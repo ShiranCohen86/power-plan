@@ -1,0 +1,15 @@
+module.exports = {
+  User:           require('./User'),
+  AuditLog:       require('./AuditLog'),
+  Project:        require('./Project'),
+  Phase:          require('./Phase'),
+  Document:       require('./Document'),
+  AgentLog:       require('./AgentLog'),
+  Meeting:        require('./Meeting'),
+  MeetingMessage: require('./MeetingMessage'),
+  Task:           require('./Task'),
+  Sprint:         require('./Sprint'),
+  GeneratedFile:  require('./GeneratedFile'),
+  Notification:   require('./Notification'),
+  Lesson:         require('./Lesson'),
+};

@@ -1,0 +1,78 @@
+{
+  "app": {
+    "name": "Power Plan",
+    "tagline": "מרעיון לאפליקציה חיה — בכוח AI"
+  },
+  "auth": {
+    "signIn": "התחברות",
+    "signIn2": "התחבר",
+    "signUp": "הרשמה",
+    "register": "יצירת חשבון חדש",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "fullName": "שם מלא",
+    "wrongCredentials": "אימייל או סיסמה שגויים",
+    "noAccount": "אין לך חשבון?",
+    "hasAccount": "יש לך חשבון?",
+    "orEmail": "או עם אימייל",
+    "logout": "התנתקות"
+  },
+  "dashboard": {
+    "title": "הפרויקטים שלי",
+    "newProject": "פרויקט חדש",
+    "empty": "עדיין אין פרויקטים",
+    "emptySub": "צור פרויקט חדש כדי להתחיל",
+    "status": {
+      "onboarding": "איסוף מידע",
+      "planning": "בתכנון",
+      "coding": "בפיתוח",
+      "deploying": "בפריסה",
+      "live": "פעיל",
+      "failed": "נכשל",
+      "paused": "מושהה"
+    }
+  },
+  "newProject": {
+    "title": "פרויקט חדש",
+    "subtitle": "ספר לנו על הרעיון שלך ו-Claude יבנה אותו",
+    "projectName": "שם הפרויקט",
+    "namePlaceholder": "לדוגמה: Book Smart",
+    "ideaLabel": "תאר את הרעיון שלך",
+    "ideaPlaceholder": "אפליקציה שעוזרת... (לפחות 10 תווים)",
+    "startBtn": "התחל ניתוח"
+  },
+  "workspace": {
+    "startPipeline": "התחל Pipeline",
+    "approve": "אשר והמשך",
+    "refine": "בקש שינוי",
+    "refineLeft": "נותרו",
+    "awaitingApproval": "ממתין לאישורך",
+    "aiRunning": "AI עובד...",
+    "selectPhase": "בחר שלב לצפייה",
+    "pipelineRunning": "Claude עובד על שלב זה...",
+    "tabs": {
+      "narrative": "Claude חושב",
+      "meeting": "ישיבה",
+      "tech": "טכני"
+    }
+  },
+  "discovery": {
+    "title": "שאלון גילוי",
+    "subtitle": "Claude ישאל אותך כמה שאלות להבנה מעמיקה",
+    "answerPlaceholder": "הקלד את תשובתך...",
+    "claudeTyping": "Claude מקליד...",
+    "allDone": "מעולה! אני מוכן להתחיל לתכנן את האפליקציה שלך",
+    "startPipeline": "התחל תכנון"
+  },
+  "common": {
+    "loading": "טוען...",
+    "save": "שמור",
+    "cancel": "ביטול",
+    "back": "חזרה",
+    "continue": "המשך",
+    "approve": "אישור",
+    "error": "שגיאה",
+    "retry": "נסה שוב",
+    "send": "שלח"
+  }
+}

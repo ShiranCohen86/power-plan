@@ -1,0 +1,64 @@
+const env = {
+  NODE_ENV:               process.env.NODE_ENV || 'development',
+  PORT:                   parseInt(process.env.PORT, 10) || 5000,
+  MONGO_URI:              process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/power_plan',
+  JWT_SECRET:             process.env.JWT_SECRET || 'dev_jwt_secret_change_me',
+  JWT_EXPIRES_IN:         process.env.JWT_EXPIRES_IN || '15m',
+  JWT_REFRESH_SECRET:     process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_me_DIFFERENT',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+  BCRYPT_SALT_ROUNDS:     parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
+  FRONTEND_URL:           process.env.FRONTEND_URL || 'http://localhost:5173',
+  RATE_LIMIT_WINDOW_MS:   parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
+  RATE_LIMIT_MAX:         parseInt(process.env.RATE_LIMIT_MAX, 10) || 200,
+  LOG_LEVEL:              process.env.LOG_LEVEL || 'info',
+  ANTHROPIC_API_KEY:      process.env.ANTHROPIC_API_KEY || '',
+  ANTHROPIC_MODEL:        process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+  ANTHROPIC_MODEL_STARTER: process.env.ANTHROPIC_MODEL_STARTER || 'claude-haiku-4-5-20251001',
+  PIPELINE_MAX_CONCURRENT: parseInt(process.env.PIPELINE_MAX_CONCURRENT, 10) || 5,
+  ENCRYPTION_KEY:         process.env.ENCRYPTION_KEY || '',
+
+  // MongoDB Atlas (Power Plan's shared cluster)
+  ATLAS_PUBLIC_KEY:   process.env.ATLAS_PUBLIC_KEY  || '',
+  ATLAS_PRIVATE_KEY:  process.env.ATLAS_PRIVATE_KEY || '',
+  ATLAS_PROJECT_ID:   process.env.ATLAS_PROJECT_ID  || '',
+  ATLAS_CLUSTER_NAME: process.env.ATLAS_CLUSTER_NAME || 'powerplan-cluster',
+  ATLAS_CLUSTER_HOST: process.env.ATLAS_CLUSTER_HOST || '',  // e.g. cluster0.abc12.mongodb.net
+
+  // GitHub (Power Plan's org)
+  GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
+  GITHUB_ORG:   process.env.GITHUB_ORG   || 'power-plan-apps',
+
+  // Render (Power Plan's account)
+  RENDER_API_KEY:  process.env.RENDER_API_KEY  || '',
+  RENDER_OWNER_ID: process.env.RENDER_OWNER_ID || '',
+
+  // Resend (Power Plan's shared email account)
+  RESEND_API_KEY:  process.env.RESEND_API_KEY  || '',
+  RESEND_FROM:     process.env.RESEND_FROM     || 'hello@powerplan.app',
+
+  // Cloudinary (Power Plan's shared media account)
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+  CLOUDINARY_API_KEY:    process.env.CLOUDINARY_API_KEY    || '',
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+
+  RETURN_DEV_TOKEN: process.env.RETURN_DEV_TOKEN === 'true',
+};
+
+if (env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev_jwt_secret_change_me') {
+    throw new Error('FATAL: JWT_SECRET must be set to a strong random value in production');
+  }
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === 'dev_refresh_secret_change_me_DIFFERENT') {
+    throw new Error('FATAL: JWT_REFRESH_SECRET must be set to a strong random value in production');
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('FATAL: ANTHROPIC_API_KEY must be set in production');
+  }
+}
+
+if (env.JWT_SECRET === env.JWT_REFRESH_SECRET) {
+  // eslint-disable-next-line no-console
+  console.warn('JWT_SECRET and JWT_REFRESH_SECRET are identical — use two different values.');
+}
+
+module.exports = env;

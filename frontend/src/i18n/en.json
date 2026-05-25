@@ -1,0 +1,78 @@
+{
+  "app": {
+    "name": "Power Plan",
+    "tagline": "From idea to live app — powered by AI"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signIn2": "Sign in",
+    "signUp": "Sign Up",
+    "register": "Create a new account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "wrongCredentials": "Invalid email or password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orEmail": "or with email",
+    "logout": "Log out"
+  },
+  "dashboard": {
+    "title": "My Projects",
+    "newProject": "New Project",
+    "empty": "No projects yet",
+    "emptySub": "Create a new project to get started",
+    "status": {
+      "onboarding": "Onboarding",
+      "planning": "Planning",
+      "coding": "Building",
+      "deploying": "Deploying",
+      "live": "Live",
+      "failed": "Failed",
+      "paused": "Paused"
+    }
+  },
+  "newProject": {
+    "title": "New Project",
+    "subtitle": "Tell us about your idea and Claude will build it",
+    "projectName": "Project name",
+    "namePlaceholder": "e.g. Book Smart",
+    "ideaLabel": "Describe your idea",
+    "ideaPlaceholder": "An app that helps... (at least 10 characters)",
+    "startBtn": "Start Analysis"
+  },
+  "workspace": {
+    "startPipeline": "Start Pipeline",
+    "approve": "Approve & Continue",
+    "refine": "Request Changes",
+    "refineLeft": "left",
+    "awaitingApproval": "Awaiting your approval",
+    "aiRunning": "AI working...",
+    "selectPhase": "Select a phase to view",
+    "pipelineRunning": "Claude is working on this phase...",
+    "tabs": {
+      "narrative": "Claude thinking",
+      "meeting": "Meeting",
+      "tech": "Technical"
+    }
+  },
+  "discovery": {
+    "title": "Discovery Chat",
+    "subtitle": "Claude will ask a few questions to deeply understand your idea",
+    "answerPlaceholder": "Type your answer...",
+    "claudeTyping": "Claude is typing...",
+    "allDone": "Great! I'm ready to start planning your app",
+    "startPipeline": "Start Planning"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "continue": "Continue",
+    "approve": "Approve",
+    "error": "Error",
+    "retry": "Retry",
+    "send": "Send"
+  }
+}

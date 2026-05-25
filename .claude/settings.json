@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Shiran\\\\Desktop\\\\\" -Directory | Select-Object Name)",
+      "Read(//c/Users/Shiran/Desktop/dor-cellular/backend/src/models/**)",
+      "Read(//c/Users/Shiran/Desktop/dor-cellular/backend/src/routes/**)",
+      "Read(//c/Users/Shiran/Desktop/dor-cellular/backend/src/middleware/**)",
+      "Read(//c/Users/Shiran/Desktop/dor-cellular/frontend/src/api/**)",
+      "Bash(cd \"C:\\\\Users\\\\Shiran\\\\Desktop\\\\dor-cellular\" && find . -type d -maxdepth 2 | grep -v node_modules | grep -v \"\\\\.git\" | grep -v \"\\\\.claude\" | sort)",
+      "Read(//c/Users/Shiran/Desktop/dor-cellular/**)"
+    ]
+  }
+}
