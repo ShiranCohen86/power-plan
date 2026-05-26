@@ -143,7 +143,15 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
   const project      = await Project.findById(projectId).lean();
   const planningDocs = await _getPlanningDocs(projectId, cfg.contextDocs);
   const prevFiles    = await _getPreviousFiles(projectId, cfg.prevFilePatterns);
-  const userPrompt   = agent.buildCodegenContext(project, planningDocs, prevFiles);
+  let   userPrompt   = agent.buildCodegenContext(project, planningDocs, prevFiles);
+
+  // Inject service credentials so the agent writes correct .env + usage code
+  if (userCtx.serviceEnv && Object.keys(userCtx.serviceEnv).length > 0) {
+    const envBlock = Object.entries(userCtx.serviceEnv)
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+    userPrompt += `\n\n## Third-Party Service Credentials\nInclude these in .env / .env.example and use them in the generated code:\n\`\`\`\n${envBlock}\n\`\`\``;
+  }
 
   // Run agent
   const narrativeChunks = [];
@@ -241,7 +249,22 @@ async function _getUserCtx(project) {
   if (!apiKey && user?.settings?.anthropicApiKey) {
     try { apiKey = decrypt(user.settings.anthropicApiKey); } catch { }
   }
-  return { plan: user?.plan || 'starter', apiKey };
+  const serviceEnv = await _getServiceCredentials(project._id);
+  return { plan: user?.plan || 'starter', apiKey, serviceEnv };
+}
+
+async function _getServiceCredentials(projectId) {
+  const project = await Project.findById(projectId)
+    .select('+requiredServices.credentials')
+    .lean();
+  const env = {};
+  for (const svc of (project?.requiredServices || [])) {
+    if (!svc.credentials) continue;
+    for (const [key, encVal] of Object.entries(svc.credentials)) {
+      try { env[key] = decrypt(encVal); } catch { }
+    }
+  }
+  return env;
 }
 
 async function _getPlanningDocs(projectId, types) {

@@ -18,6 +18,10 @@ router.post('/:id/discovery/complete', validate({ params: projectValidator.objec
 // Meeting history
 router.get('/:id/meetings', validate(projectValidator.objectId), projectsController.getMeetings);
 
+// Dynamic service credentials
+router.get ('/:id/required-services',                                    projectsController.getRequiredServices);
+router.post('/:id/required-services/:serviceId/credentials',             projectsController.saveServiceCredentials);
+
 // Per-project settings
 router.get   ('/:id/settings',              projectsController.getProjectSettings);
 router.put   ('/:id/settings/api-key',      projectsController.setProjectApiKey);

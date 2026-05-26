@@ -48,9 +48,10 @@ export function useProjectSocket(projectId, handlers = {}) {
       'file:written':              wrap('onFileWritten'),
       'file:secret_detected':      wrap('onSecretDetected'),
       'pipeline:codegen_complete': wrap('onCodegenComplete'),
-      'consultants:started':       wrap('onConsultantsStarted'),
-      'consultants:message':       wrap('onConsultantsMessage'),
-      'consultants:completed':     wrap('onConsultantsCompleted'),
+      'consultants:started':           wrap('onConsultantsStarted'),
+      'consultants:message':           wrap('onConsultantsMessage'),
+      'consultants:completed':         wrap('onConsultantsCompleted'),
+      'pipeline:awaiting_credentials': wrap('onAwaitingCredentials'),
     };
 
     Object.entries(listeners).forEach(([event, fn]) => socket.current.on(event, fn));

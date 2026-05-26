@@ -78,13 +78,23 @@ async function startPlanning(projectId) {
     // Auto-extract lessons from any agent errors in this project (fire-and-forget)
     autoExtractLessons(projectId).catch(() => {});
 
-    // External Consultants → then Codegen (fire-and-forget chain)
-    const { runExternalConsultants } = require('./ai/external-consultants.orchestrator');
-    const { startCodegen }           = require('./codegen-runner.service');
+    // External Consultants → credential detection gate → Codegen
+    const { runExternalConsultants }  = require('./ai/external-consultants.orchestrator');
+    const { startCodegen }            = require('./codegen-runner.service');
+    const { detectAndPauseForCredentials } = require('./service-detector.service');
 
     runExternalConsultants(projectId)
       .catch((err) => logger.warn('planning-runner: external consultants failed (non-fatal)', { projectId, error: err.message }))
-      .finally(() => {
+      .finally(async () => {
+        try {
+          const paused = await detectAndPauseForCredentials(projectId);
+          if (paused) {
+            logger.info('planning-runner: paused for credentials', { projectId });
+            return;
+          }
+        } catch (err) {
+          logger.warn('planning-runner: credential detection failed (non-fatal)', { projectId, error: err.message });
+        }
         startCodegen(projectId).catch((err) =>
           logger.error('planning-runner: codegen start failed', { projectId, error: err.message }),
         );

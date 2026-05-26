@@ -19,7 +19,8 @@ import PhaseList               from '../components/workspace/PhaseList';
 import LiveFeed                from '../components/workspace/LiveFeed';
 import ApprovalBar             from '../components/workspace/ApprovalBar';
 import ProjectSettingsModal    from '../components/workspace/ProjectSettingsModal';
-import QuotaBanner        from '../components/workspace/QuotaBanner';
+import CredentialsGateModal   from '../components/workspace/CredentialsGateModal';
+import QuotaBanner            from '../components/workspace/QuotaBanner';
 import DeploymentStatus   from '../components/workspace/DeploymentStatus';
 import CelebrationOverlay from '../components/workspace/CelebrationOverlay';
 import SettingsGate       from '../components/SettingsGate';
@@ -65,6 +66,7 @@ export default function ProjectWorkspace() {
   const [usingFallback, setUsingFallback] = useState(false);
   const [rateLimit, setRateLimit] = useState(null); // { used, remaining, maxPerHour, resetsAt }
   const [showProjectSettings, setShowProjectSettings] = useState(false);
+  const [awaitingServices, setAwaitingServices]       = useState(null); // null | [{ id, name, fields, howto }]
 
   // Live Company Experience state
   const [activeFeedTab, setActiveFeedTab]       = useState('narrative');
@@ -202,7 +204,10 @@ export default function ProjectWorkspace() {
       setProject((p) => p ? { ...p, completionPercent: 50 } : p);
     },
     onQuotaExhausted: ({ message }) => {
-      setQuotaError({ message, plan: project?.plan || 'starter' });
+      setQuotaError({ message });
+    },
+    onAwaitingCredentials: ({ services }) => {
+      setAwaitingServices(services);
     },
     onDeploymentStep: ({ step, status, label }) => {
       setDeploySteps((prev) => ({ ...prev, [step]: { status, label } }));
@@ -465,7 +470,6 @@ export default function ProjectWorkspace() {
       {isQuotaPaused && (
         <QuotaBanner
           message={quotaError?.message}
-          plan={quotaError?.plan || project?.plan}
           projectId={id}
         />
       )}
@@ -491,7 +495,15 @@ export default function ProjectWorkspace() {
           projectId={id}
           projectTitle={project?.title}
           onClose={() => setShowProjectSettings(false)}
-          onKeyUpdated={() => setHasApiKey(true)}
+        />
+      )}
+
+      {/* Credentials gate modal — shown when pipeline pauses for service tokens */}
+      {awaitingServices && (
+        <CredentialsGateModal
+          projectId={id}
+          services={awaitingServices}
+          onDone={() => setAwaitingServices(null)}
         />
       )}
 

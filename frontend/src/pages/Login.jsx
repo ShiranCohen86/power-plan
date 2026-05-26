@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,6 +7,7 @@ import {
   selectAuthError, selectAuthStatus, selectCurrentUser,
 } from '../store/slices/authSlice.js';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
+import { updateApiKey, validateApiKey } from '../api/settings.api.js';
 
 export default function Login() {
   const { t }           = useTranslation();
@@ -24,11 +25,23 @@ export default function Login() {
   const [emailInput, setEmailInput]       = useState('');
   const [passInput,  setPassInput]        = useState('');
   const [localError, setLocalError]       = useState('');
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
+  const [apiKeyInput, setApiKeyInput]     = useState('');
+  const [apiKeyBusy, setApiKeyBusy]       = useState(false);
+  const [apiKeyErr, setApiKeyErr]         = useState('');
+  const [apiKeyValid, setApiKeyValid]     = useState(null);
+  const [apiKeyValidating, setApiKeyValidating] = useState(false);
+  const justRegisteredRef = useRef(false);
 
   useEffect(() => {
     if (currentUser) {
-      const redirect = searchParams.get('redirect');
-      navigate(redirect || '/dashboard', { replace: true });
+      if (justRegisteredRef.current) {
+        justRegisteredRef.current = false;
+        setShowApiKeyPrompt(true);
+      } else {
+        const redirect = searchParams.get('redirect');
+        navigate(redirect || '/dashboard', { replace: true });
+      }
     }
   }, [currentUser, navigate, searchParams]);
 
@@ -43,8 +56,9 @@ export default function Login() {
 
     if (isRegister) {
       if (!nameInput.trim()) { setLocalError('נא להזין שם מלא'); return; }
+      justRegisteredRef.current = true;
       const result = await dispatch(signupUser({ name: nameInput.trim(), email: emailInput, password: passInput }));
-      if (result.error) setLocalError(result.payload || 'שגיאה בהרשמה');
+      if (result.error) { justRegisteredRef.current = false; setLocalError(result.payload || 'שגיאה בהרשמה'); }
     } else {
       await dispatch(loginUser({ email: emailInput, password: passInput }));
     }
@@ -57,6 +71,96 @@ export default function Login() {
   };
 
   const error = localError || authError;
+
+  async function handleApiKeyValidate() {
+    if (!apiKeyInput.trim()) return;
+    setApiKeyValidating(true); setApiKeyValid(null);
+    try {
+      const res = await validateApiKey(apiKeyInput.trim());
+      setApiKeyValid(res);
+    } catch { setApiKeyValid({ valid: false, error: 'שגיאת רשת' }); }
+    finally { setApiKeyValidating(false); }
+  }
+
+  async function handleApiKeySave() {
+    if (!apiKeyInput.trim()) return;
+    setApiKeyBusy(true); setApiKeyErr('');
+    try {
+      await updateApiKey(apiKeyInput.trim());
+      navigate('/dashboard', { replace: true });
+    } catch (e) {
+      setApiKeyErr(e.message || 'שגיאה בשמירת המפתח');
+      setApiKeyBusy(false);
+    }
+  }
+
+  if (showApiKeyPrompt) {
+    return (
+      <div className="login-shell">
+        <div className="login-card" style={{ maxWidth: 440 }}>
+          <div style={{ marginBottom: 4 }}>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>ברוך הבא! 👋</h2>
+            <p className="muted" style={{ margin: '6px 0 0', fontSize: 13 }}>
+              כדי לבנות אפליקציות עם AI, נא להזין את מפתח ה-API של Anthropic.
+            </p>
+          </div>
+
+          <div style={{ height: 1, background: 'var(--border)', margin: '16px 0' }} />
+
+          <div className="form-group">
+            <label style={{ fontSize: 13 }}>מפתח Anthropic API</label>
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => { setApiKeyInput(e.target.value); setApiKeyValid(null); }}
+              placeholder="sk-ant-api03-..."
+              autoComplete="off"
+              dir="ltr"
+              style={{ fontSize: 13 }}
+            />
+          </div>
+
+          {apiKeyErr && (
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--danger)' }}>{apiKeyErr}</p>
+          )}
+          {apiKeyValid && (
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: apiKeyValid.valid ? '#16a34a' : 'var(--danger)' }}>
+              {apiKeyValid.valid ? '✓ המפתח תקין' : `✗ ${apiKeyValid.error}`}
+            </p>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              className="btn btn--secondary"
+              style={{ fontSize: 13 }}
+              onClick={handleApiKeyValidate}
+              disabled={apiKeyValidating || !apiKeyInput.trim()}
+            >
+              {apiKeyValidating ? 'בודק...' : '🔍 בדוק'}
+            </button>
+            <button
+              style={{ fontSize: 13, flex: 1 }}
+              onClick={handleApiKeySave}
+              disabled={apiKeyBusy || !apiKeyInput.trim()}
+            >
+              {apiKeyBusy ? 'שומר...' : 'שמור והמשך'}
+            </button>
+          </div>
+
+          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: 'var(--text-muted)' }}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 12, textDecoration: 'underline' }}
+              onClick={() => navigate('/dashboard', { replace: true })}
+            >
+              דלג בינתיים — אוסיף מאוחר יותר בהגדרות
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-shell">

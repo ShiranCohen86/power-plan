@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  getSettings, updatePlan, updateApiKey, deleteApiKey,
-  updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
-  validateApiKey,
+  getSettings, updatePlan, updateApiKey, deleteApiKey, validateApiKey,
 } from '../api/settings.api';
 
 const PLANS = [
@@ -304,15 +302,15 @@ export default function Settings() {
           </section>
 
           <section className="settings-section">
-            <h2 className="settings-section__title">קודי גישה לשירותים</h2>
+            <h2 className="settings-section__title">מפתח AI (Anthropic)</h2>
             <p className="settings-section__desc">
-              כל אחד מהשירותים הבאים נדרש בשלב מסוים בבניית האפליקציה שלך.
-              Power Plan תבקש אותם בדיוק כשצריך — לא לפני.
+              מפתח אחד משמש את <strong>כל הפרויקטים</strong> שלך.
+              קודי גישה ל-GitHub ו-Render מוגדרים בנפרד לכל פרויקט — דרך כפתור ⚙️ הגדרות בסביבת הפרויקט.
             </p>
 
             <TokenSection
               title="מפתח AI אישי (Anthropic)"
-              subtitle="נדרש לפני שלב הניתוח — מאפשר ל-Power Plan לדבר עם Claude בשמך."
+              subtitle="מאפשר ל-Power Plan לדבר עם Claude בשמך — משמש לכל הפרויקטים."
               hint={settings.apiKeyHint}
               hasToken={settings.hasApiKey}
               onValidate={(key) => validateApiKey(key)}
@@ -335,64 +333,6 @@ export default function Settings() {
                     'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן',
                   ],
                   note: '💡 כל פרויקט שלם עולה בערך ₪1-5 — חיוב לפי שימוש בלבד.',
-                },
-              }}
-            />
-
-            <TokenSection
-              title="קוד גישה ל-GitHub"
-              subtitle="נדרש לפני שלב הקוד — מאפשר לנו לשמור את הקוד של האפליקציה שלך ב-GitHub."
-              hint={settings.githubTokenHint}
-              hasToken={settings.hasGithubToken}
-              onSave={async (v) => {
-                const res = await updateGithubToken(v);
-                setSettings((s) => ({ ...s, hasGithubToken: res.hasGithubToken, githubTokenHint: res.githubTokenHint }));
-              }}
-              onDelete={async () => {
-                await deleteGithubToken();
-                setSettings((s) => ({ ...s, hasGithubToken: false, githubTokenHint: null }));
-              }}
-              inputProps={{
-                placeholder: 'ghp_...',
-                howto: {
-                  title: 'איך מקבלים קוד גישה ל-GitHub?',
-                  steps: [
-                    'היכנס ל-<strong>github.com</strong> (צור חשבון חינמי אם אין לך)',
-                    'לחץ על התמונה שלך (פינה ימנית עליונה) → Settings',
-                    'גלול למטה → "Developer settings" → "Personal access tokens" → "Tokens (classic)"',
-                    'לחץ "Generate new token (classic)" → בחר scope: <code>repo</code> בלבד',
-                    'העתק את הtoken (מתחיל ב-<code>ghp_</code>) והדבק כאן',
-                  ],
-                  note: '💡 GitHub חינמי לחלוטין — הקוד שלך יישמר ב-repo פרטי.',
-                },
-              }}
-            />
-
-            <TokenSection
-              title="קוד גישה ל-Render (פריסה)"
-              subtitle="נדרש לפני שלב הפריסה — מאפשר לנו להעלות את האפליקציה לאינטרנט בשמך."
-              hint={settings.renderTokenHint}
-              hasToken={settings.hasRenderToken}
-              onSave={async (v) => {
-                const res = await updateRenderToken(v);
-                setSettings((s) => ({ ...s, hasRenderToken: res.hasRenderToken, renderTokenHint: res.renderTokenHint }));
-              }}
-              onDelete={async () => {
-                await deleteRenderToken();
-                setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
-              }}
-              inputProps={{
-                placeholder: 'rnd_...',
-                howto: {
-                  title: 'איך מקבלים קוד גישה ל-Render?',
-                  steps: [
-                    'היכנס לאתר <strong>render.com</strong> (צור חשבון חינמי אם אין לך)',
-                    'לחץ על "Account Settings" בתפריט הצד',
-                    'לחץ על "API Keys" ואז "Create API Key"',
-                    'תן לו שם (למשל: "Power Plan") ולחץ "Create"',
-                    'העתק את ה-API key (מתחיל ב-<code>rnd_</code>) והדבק כאן',
-                  ],
-                  note: '💡 Render מציע tier חינמי — האפליקציה שלך תרוץ בחינם.',
                 },
               }}
             />

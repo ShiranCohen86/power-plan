@@ -12,7 +12,7 @@ const ProjectSchema = new mongoose.Schema(
     ownerId:           { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     status: {
       type: String,
-      enum: ['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'quota_paused'],
+      enum: ['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'quota_paused', 'awaiting_credentials'],
       default: 'onboarding',
       index: true,
     },
@@ -40,6 +40,13 @@ const ProjectSchema = new mongoose.Schema(
       githubToken:     { type: String, select: false }, // encrypted AES-256
       renderApiKey:    { type: String, select: false }, // encrypted AES-256
     },
+
+    // Third-party services detected from AI planning docs — user must provide credentials
+    requiredServices: [{
+      serviceId:           { type: String, required: true },
+      credentialsProvided: { type: Boolean, default: false },
+      credentials:         { type: Map, of: String, select: false }, // encrypted AES-256
+    }],
 
     // Quota / pause tracking
     quotaPausedAt:   Date,

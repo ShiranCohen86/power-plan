@@ -44,6 +44,12 @@ export const setProjectRenderToken    = (id, token) =>
 export const deleteProjectRenderToken = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}/settings/render-token` });
 
+export const getRequiredServices = (id) =>
+  safeRequest({ method: 'get', url: `/projects/${id}/required-services` });
+
+export const saveServiceCredentials = (id, serviceId, credentials) =>
+  safeRequest({ method: 'post', url: `/projects/${id}/required-services/${serviceId}/credentials`, data: { credentials } });
+
 /**
  * Opens an SSE connection to stream the next discovery question.
  * Returns an AbortController so the caller can cancel the stream.

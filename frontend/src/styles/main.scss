@@ -1538,6 +1538,11 @@ input, select, textarea {
   }
   &__body     { padding: 20px; display: flex; flex-direction: column; gap: 20px; flex: 1; }
   &__desc     { font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.6; }
+  &__global-note {
+    font-size: 12px; color: var(--text-muted);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: $radius-sm; padding: 10px 12px; line-height: 1.5;
+  }
 }
 
 .proj-settings-row {
@@ -1551,6 +1556,61 @@ input, select, textarea {
   &__status  { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
   &__status--ok { color: #34d399; }
   &__hint    { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+}
+
+// ── Credentials Gate Modal ──────────────────────────────────────────────────
+
+.creds-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+
+.creds-modal {
+  width: 520px; max-width: 100%; max-height: 90vh;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: $radius-lg;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+
+  &__header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
+  }
+  &__title    { font-size: 16px; font-weight: 700; }
+  &__subtitle { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }
+  &__body     { padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  &__progress { font-size: 12px; color: var(--text-muted); margin: 0; }
+  &__all-done {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 600; color: #34d399;
+    padding: 24px 0; justify-content: center;
+  }
+}
+
+.creds-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: $radius;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+
+  &--done {
+    opacity: 0.6;
+    border-color: #34d399;
+  }
+
+  &__header  { display: flex; align-items: center; justify-content: space-between; }
+  &__name    { font-size: 14px; font-weight: 600; }
+  &__check   { font-size: 12px; color: #34d399; font-weight: 600; }
+  &__howto   { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+  &__howto-label { font-weight: 600; }
+  &__fields  { display: flex; flex-direction: column; gap: 8px; }
+  &__field   { display: flex; flex-direction: column; gap: 4px; }
+  &__label   { font-size: 12px; color: var(--text-muted); }
 }
 
 // ── Live Company Experience ─────────────────────────────────────────────────

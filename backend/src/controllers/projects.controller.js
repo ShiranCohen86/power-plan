@@ -253,6 +253,70 @@ exports.deleteProjectRenderToken = asyncHandler(async (req, res) => {
   res.json({ hasRenderToken: false });
 });
 
+// ── Dynamic service credentials ───────────────────────────────────────────────
+
+exports.getRequiredServices = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const registry = require('../config/serviceRegistry');
+  const services = (project.requiredServices || []).map((s) => ({
+    id:                   s.serviceId,
+    name:                 registry[s.serviceId]?.name  || s.serviceId,
+    fields:               registry[s.serviceId]?.fields || [],
+    howto:                registry[s.serviceId]?.howto  || '',
+    credentialsProvided:  s.credentialsProvided,
+  }));
+
+  res.json({ services });
+});
+
+exports.saveServiceCredentials = asyncHandler(async (req, res) => {
+  const { serviceId } = req.params;
+  const { credentials } = req.body;
+
+  if (!credentials || typeof credentials !== 'object') {
+    throw ApiError.badRequest('credentials must be an object');
+  }
+
+  const registry = require('../config/serviceRegistry');
+  if (!registry[serviceId]) throw ApiError.badRequest(`Unknown service: ${serviceId}`);
+
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id })
+    .select('+requiredServices.credentials');
+  if (!project) throw ApiError.notFound('Project not found');
+
+  // Upsert this service entry
+  let svc = project.requiredServices.find((s) => s.serviceId === serviceId);
+  if (!svc) {
+    project.requiredServices.push({ serviceId, credentialsProvided: false });
+    svc = project.requiredServices[project.requiredServices.length - 1];
+  }
+
+  if (!svc.credentials) svc.credentials = new Map();
+  for (const [key, val] of Object.entries(credentials)) {
+    if (typeof val === 'string' && val.trim()) {
+      svc.credentials.set(key, encrypt(val.trim()));
+    }
+  }
+  svc.credentialsProvided = true;
+  await project.save();
+
+  // If all required services now have credentials → resume codegen
+  const allDone = project.requiredServices.every((s) => s.credentialsProvided);
+  if (allDone && project.status === 'awaiting_credentials') {
+    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
+    const { startCodegen } = require('../services/codegen-runner.service');
+    startCodegen(req.params.id).catch((err) =>
+      require('../utils/logger').error('projects.ctrl: codegen resume failed', { error: err.message }),
+    );
+  }
+
+  res.json({ ok: true, credentialsProvided: true, allDone });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function _ownedProject(req) {
   const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
   if (!project) throw ApiError.notFound('Project not found');
