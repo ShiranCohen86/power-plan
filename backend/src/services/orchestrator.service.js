@@ -17,28 +17,18 @@ async function startPipeline(projectId, userId) {
   if (!project) throw ApiError.notFound('Project not found');
   if (String(project.ownerId) !== String(userId)) throw ApiError.forbidden();
 
-  // Auto-recover: if discovery completed but status never transitioned, fix it now
-  if (project.status === 'onboarding') {
-    if (project.discoveryAnswers?.length) {
-      project.status = 'planning';
-      await project.save();
-      logger.info('orchestrator: auto-transitioned onboarding→planning', { projectId });
-    } else {
-      throw ApiError.badRequest('Project is not in planning state. Complete discovery first.');
-    }
-  }
-
-  // Allow resuming paused or failed pipelines
-  const resumable = ['planning', 'paused', 'failed'];
-  if (!resumable.includes(project.status)) {
-    throw ApiError.badRequest(`Cannot start pipeline from status: ${project.status}`);
+  // Reject only statuses that are truly in-progress or already done
+  const blocked = ['coding', 'deploying', 'live'];
+  if (blocked.includes(project.status)) {
+    throw ApiError.badRequest(`Cannot start pipeline — project is currently: ${project.status}`);
   }
 
   const running = await Phase.findOne({ projectId, status: 'running' });
   if (running) throw ApiError.badRequest('Pipeline is already running');
 
-  // Transition paused/failed back to planning before starting
+  // Auto-transition any non-planning status to planning before starting
   if (project.status !== 'planning') {
+    logger.info('orchestrator: transitioning status to planning', { projectId, from: project.status });
     project.status = 'planning';
     await project.save();
   }

@@ -256,8 +256,10 @@ export default function ProjectWorkspace() {
   const isOnboarding   = projectStatus === 'onboarding';
   const isPaused       = projectStatus === 'paused';
   const isFailed       = projectStatus === 'failed';
-  const canStart       = projectStatus === 'planning' && notStarted;
-  const canResume      = isPaused || isFailed;
+  // canStart: show Start button whenever no phases exist and pipeline isn't already live/running
+  const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
+  const canStart       = notStarted && !inProgress;
+  const canResume      = (isPaused || isFailed) && hasPhases;
 
   return (
     <div className="workspace">
@@ -339,14 +341,15 @@ export default function ProjectWorkspace() {
             }}
           />
 
-          {/* Discovery not complete — guide user back */}
+          {/* Discovery hint — shown for onboarding projects, but doesn't block */}
           {isOnboarding && (
             <div className="workspace-discovery-cta">
               <p className="workspace-discovery-cta__text">
-                השאלון לא הושלם — יש לסיים אותו לפני שמתחילים את הפייפליין.
+                מומלץ להשלים את שאלון הגילוי לקבלת תוצאות טובות יותר.
               </p>
               <button
                 className="btn btn--secondary btn--full"
+                style={{ marginBottom: 8 }}
                 onClick={() => navigate('/new-project')}
               >
                 ← השלם שאלון גילוי
@@ -354,7 +357,7 @@ export default function ProjectWorkspace() {
             </div>
           )}
 
-          {/* Ready to start */}
+          {/* Start / Resume button */}
           {canStart && (
             <div className="workspace-start-btn">
               <button className="btn btn--primary btn--full" onClick={handleStart}>
@@ -363,7 +366,6 @@ export default function ProjectWorkspace() {
             </div>
           )}
 
-          {/* Paused or failed — resume */}
           {canResume && (
             <div className="workspace-start-btn">
               <button className="btn btn--primary btn--full" onClick={handleStart}>
@@ -399,11 +401,6 @@ export default function ProjectWorkspace() {
                 <div className="workspace-empty__running">
                   <div className="pwa-spinner" style={{ width: 48, height: 48 }} />
                   <p>Claude עובד על השלב הזה...</p>
-                </div>
-              ) : isOnboarding ? (
-                <div className="workspace-empty">
-                  <div style={{ fontSize: 48 }}>💬</div>
-                  <p>יש להשלים את שאלון הגילוי תחילה</p>
                 </div>
               ) : notStarted ? (
                 <div className="workspace-empty">
