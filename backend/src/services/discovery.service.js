@@ -53,7 +53,16 @@ async function streamNextQuestion(res, { idea, title, answers }) {
     }
   }
 
-  const finished = fullText.trim() === 'DISCOVERY_COMPLETE' || answeredCount >= 6;
+  const trimmed = fullText.trim();
+
+  // Guard: if Claude returned nothing, surface an error rather than an empty state
+  if (!trimmed) {
+    res.write(`data: ${JSON.stringify({ error: 'No response from AI — please try again' })}\n\n`);
+    res.end();
+    return;
+  }
+
+  const finished = trimmed === 'DISCOVERY_COMPLETE' || answeredCount >= 6;
 
   res.write(`data: ${JSON.stringify({ done: true, finished })}\n\n`);
   res.end();

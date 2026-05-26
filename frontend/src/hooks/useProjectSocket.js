@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useSocket } from '../context/SocketContext';
 
 /**
@@ -6,9 +6,11 @@ import { useSocket } from '../context/SocketContext';
  * handlers: { onPhaseStarted, onPhaseNarrative, onPhaseCompleted,
  *             onPhaseAwaiting, onMeetingStarted, onMeetingMessage,
  *             onMeetingCompleted, onPipelineError }
+ *
+ * Re-runs when `connected` changes so we catch a late socket initialization.
  */
 export function useProjectSocket(projectId, handlers = {}) {
-  const { socket } = useSocket();
+  const { socket, connected } = useSocket();
 
   useEffect(() => {
     if (!socket.current || !projectId) return;
@@ -76,5 +78,6 @@ export function useProjectSocket(projectId, handlers = {}) {
       off('consultants:message',        handlers.onConsultantsMessage);
       off('consultants:completed',      handlers.onConsultantsCompleted);
     };
-  }, [projectId, socket]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, connected]);
 }

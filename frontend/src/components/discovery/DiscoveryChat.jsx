@@ -11,16 +11,20 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   const [streaming, setStreaming] = useState(false);
   const [currentQ, setCurrentQ]   = useState('');
   const [finished, setFinished]   = useState(false);
+  const [lastError, setLastError] = useState(null); // tracks last SSE error for retry
 
   const bottomRef   = useRef(null);
   const inputRef    = useRef(null);
   const abortRef    = useRef(null);
 
+  // Start discovery as soon as the component mounts
   useEffect(() => {
     fetchNextQuestion([]);
     return () => abortRef.current?.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentQ]);
@@ -28,6 +32,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   function fetchNextQuestion(currentAnswers) {
     setStreaming(true);
     setCurrentQ('');
+    setLastError(null);
 
     abortRef.current = discoveryNextSSE(projectId, currentAnswers, {
       onChunk(text) {
@@ -48,9 +53,15 @@ export default function DiscoveryChat({ projectId, onComplete }) {
       onError(err) {
         setStreaming(false);
         setCurrentQ('');
+        setLastError(err.message);
         setMessages((m) => [...m, { role: 'error', text: err.message }]);
       },
     });
+  }
+
+  function handleRetry() {
+    // Re-fetch the current question using the existing answers
+    fetchNextQuestion(answers);
   }
 
   function handleSend(e) {
@@ -58,7 +69,11 @@ export default function DiscoveryChat({ projectId, onComplete }) {
     const answer = input.trim();
     if (!answer || streaming || finished) return;
 
-    const lastQ = messages.filter((m) => m.role === 'assistant').slice(-1)[0]?.text || '';
+    // Find the last question from the assistant; fall back to a placeholder
+    // to satisfy backend validation (Joi.string().required() rejects empty strings)
+    const lastQ = messages.filter((m) => m.role === 'assistant').slice(-1)[0]?.text
+      || currentQ.trim()
+      || '(question)';
     const newAnswers = [...answers, { question: lastQ, answer }];
 
     setAnswers(newAnswers);
@@ -70,6 +85,8 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   function handleFinish() {
     onComplete(answers);
   }
+
+  const hasError = lastError && !streaming;
 
   return (
     <div className="discovery-chat">
@@ -94,6 +111,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
           </div>
         ))}
 
+        {/* Streaming in-progress indicator */}
         {(streaming || currentQ) && (
           <div className="discovery-msg discovery-msg--assistant">
             <span className="discovery-msg__avatar">🤖</span>
@@ -105,6 +123,15 @@ export default function DiscoveryChat({ projectId, onComplete }) {
 
         <div ref={bottomRef} />
       </div>
+
+      {/* Retry button shown after an error */}
+      {hasError && (
+        <div style={{ textAlign: 'center', padding: '8px 0' }}>
+          <button className="btn btn--secondary" onClick={handleRetry} style={{ fontSize: 13 }}>
+            🔄 {t('common.retry')}
+          </button>
+        </div>
+      )}
 
       {finished ? (
         <div className="discovery-chat__finish">

@@ -13,6 +13,10 @@ module.exports = function errorMiddleware(err, req, res, next) {
     details = Object.values(err.errors).map((e) => ({ path: e.path, message: e.message }));
     message = 'Validation failed';
   }
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
+    status = 400;
+    message = 'Invalid ID format';
+  }
   if (err.code === 11000) {
     status = 409;
     details = err.keyValue;

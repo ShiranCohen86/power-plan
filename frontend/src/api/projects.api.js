@@ -14,14 +14,24 @@ export const discoveryComplete = (id, answers) =>
 
 /**
  * Opens an SSE connection to stream the next discovery question.
- * Returns an EventSource-compatible fetch stream.
+ * Returns an AbortController so the caller can cancel the stream.
  * Calls onChunk(text) for each streamed token, onDone({ finished }) when complete.
+ *
+ * Uses apiBaseUrl from env so it works in both same-origin (Render) and
+ * cross-origin (separate Vercel/Render split) deployments.
  */
 export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
   const controller = new AbortController();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+
+  // Abort if the backend never responds within 45 seconds (cold-start safety net)
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    onError(new Error('Discovery request timed out — please try again'));
+  }, 45000);
 
   const token = localStorage.getItem('token');
-  fetch(`/api/projects/${id}/discovery/next`, {
+  fetch(`${apiBaseUrl}/api/projects/${id}/discovery/next`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -31,9 +41,11 @@ export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
     signal: controller.signal,
   })
     .then(async (res) => {
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        onError(new Error(err.error || 'Discovery request failed'));
+        onError(new Error(err.error || `Discovery request failed (${res.status})`));
         return;
       }
 
@@ -46,8 +58,9 @@ export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
+        // SSE lines are separated by \n; events by \n\n — process line by line
         const lines = buffer.split('\n');
-        buffer = lines.pop();
+        buffer = lines.pop(); // keep incomplete last line in buffer
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
@@ -61,12 +74,13 @@ export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
               onChunk(payload.chunk);
             }
           } catch {
-            // malformed SSE line — skip
+            // malformed SSE line — skip silently
           }
         }
       }
     })
     .catch((err) => {
+      clearTimeout(timeoutId);
       if (err.name !== 'AbortError') onError(err);
     });
 
