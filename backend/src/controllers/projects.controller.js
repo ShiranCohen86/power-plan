@@ -1,6 +1,8 @@
 const asyncHandler = require('../utils/asyncHandler');
 const projectService = require('../services/project.service');
 const discoveryService = require('../services/discovery.service');
+const User = require('../models/User');
+const { decrypt } = require('../services/encryption.service');
 
 function friendlyAIError(err) {
   const raw = err.message || '';
@@ -50,11 +52,25 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  // Fetch user's own API key (select: false field needs explicit select)
+  const user = await User.findById(req.user.id).select('+settings.anthropicApiKey');
+  const userApiKey = user?.settings?.anthropicApiKey
+    ? decrypt(user.settings.anthropicApiKey)
+    : null;
+
+  if (!userApiKey) {
+    res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic. עבור להגדרות והזן את המפתח שלך.' })}\n\n`);
+    res.end();
+    return;
+  }
+
   try {
     await discoveryService.streamNextQuestion(res, {
-      idea:    project.idea,
-      title:   project.title,
-      answers: req.body.answers || [],
+      idea:       project.idea,
+      title:      project.title,
+      answers:    req.body.answers || [],
+      userPlan:   user.plan,
+      userApiKey,
     });
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: friendlyAIError(err) })}\n\n`);

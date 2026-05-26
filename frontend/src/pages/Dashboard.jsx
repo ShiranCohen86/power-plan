@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { selectCurrentUser, logoutUser } from '../store/slices/authSlice.js';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
 import { selectProjects, selectProjectsStatus, fetchProjects } from '../store/slices/projectsSlice.js';
 import NotificationBell from '../components/ui/NotificationBell.jsx';
+import { getSettings } from '../api/settings.api.js';
 
 const STATUS_COLORS = {
   onboarding: '#7c3aed',
@@ -49,10 +50,17 @@ export default function Dashboard() {
   const projects    = useSelector(selectProjects);
   const status      = useSelector(selectProjectsStatus);
   const lang        = useSelector(selectLanguage);
+  const [hasApiKey, setHasApiKey] = useState(null); // null = loading
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchProjects());
   }, [dispatch, status]);
+
+  useEffect(() => {
+    getSettings()
+      .then((s) => setHasApiKey(s.hasApiKey))
+      .catch(() => setHasApiKey(true)); // on error, don't block
+  }, []);
 
   return (
     <div className="dashboard-shell">
@@ -73,6 +81,22 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+      {/* Setup banner — shown until Anthropic key is configured */}
+      {hasApiKey === false && (
+        <div className="dashboard-setup-banner">
+          <div className="dashboard-setup-banner__inner">
+            <span className="dashboard-setup-banner__icon">🔑</span>
+            <div className="dashboard-setup-banner__text">
+              <strong>צעד ראשון: הגדר את מפתח ה-AI שלך</strong>
+              <span>כדי להתחיל לבנות אפליקציות, Power Plan צריכה גישה ל-Claude. זה לוקח פחות מדקה.</span>
+            </div>
+            <button className="btn btn--primary" onClick={() => navigate('/settings')}>
+              ⚙️ הגדר עכשיו →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="dashboard-main">

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSettings, updatePlan, updateApiKey, deleteApiKey } from '../api/settings.api';
+import {
+  getSettings, updatePlan, updateApiKey, deleteApiKey,
+  updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
+} from '../api/settings.api';
 
 const PLANS = [
   {
@@ -15,9 +18,6 @@ const PLANS = [
     features: [
       { label: '12 שלבי תכנון מלאים', included: true },
       { label: 'קוד מוכן לפריסה', included: true },
-      { label: 'מסד נתונים + GitHub + Render — אוטומטי', included: true },
-      { label: 'שליחת מיילים (Resend)', included: true },
-      { label: 'אחסון תמונות (Cloudinary)', included: true },
       { label: 'פגישות צוות AI (Meeting System)', included: false, note: 'ב-Pro בלבד' },
       { label: 'ביקורת יועצים חיצוניים', included: false, note: 'ב-Pro בלבד' },
       { label: 'ציון איכות האפיון', included: false, note: 'ב-Pro בלבד' },
@@ -37,9 +37,6 @@ const PLANS = [
     features: [
       { label: '12 שלבי תכנון מלאים', included: true },
       { label: 'קוד מוכן לפריסה', included: true },
-      { label: 'מסד נתונים + GitHub + Render — אוטומטי', included: true },
-      { label: 'שליחת מיילים (Resend)', included: true },
-      { label: 'אחסון תמונות (Cloudinary)', included: true },
       { label: 'פגישות צוות AI (Meeting System)', included: true },
       { label: 'ביקורת יועצים חיצוניים', included: true },
       { label: 'ציון איכות האפיון', included: true },
@@ -50,7 +47,7 @@ const PLANS = [
 ];
 
 function PlanCard({ plan, currentPlan, hasApiKey, onSelect, loading }) {
-  const isActive = currentPlan === plan.key;
+  const isActive  = currentPlan === plan.key;
   const canSelect = plan.key === 'pro' || hasApiKey;
 
   return (
@@ -84,7 +81,7 @@ function PlanCard({ plan, currentPlan, hasApiKey, onSelect, loading }) {
           disabled={loading || (!canSelect && plan.requiresKey)}
         >
           {plan.requiresKey && !hasApiKey
-            ? 'הזן מפתח API קודם ↓'
+            ? 'הזן מפתח Anthropic קודם ↓'
             : loading ? 'מחליף...' : `עבור ל-${plan.name}`}
         </button>
       )}
@@ -92,56 +89,48 @@ function PlanCard({ plan, currentPlan, hasApiKey, onSelect, loading }) {
   );
 }
 
-function ApiKeySection({ hasApiKey, apiKeyHint, onSaved, onDeleted }) {
-  const [mode, setMode]   = useState('idle'); // idle | editing | deleting
+function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, saving, saveError, inputProps }) {
+  const [mode, setMode]   = useState('idle');
   const [value, setValue] = useState('');
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [err, setErr]     = useState('');
+  const [busy, setBusy]   = useState(false);
 
   async function handleSave() {
     if (!value.trim()) return;
-    setSaving(true); setError('');
+    setBusy(true); setErr('');
     try {
-      const res = await updateApiKey(value.trim());
-      onSaved(res.data);
+      await onSave(value.trim());
       setMode('idle'); setValue('');
-    } catch (err) {
-      setError(err.response?.data?.error || 'שגיאה בשמירה');
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) {
+      setErr(e.message || 'שגיאה בשמירה');
+    } finally { setBusy(false); }
   }
 
   async function handleDelete() {
-    setSaving(true); setError('');
+    setBusy(true); setErr('');
     try {
-      const res = await deleteApiKey();
-      onDeleted(res.data);
+      await onDelete();
       setMode('idle');
-    } catch (err) {
-      setError(err.response?.data?.error || 'שגיאה במחיקה');
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) {
+      setErr(e.message || 'שגיאה במחיקה');
+    } finally { setBusy(false); }
   }
 
   return (
     <div className="settings-apikey">
       <div className="settings-apikey__header">
         <div>
-          <h3 className="settings-apikey__title">מפתח API אישי (לתוכנית Starter)</h3>
-          <p className="settings-apikey__subtitle">
-            מפתח שמאפשר ל-Power Plan לדבר עם Claude בשמך — בלי שנגע בכסף שלך.
-          </p>
+          <h3 className="settings-apikey__title">{title}</h3>
+          <p className="settings-apikey__subtitle">{subtitle}</p>
         </div>
-        <div className={`settings-apikey__status${hasApiKey ? ' settings-apikey__status--ok' : ''}`}>
-          {hasApiKey ? '✓ מוגדר' : 'לא מוגדר'}
+        <div className={`settings-apikey__status${hasToken ? ' settings-apikey__status--ok' : ''}`}>
+          {hasToken ? '✓ מוגדר' : 'לא מוגדר'}
         </div>
       </div>
 
-      {hasApiKey && mode === 'idle' && (
+      {hasToken && mode === 'idle' && (
         <div className="settings-apikey__current">
-          <span className="settings-apikey__hint">{apiKeyHint}</span>
+          <span className="settings-apikey__hint">{hint}</span>
           <div className="settings-apikey__actions">
             <button className="btn btn--secondary" onClick={() => setMode('editing')}>עדכן</button>
             <button className="btn settings-apikey__delete-btn" onClick={() => setMode('deleting')}>מחק</button>
@@ -149,39 +138,40 @@ function ApiKeySection({ hasApiKey, apiKeyHint, onSaved, onDeleted }) {
         </div>
       )}
 
-      {!hasApiKey && mode === 'idle' && (
-        <button className="btn btn--primary" onClick={() => setMode('editing')}>+ הזן מפתח API</button>
+      {!hasToken && mode === 'idle' && (
+        <button className="btn btn--primary" onClick={() => setMode('editing')}>+ הזן קוד גישה</button>
       )}
 
       {mode === 'editing' && (
         <div className="settings-apikey__form">
-          <div className="settings-apikey__howto">
-            <p className="settings-apikey__howto-title">איך מקבלים מפתח?</p>
-            <ol className="settings-apikey__howto-steps">
-              <li>היכנס לאתר <strong>console.anthropic.com</strong></li>
-              <li>לחץ על "API Keys" בתפריט הצד</li>
-              <li>לחץ "Create Key" ותן לו שם (למשל: "Power Plan")</li>
-              <li>העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן</li>
-            </ol>
-            <p className="settings-apikey__howto-cost">
-              💡 <strong>כמה זה עולה?</strong> כל פרויקט שלם עם Claude Haiku עולה בערך <strong>₪1-5</strong>. יש חיוב רק על שימוש בפועל — אין תשלום חודשי לאנתרופיק.
-            </p>
-          </div>
+          {inputProps?.howto && (
+            <div className="settings-apikey__howto">
+              <p className="settings-apikey__howto-title">{inputProps.howto.title}</p>
+              <ol className="settings-apikey__howto-steps">
+                {inputProps.howto.steps.map((s, i) => (
+                  <li key={i} dangerouslySetInnerHTML={{ __html: s }} />
+                ))}
+              </ol>
+              {inputProps.howto.note && (
+                <p className="settings-apikey__howto-cost">{inputProps.howto.note}</p>
+              )}
+            </div>
+          )}
           <input
             type="password"
             className="settings-apikey__input"
-            placeholder="sk-ant-api03-..."
+            placeholder={inputProps?.placeholder || ''}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             autoComplete="off"
             dir="ltr"
           />
-          {error && <p className="settings-apikey__error">{error}</p>}
+          {err && <p className="settings-apikey__error">{err}</p>}
           <div className="settings-apikey__form-actions">
-            <button className="btn btn--primary" onClick={handleSave} disabled={saving || !value.trim()}>
-              {saving ? 'שומר...' : 'שמור מפתח'}
+            <button className="btn btn--primary" onClick={handleSave} disabled={busy || !value.trim()}>
+              {busy ? 'שומר...' : 'שמור'}
             </button>
-            <button className="btn btn--secondary" onClick={() => { setMode('idle'); setValue(''); setError(''); }}>
+            <button className="btn btn--secondary" onClick={() => { setMode('idle'); setValue(''); setErr(''); }}>
               ביטול
             </button>
           </div>
@@ -190,11 +180,11 @@ function ApiKeySection({ hasApiKey, apiKeyHint, onSaved, onDeleted }) {
 
       {mode === 'deleting' && (
         <div className="settings-apikey__confirm-delete">
-          <p>למחוק את המפתח? אם התוכנית שלך היא Starter, תועבר אוטומטית ל-Pro.</p>
-          {error && <p className="settings-apikey__error">{error}</p>}
+          <p>למחוק את קוד הגישה?</p>
+          {err && <p className="settings-apikey__error">{err}</p>}
           <div className="settings-apikey__form-actions">
-            <button className="btn settings-apikey__delete-btn" onClick={handleDelete} disabled={saving}>
-              {saving ? 'מוחק...' : 'כן, מחק'}
+            <button className="btn settings-apikey__delete-btn" onClick={handleDelete} disabled={busy}>
+              {busy ? 'מוחק...' : 'כן, מחק'}
             </button>
             <button className="btn btn--secondary" onClick={() => setMode('idle')}>ביטול</button>
           </div>
@@ -205,36 +195,31 @@ function ApiKeySection({ hasApiKey, apiKeyHint, onSaved, onDeleted }) {
 }
 
 export default function Settings() {
-  const navigate = useNavigate();
-  const [settings, setSettings] = useState(null);
+  const navigate    = useNavigate();
+  const [settings,    setSettings]    = useState(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError,   setPlanError]   = useState('');
   const [loadError,   setLoadError]   = useState('');
 
   useEffect(() => {
     getSettings()
-      .then((res) => setSettings(res.data))
+      .then((res) => setSettings(res))
       .catch(() => setLoadError('לא ניתן לטעון הגדרות. נסה לרענן.'));
   }, []);
+
+  // After key is configured we know the user came from onboarding — show CTA
+  const readyToBuild = settings?.hasApiKey;
 
   async function handleSelectPlan(plan) {
     setPlanLoading(true); setPlanError('');
     try {
       const res = await updatePlan(plan);
-      setSettings((s) => ({ ...s, plan: res.data.plan }));
+      setSettings((s) => ({ ...s, plan: res.plan }));
     } catch (err) {
-      setPlanError(err.response?.data?.error || 'שגיאה בשינוי תוכנית');
+      setPlanError(err.message || 'שגיאה בשינוי תוכנית');
     } finally {
       setPlanLoading(false);
     }
-  }
-
-  function handleApiKeySaved(data) {
-    setSettings((s) => ({ ...s, hasApiKey: data.hasApiKey, apiKeyHint: data.apiKeyHint }));
-  }
-
-  function handleApiKeyDeleted(data) {
-    setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null, plan: data.plan }));
   }
 
   return (
@@ -250,6 +235,26 @@ export default function Settings() {
         <div className="settings-page__loading"><div className="spinner" /></div>
       )}
 
+      {settings && !settings.hasApiKey && (
+        <div className="settings-onboarding-hint">
+          <span>👋</span>
+          <span>ברוך הבא! לפני שמתחילים לבנות, הזן את מפתח ה-AI שלך למטה. זה הדבר היחידי שנדרש כדי להתחיל.</span>
+        </div>
+      )}
+
+      {readyToBuild && (
+        <div className="settings-ready-cta">
+          <span className="settings-ready-cta__icon">✅</span>
+          <div>
+            <strong>הכל מוכן!</strong>
+            <span> מפתח ה-AI מוגדר — אפשר להתחיל לבנות.</span>
+          </div>
+          <button className="btn btn--primary" onClick={() => navigate('/new-project')}>
+            התחל לבנות אפליקציה →
+          </button>
+        </div>
+      )}
+
       {settings && (
         <div className="settings-page__body">
           <section className="settings-section">
@@ -257,9 +262,7 @@ export default function Settings() {
             <p className="settings-section__desc">
               בשתי התוכניות תקבל אפיון מלא וקוד עובד — ההבדל הוא <strong>מי מספק את ה-AI</strong>.
             </p>
-
             {planError && <p className="settings-plan__error">{planError}</p>}
-
             <div className="settings-plans">
               {PLANS.map((plan) => (
                 <PlanCard
@@ -275,42 +278,100 @@ export default function Settings() {
           </section>
 
           <section className="settings-section">
-            <ApiKeySection
-              hasApiKey={settings.hasApiKey}
-              apiKeyHint={settings.apiKeyHint}
-              onSaved={handleApiKeySaved}
-              onDeleted={handleApiKeyDeleted}
-            />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section__title">שירותים שכלולים אוטומטית</h2>
+            <h2 className="settings-section__title">קודי גישה לשירותים</h2>
             <p className="settings-section__desc">
-              בכל פרויקט שנבנה, Power Plan מחברת את כל השירותים הבאים אוטומטית — אין צורך בהרשמה או קונפיגורציה.
+              כל אחד מהשירותים הבאים נדרש בשלב מסוים בבניית האפליקציה שלך.
+              Power Plan תבקש אותם בדיוק כשצריך — לא לפני.
             </p>
-            <div className="settings-infra-grid">
-              {INFRA_SERVICES.map((svc) => (
-                <div key={svc.name} className="settings-infra-card">
-                  <span className="settings-infra-card__icon">{svc.icon}</span>
-                  <div>
-                    <p className="settings-infra-card__name">{svc.name}</p>
-                    <p className="settings-infra-card__desc">{svc.desc}</p>
-                  </div>
-                  <span className="settings-infra-card__badge">אוטומטי ✓</span>
-                </div>
-              ))}
-            </div>
+
+            <TokenSection
+              title="מפתח AI אישי (Anthropic)"
+              subtitle="נדרש לפני שלב הניתוח — מאפשר ל-Power Plan לדבר עם Claude בשמך."
+              hint={settings.apiKeyHint}
+              hasToken={settings.hasApiKey}
+              onSave={async (v) => {
+                const res = await updateApiKey(v);
+                setSettings((s) => ({ ...s, hasApiKey: res.hasApiKey, apiKeyHint: res.apiKeyHint }));
+              }}
+              onDelete={async () => {
+                const res = await deleteApiKey();
+                setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null, plan: res.plan }));
+              }}
+              inputProps={{
+                placeholder: 'sk-ant-api03-...',
+                howto: {
+                  title: 'איך מקבלים מפתח Anthropic?',
+                  steps: [
+                    'היכנס לאתר <strong>console.anthropic.com</strong>',
+                    'לחץ על "API Keys" בתפריט הצד',
+                    'לחץ "Create Key" ותן לו שם (למשל: "Power Plan")',
+                    'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן',
+                  ],
+                  note: '💡 כל פרויקט שלם עולה בערך ₪1-5 — חיוב לפי שימוש בלבד.',
+                },
+              }}
+            />
+
+            <TokenSection
+              title="קוד גישה ל-GitHub"
+              subtitle="נדרש לפני שלב הקוד — מאפשר לנו לשמור את הקוד של האפליקציה שלך ב-GitHub."
+              hint={settings.githubTokenHint}
+              hasToken={settings.hasGithubToken}
+              onSave={async (v) => {
+                const res = await updateGithubToken(v);
+                setSettings((s) => ({ ...s, hasGithubToken: res.hasGithubToken, githubTokenHint: res.githubTokenHint }));
+              }}
+              onDelete={async () => {
+                await deleteGithubToken();
+                setSettings((s) => ({ ...s, hasGithubToken: false, githubTokenHint: null }));
+              }}
+              inputProps={{
+                placeholder: 'ghp_...',
+                howto: {
+                  title: 'איך מקבלים קוד גישה ל-GitHub?',
+                  steps: [
+                    'היכנס ל-<strong>github.com</strong> (צור חשבון חינמי אם אין לך)',
+                    'לחץ על התמונה שלך (פינה ימנית עליונה) → Settings',
+                    'גלול למטה → "Developer settings" → "Personal access tokens" → "Tokens (classic)"',
+                    'לחץ "Generate new token (classic)" → בחר scope: <code>repo</code> בלבד',
+                    'העתק את הtoken (מתחיל ב-<code>ghp_</code>) והדבק כאן',
+                  ],
+                  note: '💡 GitHub חינמי לחלוטין — הקוד שלך יישמר ב-repo פרטי.',
+                },
+              }}
+            />
+
+            <TokenSection
+              title="קוד גישה ל-Render (פריסה)"
+              subtitle="נדרש לפני שלב הפריסה — מאפשר לנו להעלות את האפליקציה לאינטרנט בשמך."
+              hint={settings.renderTokenHint}
+              hasToken={settings.hasRenderToken}
+              onSave={async (v) => {
+                const res = await updateRenderToken(v);
+                setSettings((s) => ({ ...s, hasRenderToken: res.hasRenderToken, renderTokenHint: res.renderTokenHint }));
+              }}
+              onDelete={async () => {
+                await deleteRenderToken();
+                setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
+              }}
+              inputProps={{
+                placeholder: 'rnd_...',
+                howto: {
+                  title: 'איך מקבלים קוד גישה ל-Render?',
+                  steps: [
+                    'היכנס לאתר <strong>render.com</strong> (צור חשבון חינמי אם אין לך)',
+                    'לחץ על "Account Settings" בתפריט הצד',
+                    'לחץ על "API Keys" ואז "Create API Key"',
+                    'תן לו שם (למשל: "Power Plan") ולחץ "Create"',
+                    'העתק את ה-API key (מתחיל ב-<code>rnd_</code>) והדבק כאן',
+                  ],
+                  note: '💡 Render מציע tier חינמי — האפליקציה שלך תרוץ בחינם.',
+                },
+              }}
+            />
           </section>
         </div>
       )}
     </div>
   );
 }
-
-const INFRA_SERVICES = [
-  { icon: '🗄️', name: 'MongoDB Atlas',  desc: 'מסד נתונים — נוצר ומוגדר לכל פרויקט בנפרד' },
-  { icon: '📦', name: 'GitHub',         desc: 'הקוד שמור ב-repo פרטי תחת Power Plan' },
-  { icon: '🚀', name: 'Render',         desc: 'השרת פורסם ורץ ב-render.com' },
-  { icon: '📧', name: 'Resend',         desc: 'שליחת מיילים מהאפליקציה — מוכן לשימוש' },
-  { icon: '🖼️', name: 'Cloudinary',    desc: 'העלאת תמונות וקבצים — מוכן לשימוש' },
-];

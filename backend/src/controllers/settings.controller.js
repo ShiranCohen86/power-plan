@@ -5,14 +5,19 @@ const { encrypt, decrypt } = require('../services/encryption.service');
 
 // GET /api/settings
 exports.getSettings = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id).select('+settings.anthropicApiKey').lean();
+  const user = await User.findById(req.user.id)
+    .select('+settings.anthropicApiKey +settings.githubToken +settings.renderApiKey')
+    .lean();
+
+  const s = user.settings || {};
   res.json({
-    plan:          user.plan,
-    hasApiKey:     !!(user.settings?.anthropicApiKey),
-    // Return masked key hint so frontend can show "sk-ant-...****"
-    apiKeyHint:    user.settings?.anthropicApiKey
-      ? _maskKey(decrypt(user.settings.anthropicApiKey))
-      : null,
+    plan:            user.plan,
+    hasApiKey:       !!(s.anthropicApiKey),
+    hasGithubToken:  !!(s.githubToken),
+    hasRenderToken:  !!(s.renderApiKey),
+    apiKeyHint:      s.anthropicApiKey ? _maskKey(decrypt(s.anthropicApiKey)) : null,
+    githubTokenHint: s.githubToken     ? _maskKey(decrypt(s.githubToken))     : null,
+    renderTokenHint: s.renderApiKey    ? _maskKey(decrypt(s.renderApiKey))    : null,
   });
 });
 
@@ -23,7 +28,6 @@ exports.updatePlan = asyncHandler(async (req, res) => {
 
   const user = await User.findById(req.user.id).select('+settings.anthropicApiKey');
 
-  // Starter requires an API key
   if (plan === 'starter' && !user.settings?.anthropicApiKey) {
     throw ApiError.badRequest('כדי להשתמש בתוכנית Starter עליך קודם להזין מפתח API אישי.');
   }
@@ -38,7 +42,6 @@ exports.updateApiKey = asyncHandler(async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey || typeof apiKey !== 'string') throw ApiError.badRequest('apiKey required');
 
-  // Basic Anthropic key format check
   if (!apiKey.startsWith('sk-ant-')) {
     throw ApiError.badRequest('מפתח API לא תקין — צריך להתחיל עם "sk-ant-"');
   }
@@ -55,10 +58,55 @@ exports.updateApiKey = asyncHandler(async (req, res) => {
 exports.deleteApiKey = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   if (user.settings) user.settings.anthropicApiKey = undefined;
-  // Downgrade to pro if they delete their key (can't use starter without key)
   if (user.plan === 'starter') user.plan = 'pro';
   await user.save();
   res.json({ hasApiKey: false, plan: user.plan });
+});
+
+// PUT /api/settings/github-token
+exports.updateGithubToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token || typeof token !== 'string') throw ApiError.badRequest('token required');
+
+  if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+    throw ApiError.badRequest('קוד גישה GitHub לא תקין — צריך להתחיל עם "ghp_" או "github_pat_"');
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user.settings) user.settings = {};
+  user.settings.githubToken = encrypt(token);
+  await user.save();
+
+  res.json({ hasGithubToken: true, githubTokenHint: _maskKey(token) });
+});
+
+// DELETE /api/settings/github-token
+exports.deleteGithubToken = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user.settings) user.settings.githubToken = undefined;
+  await user.save();
+  res.json({ hasGithubToken: false });
+});
+
+// PUT /api/settings/render-token
+exports.updateRenderToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token || typeof token !== 'string') throw ApiError.badRequest('token required');
+
+  const user = await User.findById(req.user.id);
+  if (!user.settings) user.settings = {};
+  user.settings.renderApiKey = encrypt(token);
+  await user.save();
+
+  res.json({ hasRenderToken: true, renderTokenHint: _maskKey(token) });
+});
+
+// DELETE /api/settings/render-token
+exports.deleteRenderToken = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user.settings) user.settings.renderApiKey = undefined;
+  await user.save();
+  res.json({ hasRenderToken: false });
 });
 
 function _maskKey(key) {

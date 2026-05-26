@@ -29,6 +29,8 @@ const UserSchema = new mongoose.Schema(
     sessions:             { type: [SessionSchema], default: [] },
     settings: {
       anthropicApiKey: { type: String, select: false }, // encrypted AES-256
+      githubToken:     { type: String, select: false }, // encrypted AES-256
+      renderApiKey:    { type: String, select: false }, // encrypted AES-256
     },
   },
   { timestamps: true },
