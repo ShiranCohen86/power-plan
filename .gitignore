@@ -7,3 +7,4 @@ frontend/.env.local
 backend/src/workspace/
 *.log
 .DS_Store
+AI-COMPANY-SYSTEM/

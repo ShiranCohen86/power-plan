@@ -209,11 +209,18 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
 }
 
 async function _getUserCtx(project) {
-  const user = await User.findById(project.ownerId).select('+settings.anthropicApiKey').lean();
-  return {
-    plan:   user?.plan || 'starter',
-    apiKey: user?.settings?.anthropicApiKey ? decrypt(user.settings.anthropicApiKey) : null,
-  };
+  const [user, projectWithKey] = await Promise.all([
+    User.findById(project.ownerId).select('+settings.anthropicApiKey').lean(),
+    Project.findById(project._id).select('+settings.anthropicApiKey').lean(),
+  ]);
+  let apiKey = null;
+  if (projectWithKey?.settings?.anthropicApiKey) {
+    try { apiKey = decrypt(projectWithKey.settings.anthropicApiKey); } catch { }
+  }
+  if (!apiKey && user?.settings?.anthropicApiKey) {
+    try { apiKey = decrypt(user.settings.anthropicApiKey); } catch { }
+  }
+  return { plan: user?.plan || 'starter', apiKey };
 }
 
 async function _getPlanningDocs(projectId, types) {

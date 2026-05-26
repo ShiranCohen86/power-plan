@@ -59,6 +59,7 @@ export default function ProjectWorkspace() {
   const [consultantMsgs, setConsultantMsgs] = useState([]);
   const [consultantsRunning, setConsultantsRunning] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(null); // null = loading
+  const [usingFallback, setUsingFallback] = useState(false);
 
   // Load project + pipeline status
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function ProjectWorkspace() {
         setProject(projRes);
         setPhases(statusRes.phases || []);
         setHasApiKey(settingsRes ? settingsRes.hasApiKey : true);
+        setUsingFallback(settingsRes?.usingFallback || false);
 
         // If there's a phase awaiting approval, set it
         const waiting = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
@@ -335,6 +337,15 @@ export default function ProjectWorkspace() {
           )}
         </div>
       </header>
+
+      {/* Fallback key hint — shown when using global user key instead of project key */}
+      {hasApiKey && usingFallback && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '5px 16px',
+                      background: 'rgba(124,58,237,0.08)', borderBottom: '1px solid var(--border)' }}>
+          💡 משתמש במפתח Anthropic הגלובלי שלך —{' '}
+          <a href="/settings" style={{ color: 'var(--brand-primary-light)' }}>הגדר מפתח פרויקט ייעודי</a>
+        </div>
+      )}
 
       {/* Missing API key banner — shown only when project has no key configured */}
       {hasApiKey === false && (
