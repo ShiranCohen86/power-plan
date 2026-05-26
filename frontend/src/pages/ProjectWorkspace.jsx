@@ -64,11 +64,11 @@ export default function ProjectWorkspace() {
           getProject(id),
           getPipelineStatus(id),
         ]);
-        setProject(projRes.data);
-        setPhases(statusRes.data.phases || []);
+        setProject(projRes);
+        setPhases(statusRes.phases || []);
 
         // If there's a phase awaiting approval, set it
-        const waiting = (statusRes.data.phases || []).find((p) => p.status === 'awaiting_approval');
+        const waiting = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
         if (waiting) {
           setAwaiting(waiting.index);
           setActive(waiting.index);
@@ -85,7 +85,7 @@ export default function ProjectWorkspace() {
   async function loadDocument(phaseIndex) {
     try {
       const res = await getPhaseDocument(id, phaseIndex);
-      setActiveDoc(res.data);
+      setActiveDoc(res);
     } catch {
       setActiveDoc(null);
     }
@@ -191,7 +191,7 @@ export default function ProjectWorkspace() {
     try {
       await startPipeline(id);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to start pipeline');
+      setError(err.message || 'Failed to start pipeline');
     }
   }
 
@@ -202,7 +202,7 @@ export default function ProjectWorkspace() {
       setAwaiting(null);
       setRefineOpen(false);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to approve');
+      setError(err.message || 'Failed to approve');
     }
   }
 
@@ -214,7 +214,7 @@ export default function ProjectWorkspace() {
       setRefineFeedback('');
       setNarrative('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to refine');
+      setError(err.message || 'Failed to refine');
     }
   }
 

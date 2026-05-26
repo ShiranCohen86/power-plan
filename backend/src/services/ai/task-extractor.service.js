@@ -1,4 +1,5 @@
-const { getClient, MODEL } = require('./claude.client');
+const { getPlatformClient } = require('./claude.client');
+const env = require('../../config/env');
 const Task   = require('../../models/Task');
 const Sprint = require('../../models/Sprint');
 const logger = require('../../utils/logger');
@@ -43,12 +44,12 @@ Rules:
 - If sprint assignments aren't explicit, distribute tasks logically across sprints`;
 
 async function extractTasks(projectId, phaseId, documentContent) {
-  const client = getClient();
+  const client = getPlatformClient();
 
   let rawJson;
   try {
     const response = await client.messages.create({
-      model:      MODEL,
+      model:      env.ANTHROPIC_MODEL,
       max_tokens: 4000,
       system:     SYSTEM_PROMPT,
       messages:   [{

@@ -1,4 +1,5 @@
-const { getClient, MODEL, MAX_TOKENS } = require('./claude.client');
+const { getPlatformClient, MAX_TOKENS } = require('./claude.client');
+const env = require('../../config/env');
 const Meeting        = require('../../models/Meeting');
 const MeetingMessage = require('../../models/MeetingMessage');
 const { emitToProject } = require('../../sockets');
@@ -78,9 +79,9 @@ RULES:
 
   const userPrompt = `Review this planning document:\n\n${documentContent.slice(0, 3000)}`;
 
-  const client   = getClient();
+  const client   = getPlatformClient();
   const response = await client.messages.create({
-    model:      MODEL,
+    model:      env.ANTHROPIC_MODEL,
     max_tokens: 1500,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],

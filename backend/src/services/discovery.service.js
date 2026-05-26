@@ -1,4 +1,5 @@
-const { getClient, MODEL, MAX_TOKENS } = require('./ai/claude.client');
+const { getPlatformClient, MAX_TOKENS } = require('./ai/claude.client');
+const env = require('../config/env');
 
 const SYSTEM_PROMPT = `You are a product discovery specialist conducting a structured interview with an entrepreneur.
 Your job is to ask targeted questions one at a time to deeply understand their app idea.
@@ -24,7 +25,7 @@ Rules:
 Respond with ONLY the question text (no numbering, no preamble) or "DISCOVERY_COMPLETE".`;
 
 async function streamNextQuestion(res, { idea, title, answers }) {
-  const client = getClient();
+  const client = getPlatformClient();
 
   const answeredCount = answers.length;
 
@@ -37,7 +38,7 @@ async function streamNextQuestion(res, { idea, title, answers }) {
   const userContent = buildUserContent(idea, title, answers);
 
   const stream = await client.messages.stream({
-    model: MODEL,
+    model: env.ANTHROPIC_MODEL,
     max_tokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userContent }],
