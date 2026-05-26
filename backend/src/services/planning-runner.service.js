@@ -56,6 +56,21 @@ async function startPlanning(projectId) {
     emitToProject(projectId, 'pipeline:planning_complete', {});
     logger.info('planning-runner: all phases complete, starting external consultants', { projectId });
 
+    // Email + in-app notification: planning complete
+    const proj  = await Project.findById(projectId).lean();
+    const owner = await User.findById(proj?.ownerId).lean();
+    if (owner?.email) {
+      email.sendPlanningComplete({
+        to: owner.email, userName: owner.name, projectTitle: proj.title,
+      }).catch(() => {});
+    }
+    notifSvc.create({
+      userId: proj.ownerId, projectId,
+      type: 'planning_complete',
+      title: `📋 ${proj.title} — האפיון הושלם`,
+      message: 'כל 12 שלבי התכנון הושלמו. Claude מתחיל לכתוב קוד.',
+    }).catch(() => {});
+
     // External Consultants → then Codegen (fire-and-forget chain)
     const { runExternalConsultants } = require('./ai/external-consultants.orchestrator');
     const { startCodegen }           = require('./codegen-runner.service');
@@ -147,9 +162,21 @@ async function startPlanning(projectId) {
 
 async function _getUserCtx(project) {
   const user = await User.findById(project.ownerId).select('+settings.anthropicApiKey').lean();
+
+  // Project key takes priority; fall back to user's global key
+  const projectWithKey = await Project.findById(project._id)
+    .select('+settings.anthropicApiKey').lean();
+  const projectKey = projectWithKey?.settings?.anthropicApiKey
+    ? decrypt(projectWithKey.settings.anthropicApiKey)
+    : null;
+
+  const userKey = user?.settings?.anthropicApiKey
+    ? decrypt(user.settings.anthropicApiKey)
+    : null;
+
   return {
     plan:   user?.plan || 'starter',
-    apiKey: user?.settings?.anthropicApiKey ? decrypt(user.settings.anthropicApiKey) : null,
+    apiKey: projectKey || userKey,
   };
 }
 

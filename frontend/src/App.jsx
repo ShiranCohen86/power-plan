@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
@@ -70,6 +71,14 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <Toaster
+        position="bottom-left"
+        toastOptions={{
+          style: { background: '#1e1e2e', color: '#e2e8f0', border: '1px solid #2d2d44', direction: 'rtl' },
+          error:   { iconTheme: { primary: '#ef4444', secondary: '#1e1e2e' } },
+          success: { iconTheme: { primary: '#22c55e', secondary: '#1e1e2e' } },
+        }}
+      />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />

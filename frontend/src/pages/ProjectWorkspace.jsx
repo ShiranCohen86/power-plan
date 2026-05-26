@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import SafeMarkdown from '../components/ui/SafeMarkdown';
 
 import { selectProjectById, updateProject } from '../store/slices/projectsSlice';
@@ -48,7 +49,7 @@ export default function ProjectWorkspace() {
   const [refineFeedback, setRefineFeedback] = useState('');
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');       // fatal load error → full page
-  const [actionError, setActionError]   = useState('');       // runtime action error → inline banner
+  const [actionError, setActionError]   = useState('');       // kept for legacy inline banner; new errors use toast
   const [quotaError, setQuotaError]     = useState(null);   // { message, plan }
   const [deploySteps, setDeploySteps]   = useState({});     // { [key]: { status, label } }
   const [liveUrl, setLiveUrl]           = useState(null);
@@ -200,14 +201,14 @@ export default function ProjectWorkspace() {
     if (isKeyErr) {
       setHasApiKey(false); // surface the inline SettingsGate
     } else {
-      setActionError(msg || 'שגיאה — נסה שוב');
+      toast.error(msg || 'שגיאה — נסה שוב');
     }
   }
 
   async function handleStart() {
-    setActionError('');
     try {
       await startPipeline(id);
+      toast.success('הפייפליין התחיל!');
     } catch (err) {
       handleActionError(err);
     }
@@ -215,11 +216,11 @@ export default function ProjectWorkspace() {
 
   async function handleApprove() {
     if (awaitingPhase == null) return;
-    setActionError('');
     try {
       await approvePhase(id, awaitingPhase);
       setAwaiting(null);
       setRefineOpen(false);
+      toast.success('השלב אושר — ממשיך לשלב הבא');
     } catch (err) {
       handleActionError(err);
     }
@@ -227,12 +228,12 @@ export default function ProjectWorkspace() {
 
   async function handleRefine() {
     if (!refineFeedback.trim() || awaitingPhase == null) return;
-    setActionError('');
     try {
       await refinePhase(id, awaitingPhase, refineFeedback);
       setRefineOpen(false);
       setRefineFeedback('');
       setNarrative('');
+      toast.success('בקשת התיקון נשלחה — Claude מעדכן...');
     } catch (err) {
       handleActionError(err);
     }
@@ -272,10 +273,16 @@ export default function ProjectWorkspace() {
   const isOnboarding   = projectStatus === 'onboarding';
   const isPaused       = projectStatus === 'paused';
   const isFailed       = projectStatus === 'failed';
-  // canStart: show Start button whenever no phases exist and pipeline isn't already live/running
   const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
   const canStart       = notStarted && !inProgress;
   const canResume      = (isPaused || isFailed) && hasPhases;
+
+  // Estimated time remaining: each planning phase ≈ 2.5 min
+  const TOTAL_PLANNING = 12;
+  const completedCount = phases.filter((p) => p.status === 'completed' || p.status === 'awaiting_approval').length;
+  const remainingPhases = Math.max(0, TOTAL_PLANNING - completedCount);
+  const estMinutes = Math.round(remainingPhases * 2.5);
+  const showEstTime = isRunning && remainingPhases > 0;
 
   return (
     <div className="workspace">
@@ -300,6 +307,11 @@ export default function ProjectWorkspace() {
           <div className="workspace-progress__fill" style={{ width: `${project?.completionPercent || 0}%` }} />
         </div>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{project?.completionPercent || 0}%</span>
+        {showEstTime && (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            ~{estMinutes} דק׳
+          </span>
+        )}
         <div className="workspace-topbar__status">
           {liveUrl && (
             <button
@@ -337,7 +349,7 @@ export default function ProjectWorkspace() {
         />
       )}
 
-      {/* Inline action error banner (start / approve / refine failures) */}
+      {/* Action errors now shown via toast — banner kept for fallback only */}
       {actionError && (
         <div className="workspace-action-error">
           <span>{actionError}</span>

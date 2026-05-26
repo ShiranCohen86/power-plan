@@ -135,4 +135,53 @@ function _quotaHtml({ userName, projectTitle, plan }) {
 </html>`;
 }
 
-module.exports = { sendDeploymentSuccess, sendQuotaExhausted };
+async function sendPlanningComplete({ to, userName, projectTitle }) {
+  if (!env.RESEND_API_KEY) return;
+  try {
+    const resend = await _getResend();
+    await resend.emails.send({
+      from: env.RESEND_FROM || 'Power Plan <hello@powerplan.app>',
+      to,
+      subject: `📋 האפיון של "${projectTitle}" הושלם — Claude מתחיל לכתוב קוד`,
+      html: `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0a0f;font-family:system-ui,sans-serif;color:#e2e8f0;direction:rtl">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:40px auto;background:#111118;border-radius:16px;overflow:hidden;border:1px solid #1e1e2e">
+    <tr>
+      <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 36px;text-align:center">
+        <div style="font-size:48px">📋</div>
+        <h1 style="margin:12px 0 4px;color:#fff;font-size:22px;font-weight:800">האפיון הושלם!</h1>
+        <p style="margin:0;color:rgba(255,255,255,.8);font-size:14px">${projectTitle}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px 36px">
+        <p style="margin:0 0 8px;font-size:15px">שלום ${userName || 'יזם יקר'},</p>
+        <p style="margin:0 0 24px;color:#94a3b8;font-size:14px;line-height:1.7">
+          כל 12 שלבי התכנון של <strong style="color:#e2e8f0">${projectTitle}</strong> הושלמו בהצלחה.<br>
+          Claude עכשיו מתחיל לכתוב את הקוד — שלב הבנייה בדרך!
+        </p>
+        <div style="background:#0a0a0f;border-radius:10px;padding:16px 20px;margin-bottom:24px">
+          <p style="margin:0 0 8px;font-size:13px;color:#64748b">מה הושלם:</p>
+          <ul style="margin:0;padding-right:20px;color:#94a3b8;font-size:13px;line-height:2">
+            <li>✅ ניתוח רעיון וסיכוני טכנולוגיה</li>
+            <li>✅ PRD מלא עם personas ו-user stories</li>
+            <li>✅ ארכיטקטורה טכנית ועיצוב מסד נתונים</li>
+            <li>✅ תכנון ספרינטים ואסטרטגיית QA</li>
+          </ul>
+        </div>
+        <p style="margin:0;color:#64748b;font-size:12px">תקבל email נוסף כשהאפליקציה תהיה מוכנה לחלוטין.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    });
+    logger.info('email.service: planning complete email sent', { to, projectTitle });
+  } catch (err) {
+    logger.warn('email.service: failed to send planning complete email', { error: err.message });
+  }
+}
+
+module.exports = { sendDeploymentSuccess, sendQuotaExhausted, sendPlanningComplete };

@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const projectService = require('../services/project.service');
 const discoveryService = require('../services/discovery.service');
 const Project = require('../models/Project');
+const User = require('../models/User');
 const { encrypt, decrypt } = require('../services/encryption.service');
 
 function friendlyAIError(err) {
@@ -136,15 +137,24 @@ exports.getProjectSettings = asyncHandler(async (req, res) => {
     .select('+settings.anthropicApiKey +settings.githubToken +settings.renderApiKey');
   if (!project) throw ApiError.notFound('Project not found');
 
+  // Check user fallback key as well
+  const user = await User.findById(req.user.id).select('+settings.anthropicApiKey').lean();
+
   const s = project.settings || {};
   const safeDecrypt = (val) => { try { return val ? _maskKey(decrypt(val)) : null; } catch { return null; } };
+
+  const hasProjectKey = !!(s.anthropicApiKey);
+  const hasUserKey    = !!(user?.settings?.anthropicApiKey);
+
   res.json({
-    hasApiKey:       !!(s.anthropicApiKey),
-    hasGithubToken:  !!(s.githubToken),
-    hasRenderToken:  !!(s.renderApiKey),
-    apiKeyHint:      safeDecrypt(s.anthropicApiKey),
-    githubTokenHint: safeDecrypt(s.githubToken),
-    renderTokenHint: safeDecrypt(s.renderApiKey),
+    hasApiKey:        hasProjectKey || hasUserKey,   // true if either key is available
+    hasProjectApiKey: hasProjectKey,                  // true only if project has its own key
+    usingFallback:    !hasProjectKey && hasUserKey,   // true if using user global key
+    hasGithubToken:   !!(s.githubToken),
+    hasRenderToken:   !!(s.renderApiKey),
+    apiKeyHint:       safeDecrypt(s.anthropicApiKey),
+    githubTokenHint:  safeDecrypt(s.githubToken),
+    renderTokenHint:  safeDecrypt(s.renderApiKey),
   });
 });
 

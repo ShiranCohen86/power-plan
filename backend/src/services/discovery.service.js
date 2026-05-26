@@ -24,7 +24,7 @@ Rules:
 
 Respond with ONLY the question text (no numbering, no preamble) or "DISCOVERY_COMPLETE".`;
 
-async function streamNextQuestion(res, { idea, title, answers, userPlan, userApiKey }) {
+async function streamNextQuestion(res, { idea, title, answers, userPlan, userApiKey }, signal) {
   const { client, model } = getClientForUser(userPlan, userApiKey);
 
   const answeredCount = answers.length;
@@ -42,7 +42,7 @@ async function streamNextQuestion(res, { idea, title, answers, userPlan, userApi
     max_tokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userContent }],
-  });
+  }, { signal });
 
   let fullText = '';
 
