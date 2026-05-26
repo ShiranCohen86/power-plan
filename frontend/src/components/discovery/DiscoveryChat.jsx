@@ -86,7 +86,13 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   }
 
   const hasError = lastError && !streaming;
-  const isCreditsError = lastError && (lastError.includes('קרדיט') || lastError.includes('credit') || lastError.includes('billing'));
+  const isSettingsError = lastError && (
+    lastError.includes('קרדיט') ||
+    lastError.includes('credit') ||
+    lastError.includes('billing') ||
+    lastError.includes('מפתח') ||
+    lastError.includes('הגדרות')
+  );
 
   return (
     <div className="discovery-chat">
@@ -130,14 +136,19 @@ export default function DiscoveryChat({ projectId, onComplete }) {
           <div className="discovery-error-card__icon">{isCreditsError ? '💳' : '⚠️'}</div>
           <div className="discovery-error-card__msg">{lastError}</div>
           <div className="discovery-error-card__actions">
-            {isCreditsError ? (
+            {isSettingsError ? (
               <a href="/settings" className="btn btn--primary" style={{ fontSize: 13 }}>
-                ⚙️ הגדרות — הכנס מפתח AI
+                ⚙️ עבור להגדרות
               </a>
             ) : (
-              <button className="btn btn--secondary" onClick={handleRetry} style={{ fontSize: 13 }}>
-                🔄 {t('common.retry')}
-              </button>
+              <>
+                <button className="btn btn--secondary" onClick={handleRetry} style={{ fontSize: 13 }}>
+                  🔄 {t('common.retry')}
+                </button>
+                <a href="/settings" style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>
+                  הגדרות
+                </a>
+              </>
             )}
           </div>
         </div>

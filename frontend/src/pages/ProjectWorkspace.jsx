@@ -219,7 +219,27 @@ export default function ProjectWorkspace() {
   }
 
   if (loading) return <div className="workspace-loading"><div className="pwa-spinner" /></div>;
-  if (error)   return <div className="workspace-error">{error}</div>;
+  if (error) {
+    const isSettingsErr = error.includes('מפתח') || error.includes('הגדרות') || error.includes('credit') || error.includes('קרדיט');
+    return (
+      <div className="workspace-error">
+        <div className="workspace-error__msg">{error}</div>
+        <div className="workspace-error__actions">
+          {isSettingsErr && (
+            <a href="/settings" className="btn btn--primary" style={{ fontSize: 13 }}>
+              ⚙️ עבור להגדרות
+            </a>
+          )}
+          <button className="btn btn--secondary" style={{ fontSize: 13 }} onClick={() => window.location.reload()}>
+            🔄 נסה שוב
+          </button>
+          <a href="/dashboard" className="btn btn--secondary" style={{ fontSize: 13 }}>
+            ← חזור לדשבורד
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const isDeploying = project?.status === 'deploying' || Object.keys(deploySteps).length > 0;
   const isQuotaPaused = project?.status === 'quota_paused' || quotaError;

@@ -533,6 +533,8 @@ input, select, textarea {
 
   &__running { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 }
+.workspace-error__msg    { font-size: 15px; color: var(--danger); text-align: center; max-width: 420px; }
+.workspace-error__actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
 // â”€â”€ Phase List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
