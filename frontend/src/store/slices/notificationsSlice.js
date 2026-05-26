@@ -5,10 +5,9 @@ export const fetchNotifications = createAsyncThunk(
   'notifications/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.getNotifications();
-      return res.data; // { notifications, unreadCount }
+      return await api.getNotifications(); // { notifications, unreadCount }
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to fetch');
+      return rejectWithValue(err.message || 'Failed to fetch');
     }
   },
 );
@@ -20,7 +19,7 @@ export const doMarkRead = createAsyncThunk(
       await api.markRead(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed');
+      return rejectWithValue(err.message || 'Failed');
     }
   },
 );
@@ -31,7 +30,7 @@ export const doMarkAllRead = createAsyncThunk(
     try {
       await api.markAllRead();
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed');
+      return rejectWithValue(err.message || 'Failed');
     }
   },
 );

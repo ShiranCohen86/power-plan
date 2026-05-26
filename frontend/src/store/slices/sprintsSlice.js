@@ -6,9 +6,9 @@ export const fetchSprints = createAsyncThunk(
   async (projectId, { rejectWithValue }) => {
     try {
       const res = await listSprints(projectId);
-      return { projectId, items: res.data.items };
+      return { projectId, items: res.items };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load sprints');
+      return rejectWithValue(err.message || 'Failed to load sprints');
     }
   },
 );
@@ -18,9 +18,9 @@ export const fetchSprint = createAsyncThunk(
   async ({ projectId, sprintIndex }, { rejectWithValue }) => {
     try {
       const res = await getSprint(projectId, sprintIndex);
-      return { projectId, sprint: res.data };
+      return { projectId, sprint: res };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load sprint');
+      return rejectWithValue(err.message || 'Failed to load sprint');
     }
   },
 );

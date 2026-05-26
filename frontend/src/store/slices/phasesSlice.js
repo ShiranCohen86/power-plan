@@ -6,9 +6,9 @@ export const fetchPhases = createAsyncThunk(
   async (projectId, { rejectWithValue }) => {
     try {
       const res = await listPhases(projectId);
-      return { projectId, phases: res.data.items };
+      return { projectId, phases: res.items };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load phases');
+      return rejectWithValue(err.message || 'Failed to load phases');
     }
   },
 );

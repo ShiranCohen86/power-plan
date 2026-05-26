@@ -6,9 +6,9 @@ export const fetchProjects = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await listProjects();
-      return res.data.items;
+      return res.items;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load projects');
+      return rejectWithValue(err.message || 'Failed to load projects');
     }
   },
 );
@@ -17,10 +17,9 @@ export const createNewProject = createAsyncThunk(
   'projects/create',
   async ({ title, idea }, { rejectWithValue }) => {
     try {
-      const res = await createProject({ title, idea });
-      return res.data;
+      return await createProject({ title, idea });
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to create project');
+      return rejectWithValue(err.message || 'Failed to create project');
     }
   },
 );

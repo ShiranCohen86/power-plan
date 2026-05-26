@@ -6,9 +6,9 @@ export const fetchEpicTree = createAsyncThunk(
   async (projectId, { rejectWithValue }) => {
     try {
       const res = await getEpicTree(projectId);
-      return { projectId, items: res.data.items };
+      return { projectId, items: res.items };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load tasks');
+      return rejectWithValue(err.message || 'Failed to load tasks');
     }
   },
 );
@@ -18,9 +18,9 @@ export const fetchTasksBySprint = createAsyncThunk(
   async ({ projectId, sprintIndex }, { rejectWithValue }) => {
     try {
       const res = await getTasksBySprint(projectId, sprintIndex);
-      return { projectId, sprintIndex, items: res.data.items };
+      return { projectId, sprintIndex, items: res.items };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to load sprint tasks');
+      return rejectWithValue(err.message || 'Failed to load sprint tasks');
     }
   },
 );
@@ -30,9 +30,9 @@ export const changeTaskStatus = createAsyncThunk(
   async ({ projectId, taskId, status }, { rejectWithValue }) => {
     try {
       const res = await apiUpdateStatus(projectId, taskId, status);
-      return { projectId, task: res.data };
+      return { projectId, task: res };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to update status');
+      return rejectWithValue(err.message || 'Failed to update status');
     }
   },
 );
