@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
-import { selectProjects, selectProjectsStatus, fetchProjects } from '../store/slices/projectsSlice.js';
+import { selectProjects, selectProjectsStatus, fetchProjects, refreshProjects } from '../store/slices/projectsSlice.js';
 
 const STATUS_COLORS = {
   onboarding: '#7c3aed',
@@ -15,16 +15,25 @@ const STATUS_COLORS = {
   paused:     '#6b7280',
 };
 
+const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
+
 function ProjectCard({ project }) {
   const { t }    = useTranslation();
   const navigate = useNavigate();
   const color    = STATUS_COLORS[project.status] || '#6b7280';
+  const isActive = ACTIVE_STATUSES.has(project.status);
 
   return (
     <div className="project-card" onClick={() => navigate(`/projects/${project._id}/workspace`)} style={{ cursor: 'pointer' }}>
       <div className="project-card__header">
         <span className="project-card__title">{project.title}</span>
-        <span className="badge" style={{ background: `${color}22`, color, borderColor: `${color}44` }}>
+        <span className="badge" style={{ background: `${color}22`, color, borderColor: `${color}44`, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          {isActive && (
+            <span style={{
+              display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+              background: color, animation: 'pulse 1.5s ease-in-out infinite',
+            }} />
+          )}
           {t(`dashboard.status.${project.status}`, project.status)}
         </span>
       </div>
@@ -49,6 +58,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (status === 'idle') dispatch(fetchProjects());
   }, [dispatch, status]);
+
+  // Auto-refresh every 30s while any project is actively running
+  const hasActive = projects.some((p) => ACTIVE_STATUSES.has(p.status));
+  useEffect(() => {
+    if (!hasActive) return;
+    const t = setInterval(() => dispatch(refreshProjects()), 30_000);
+    return () => clearInterval(t);
+  }, [hasActive, dispatch]);
 
   return (
     <div className="dashboard-shell">

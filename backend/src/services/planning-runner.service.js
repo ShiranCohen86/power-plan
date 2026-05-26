@@ -136,6 +136,7 @@ async function startPlanning(projectId) {
         { projectId, index: i },
         { status: 'failed', errorMessage: err.message, completedAt: new Date() },
       );
+      await Project.findByIdAndUpdate(projectId, { status: 'failed' });
       emitToProject(projectId, 'phase:failed', { phaseIndex: i, error: err.message });
       break;
     }

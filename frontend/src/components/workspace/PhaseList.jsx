@@ -13,6 +13,8 @@ function PhaseItem({ config, phaseData, isActive, onClick }) {
   const status = phaseData?.status || 'pending';
   const icon   = STATUS_ICON[status] || '⏳';
 
+  const tokens = phaseData?.tokensUsed;
+
   return (
     <button
       className={`phase-item phase-item--${status}${isActive ? ' phase-item--active' : ''}`}
@@ -23,6 +25,11 @@ function PhaseItem({ config, phaseData, isActive, onClick }) {
       <span className="phase-item__icon">{config.icon}</span>
       <span className="phase-item__name">{config.nameHe}</span>
       {status === 'running' && <span className="phase-item__pulse" />}
+      {tokens > 0 && status !== 'running' && (
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
+          {tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t
+        </span>
+      )}
     </button>
   );
 }

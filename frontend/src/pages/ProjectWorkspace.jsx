@@ -81,7 +81,7 @@ export default function ProjectWorkspace() {
           loadDocument(waiting.index);
         }
       } catch {
-        setError('Failed to load project');
+        setError('שגיאה בטעינת הפרויקט');
       } finally {
         setLoading(false);
       }
@@ -131,6 +131,7 @@ export default function ProjectWorkspace() {
     },
     onPhaseFailed: ({ phaseIndex, error: err }) => {
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'failed', errorMessage: err }));
+      setProject((p) => p ? { ...p, status: 'failed' } : p);
     },
     onMeetingStarted: ({ participants }) => {
       setMeetingMsgs([]);
@@ -274,8 +275,9 @@ export default function ProjectWorkspace() {
   const isPaused       = projectStatus === 'paused';
   const isFailed       = projectStatus === 'failed';
   const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
+  const hasStalledPhase = phases.some((p) => p.status === 'failed' || p.status === 'interrupted');
   const canStart       = notStarted && !inProgress;
-  const canResume      = (isPaused || isFailed) && hasPhases;
+  const canResume      = (isPaused || isFailed || hasStalledPhase) && !isRunning && hasPhases;
 
   // Estimated time remaining: each planning phase ≈ 2.5 min
   const TOTAL_PLANNING = 12;
@@ -307,6 +309,11 @@ export default function ProjectWorkspace() {
           <div className="workspace-progress__fill" style={{ width: `${project?.completionPercent || 0}%` }} />
         </div>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{project?.completionPercent || 0}%</span>
+        {isRunning && (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            שלב {completedCount + 1}/{TOTAL_PLANNING}
+          </span>
+        )}
         {showEstTime && (
           <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
             ~{estMinutes} דק׳
@@ -446,7 +453,7 @@ export default function ProjectWorkspace() {
               ) : (
                 <div className="workspace-empty">
                   <div style={{ fontSize: 48 }}>👈</div>
-                  <p>Select a phase to view its document</p>
+                  <p>בחר שלב מהרשימה כדי לצפות במסמך</p>
                 </div>
               )}
             </div>

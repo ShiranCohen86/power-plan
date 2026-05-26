@@ -13,6 +13,19 @@ export const fetchProjects = createAsyncThunk(
   },
 );
 
+// Silent background refresh — doesn't set status to 'loading' (no skeleton flash)
+export const refreshProjects = createAsyncThunk(
+  'projects/refresh',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await listProjects();
+      return res.items;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  },
+);
+
 export const createNewProject = createAsyncThunk(
   'projects/create',
   async ({ title, idea }, { rejectWithValue }) => {
@@ -72,6 +85,10 @@ const projectsSlice = createSlice({
       })
       .addCase(createNewProject.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
+      })
+      .addCase(refreshProjects.fulfilled, (state, action) => {
+        state.items    = action.payload;
+        state.loadedAt = Date.now();
       });
   },
 });

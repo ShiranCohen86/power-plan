@@ -81,23 +81,23 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
 
   const cleanup = () => clearTimeout(timeout);
 
-  // Re-fetch project with encrypted key field
-  const projectWithKey = await Project.findById(req.params.id).select('+settings.anthropicApiKey');
+  // Resolve API key: project key → user global key; use real user plan
+  const [projectWithKey, reqUser] = await Promise.all([
+    Project.findById(req.params.id).select('+settings.anthropicApiKey'),
+    User.findById(req.user.id).select('+settings.anthropicApiKey +plan').lean(),
+  ]);
+
   let apiKey = null;
   if (projectWithKey?.settings?.anthropicApiKey) {
-    try {
-      apiKey = decrypt(projectWithKey.settings.anthropicApiKey);
-    } catch {
-      cleanup();
-      res.write(`data: ${JSON.stringify({ error: 'שגיאה בקריאת מפתח ה-API — נסה להכניס מחדש בהגדרות הפרויקט.' })}\n\n`);
-      res.end();
-      return;
-    }
+    try { apiKey = decrypt(projectWithKey.settings.anthropicApiKey); } catch { /* invalid */ }
+  }
+  if (!apiKey && reqUser?.settings?.anthropicApiKey) {
+    try { apiKey = decrypt(reqUser.settings.anthropicApiKey); } catch { /* invalid */ }
   }
 
   if (!apiKey) {
     cleanup();
-    res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic לפרויקט זה. הכנס מפתח בהגדרות הפרויקט.' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic. הכנס מפתח בהגדרות הפרויקט או בהגדרות הכלליות.' })}\n\n`);
     res.end();
     return;
   }
@@ -107,7 +107,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       idea:       project.idea,
       title:      project.title,
       answers:    answers || [],
-      userPlan:   'starter',
+      userPlan:   reqUser?.plan || 'starter',
       userApiKey: apiKey,
     }, abortController.signal);
   } catch (err) {
