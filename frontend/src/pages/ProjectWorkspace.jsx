@@ -47,7 +47,8 @@ export default function ProjectWorkspace() {
   const [refineOpen, setRefineOpen]     = useState(false);
   const [refineFeedback, setRefineFeedback] = useState('');
   const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState('');
+  const [error, setError]               = useState('');       // fatal load error → full page
+  const [actionError, setActionError]   = useState('');       // runtime action error → inline banner
   const [quotaError, setQuotaError]     = useState(null);   // { message, plan }
   const [deploySteps, setDeploySteps]   = useState({});     // { [key]: { status, label } }
   const [liveUrl, setLiveUrl]           = useState(null);
@@ -191,34 +192,49 @@ export default function ProjectWorkspace() {
     },
   });
 
+  function handleActionError(err) {
+    const msg = err.message || '';
+    const isKeyErr = msg.includes('מפתח') || msg.includes('הגדרות') ||
+                     msg.includes('credit') || msg.includes('קרדיט') ||
+                     msg.includes('API key') || msg.includes('api key');
+    if (isKeyErr) {
+      setHasApiKey(false); // surface the inline SettingsGate
+    } else {
+      setActionError(msg || 'שגיאה — נסה שוב');
+    }
+  }
+
   async function handleStart() {
+    setActionError('');
     try {
       await startPipeline(id);
     } catch (err) {
-      setError(err.message || 'Failed to start pipeline');
+      handleActionError(err);
     }
   }
 
   async function handleApprove() {
     if (awaitingPhase == null) return;
+    setActionError('');
     try {
       await approvePhase(id, awaitingPhase);
       setAwaiting(null);
       setRefineOpen(false);
     } catch (err) {
-      setError(err.message || 'Failed to approve');
+      handleActionError(err);
     }
   }
 
   async function handleRefine() {
     if (!refineFeedback.trim() || awaitingPhase == null) return;
+    setActionError('');
     try {
       await refinePhase(id, awaitingPhase, refineFeedback);
       setRefineOpen(false);
       setRefineFeedback('');
       setNarrative('');
     } catch (err) {
-      setError(err.message || 'Failed to refine');
+      handleActionError(err);
     }
   }
 
@@ -319,6 +335,14 @@ export default function ProjectWorkspace() {
           plan={quotaError?.plan || project?.plan}
           projectId={id}
         />
+      )}
+
+      {/* Inline action error banner (start / approve / refine failures) */}
+      {actionError && (
+        <div className="workspace-action-error">
+          <span>{actionError}</span>
+          <button className="workspace-action-error__close" onClick={() => setActionError('')}>✕</button>
+        </div>
       )}
 
       {/* Deployment status panel */}
