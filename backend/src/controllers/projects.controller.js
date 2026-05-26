@@ -2,6 +2,25 @@ const asyncHandler = require('../utils/asyncHandler');
 const projectService = require('../services/project.service');
 const discoveryService = require('../services/discovery.service');
 
+function friendlyAIError(err) {
+  const raw = err.message || '';
+  try {
+    const jsonStart = raw.indexOf('{');
+    if (jsonStart !== -1) {
+      const parsed = JSON.parse(raw.slice(jsonStart));
+      const msg = parsed?.error?.message || '';
+      if (msg.includes('credit balance') || msg.includes('too low')) {
+        return 'אין מספיק קרדיט ב-API. הכנס מפתח Anthropic אישי בהגדרות (Starter Plan) או טען קרדיט לחשבון הפלטפורמה.';
+      }
+      if (msg) return msg;
+    }
+  } catch { /* not JSON — return as-is */ }
+  if (raw.includes('credit') || raw.includes('billing')) {
+    return 'אין מספיק קרדיט ב-API. הכנס מפתח Anthropic אישי בהגדרות.';
+  }
+  return 'שגיאה בתקשורת עם ה-AI. אנא נסה שוב.';
+}
+
 exports.create = asyncHandler(async (req, res) => {
   const project = await projectService.create({ ...req.body, ownerId: req.user.id });
   res.status(201).json(project);
@@ -38,7 +57,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       answers: req.body.answers || [],
     });
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: friendlyAIError(err) })}\n\n`);
     res.end();
   }
 });

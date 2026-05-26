@@ -54,7 +54,6 @@ export default function DiscoveryChat({ projectId, onComplete }) {
         setStreaming(false);
         setCurrentQ('');
         setLastError(err.message);
-        setMessages((m) => [...m, { role: 'error', text: err.message }]);
       },
     });
   }
@@ -87,6 +86,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   }
 
   const hasError = lastError && !streaming;
+  const isCreditsError = lastError && (lastError.includes('קרדיט') || lastError.includes('credit') || lastError.includes('billing'));
 
   return (
     <div className="discovery-chat">
@@ -124,12 +124,22 @@ export default function DiscoveryChat({ projectId, onComplete }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Retry button shown after an error */}
+      {/* Error card shown after an error */}
       {hasError && (
-        <div style={{ textAlign: 'center', padding: '8px 0' }}>
-          <button className="btn btn--secondary" onClick={handleRetry} style={{ fontSize: 13 }}>
-            🔄 {t('common.retry')}
-          </button>
+        <div className="discovery-error-card">
+          <div className="discovery-error-card__icon">{isCreditsError ? '💳' : '⚠️'}</div>
+          <div className="discovery-error-card__msg">{lastError}</div>
+          <div className="discovery-error-card__actions">
+            {isCreditsError ? (
+              <a href="/settings" className="btn btn--primary" style={{ fontSize: 13 }}>
+                ⚙️ הגדרות — הכנס מפתח AI
+              </a>
+            ) : (
+              <button className="btn btn--secondary" onClick={handleRetry} style={{ fontSize: 13 }}>
+                🔄 {t('common.retry')}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
