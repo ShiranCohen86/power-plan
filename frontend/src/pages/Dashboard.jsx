@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
-import { selectProjects, selectProjectsStatus, fetchProjects, refreshProjects } from '../store/slices/projectsSlice.js';
+import { selectProjects, selectProjectsStatus, fetchProjects, refreshProjects, deleteProjectThunk } from '../store/slices/projectsSlice.js';
 
 const STATUS_COLORS = {
   onboarding: '#7c3aed',
@@ -17,11 +18,20 @@ const STATUS_COLORS = {
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 
-function ProjectCard({ project }) {
+function ProjectCard({ project, dispatch }) {
   const { t }    = useTranslation();
   const navigate = useNavigate();
   const color    = STATUS_COLORS[project.status] || '#6b7280';
   const isActive = ACTIVE_STATUSES.has(project.status);
+
+  function handleDelete(e) {
+    e.stopPropagation();
+    if (!window.confirm(`למחוק את "${project.title}"?\nכל הנתונים יימחקו לצמיתות.`)) return;
+    dispatch(deleteProjectThunk(project._id))
+      .unwrap()
+      .then(() => toast.success('הפרויקט נמחק'))
+      .catch((err) => toast.error(err || 'שגיאה במחיקה'));
+  }
 
   return (
     <div className="project-card" onClick={() => navigate(`/projects/${project._id}/workspace`)} style={{ cursor: 'pointer' }}>
@@ -43,6 +53,16 @@ function ProjectCard({ project }) {
           <div className="project-card__progress-bar" style={{ width: `${project.completionPercent || 0}%` }} />
         </div>
         <span className="project-card__percent">{project.completionPercent || 0}%</span>
+        <button
+          onClick={handleDelete}
+          title="מחק פרויקט"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+                   fontSize: 14, padding: '0 4px', opacity: 0.5, lineHeight: 1 }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--danger)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+        >
+          🗑️
+        </button>
       </div>
     </div>
   );
@@ -100,7 +120,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="projects-grid">
-            {projects.map((p) => <ProjectCard key={p._id} project={p} />)}
+            {projects.map((p) => <ProjectCard key={p._id} project={p} dispatch={dispatch} />)}
           </div>
         )}
       </main>

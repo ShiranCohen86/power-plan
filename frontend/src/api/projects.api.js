@@ -9,6 +9,9 @@ export const listProjects = () =>
 export const getProject = (id) =>
   safeRequest({ method: 'get', url: `/projects/${id}` });
 
+export const deleteProject = (id) =>
+  safeRequest({ method: 'delete', url: `/projects/${id}` });
+
 export const discoveryComplete = (id, answers) =>
   safeRequest({ method: 'post', url: `/projects/${id}/discovery/complete`, data: { answers } });
 

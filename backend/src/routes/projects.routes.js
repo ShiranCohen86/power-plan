@@ -6,9 +6,10 @@ const projectValidator = require('../validators/project.validator');
 
 router.use(authenticate);
 
-router.post('/',    validate(projectValidator.create),  projectsController.create);
-router.get('/',                                         projectsController.list);
-router.get('/:id',  validate(projectValidator.objectId), projectsController.getOne);
+router.post  ('/',    validate(projectValidator.create),   projectsController.create);
+router.get   ('/',                                          projectsController.list);
+router.get   ('/:id', validate(projectValidator.objectId), projectsController.getOne);
+router.delete('/:id', validate(projectValidator.objectId), projectsController.deleteProject);
 
 // Discovery chat
 router.post('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);

@@ -170,8 +170,16 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
   const files = parseFiles(result.content);
   logger.info('codegen-runner: parsed files', { projectId, phase: cfg.type, count: files.length });
 
+  if (files.length > 60) {
+    logger.warn('codegen-runner: unusually high file count', { projectId, count: files.length, phase: cfg.type });
+  }
+
   // Save files + emit events
   for (const file of files) {
+    if (file.content.length > 150_000) {
+      logger.warn('codegen-runner: file too large, skipping', { projectId, filePath: file.filePath, size: file.content.length });
+      continue;
+    }
     const scanResult = scan(file.filePath, file.content);
     const status     = scanResult.clean ? 'validated' : 'failed';
 

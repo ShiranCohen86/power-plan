@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { listProjects, createProject } from '../../api/projects.api';
+import { listProjects, createProject, deleteProject } from '../../api/projects.api';
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchAll',
@@ -22,6 +22,18 @@ export const refreshProjects = createAsyncThunk(
       return res.items;
     } catch (err) {
       return rejectWithValue(err.message);
+    }
+  },
+);
+
+export const deleteProjectThunk = createAsyncThunk(
+  'projects/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteProject(id);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to delete project');
     }
   },
 );
@@ -89,6 +101,9 @@ const projectsSlice = createSlice({
       .addCase(refreshProjects.fulfilled, (state, action) => {
         state.items    = action.payload;
         state.loadedAt = Date.now();
+      })
+      .addCase(deleteProjectThunk.fulfilled, (state, action) => {
+        state.items = state.items.filter((p) => p._id !== action.payload);
       });
   },
 });

@@ -217,6 +217,27 @@ export default function ProjectWorkspace() {
     }
   }
 
+  async function handlePause() {
+    try {
+      await pausePipeline(id);
+      setProject((p) => p ? { ...p, status: 'paused' } : p);
+      toast.success('הפייפליין הופסק');
+    } catch (err) {
+      handleActionError(err);
+    }
+  }
+
+  function handleExportDoc() {
+    if (!activeDoc?.content) return;
+    const blob = new Blob([activeDoc.content], { type: 'text/markdown;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${project?.title || 'phase'}-${activePhaseIndex}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleApprove() {
     if (awaitingPhase == null) return;
     try {
@@ -303,6 +324,16 @@ export default function ProjectWorkspace() {
       {/* Top bar */}
       <header className="workspace-topbar">
         <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 משימות</button>
+        {isRunning && (
+          <button
+            className="btn-ghost"
+            onClick={handlePause}
+            title="עצור את הפייפליין"
+            style={{ minHeight: 36, padding: '4px 10px', color: 'var(--danger)', fontSize: 13 }}
+          >
+            ⏸️ עצור
+          </button>
+        )}
         <div className="workspace-topbar__title">
           <span>⚡</span>
           <span>{project?.title}</span>
@@ -433,6 +464,16 @@ export default function ProjectWorkspace() {
         <main className="workspace-main">
           {activeDoc ? (
             <div className="workspace-doc">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0' }}>
+                <button
+                  className="btn-ghost"
+                  onClick={handleExportDoc}
+                  style={{ fontSize: 12, padding: '4px 10px' }}
+                  title="הורד כקובץ Markdown"
+                >
+                  ⬇️ ייצוא
+                </button>
+              </div>
               <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
 
               {awaitingPhase === activePhaseIndex && (

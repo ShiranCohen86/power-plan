@@ -17,8 +17,21 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   const inputRef    = useRef(null);
   const abortRef    = useRef(null);
 
-  // Start discovery as soon as the component mounts
+  // Start discovery — restore progress from sessionStorage if available
   useEffect(() => {
+    const key = `discovery_${projectId}`;
+    try {
+      const saved = sessionStorage.getItem(key);
+      if (saved) {
+        const { messages: m, answers: a } = JSON.parse(saved);
+        if (a?.length > 0) {
+          setMessages(m);
+          setAnswers(a);
+          fetchNextQuestion(a);
+          return () => abortRef.current?.abort();
+        }
+      }
+    } catch { /* corrupted storage — start fresh */ }
     fetchNextQuestion([]);
     return () => abortRef.current?.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,7 +94,16 @@ export default function DiscoveryChat({ projectId, onComplete }) {
     fetchNextQuestion(newAnswers);
   }
 
+  // Persist answers to sessionStorage so progress survives a page refresh
+  useEffect(() => {
+    if (answers.length > 0) {
+      sessionStorage.setItem(`discovery_${projectId}`, JSON.stringify({ messages, answers }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers]);
+
   function handleFinish() {
+    sessionStorage.removeItem(`discovery_${projectId}`);
     onComplete(answers);
   }
 

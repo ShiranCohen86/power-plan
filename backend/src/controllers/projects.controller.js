@@ -30,6 +30,11 @@ exports.create = asyncHandler(async (req, res) => {
   res.status(201).json(project);
 });
 
+exports.deleteProject = asyncHandler(async (req, res) => {
+  await projectService.deleteProject(req.params.id, req.user.id);
+  res.status(204).end();
+});
+
 exports.list = asyncHandler(async (req, res) => {
   const projects = await projectService.listByOwner(req.user.id);
   res.json({ items: projects });

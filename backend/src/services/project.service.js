@@ -1,5 +1,14 @@
-const Project = require('../models/Project');
-const ApiError = require('../utils/ApiError');
+const Project        = require('../models/Project');
+const Phase          = require('../models/Phase');
+const Document       = require('../models/Document');
+const GeneratedFile  = require('../models/GeneratedFile');
+const Notification   = require('../models/Notification');
+const Task           = require('../models/Task');
+const Sprint         = require('../models/Sprint');
+const Meeting        = require('../models/Meeting');
+const MeetingMessage = require('../models/MeetingMessage');
+const AgentLog       = require('../models/AgentLog');
+const ApiError       = require('../utils/ApiError');
 
 async function create({ title, idea, ownerId }) {
   const project = await Project.create({ title, idea, ownerId });
@@ -29,4 +38,27 @@ async function saveDiscoveryAnswers(id, ownerId, answers) {
   return project.toObject();
 }
 
-module.exports = { create, listByOwner, getById, saveDiscoveryAnswers };
+async function deleteProject(id, ownerId) {
+  const project = await Project.findById(id);
+  if (!project) throw ApiError.notFound('Project not found');
+  if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
+
+  const meetings = await Meeting.find({ projectId: id }, '_id').lean();
+  const meetingIds = meetings.map((m) => m._id);
+
+  await Promise.all([
+    Phase.deleteMany({ projectId: id }),
+    Document.deleteMany({ projectId: id }),
+    GeneratedFile.deleteMany({ projectId: id }),
+    Notification.deleteMany({ projectId: id }),
+    Task.deleteMany({ projectId: id }),
+    Sprint.deleteMany({ projectId: id }),
+    AgentLog.deleteMany({ projectId: id }),
+    Meeting.deleteMany({ projectId: id }),
+    meetingIds.length ? MeetingMessage.deleteMany({ meetingId: { $in: meetingIds } }) : Promise.resolve(),
+  ]);
+
+  await Project.findByIdAndDelete(id);
+}
+
+module.exports = { create, listByOwner, getById, saveDiscoveryAnswers, deleteProject };
