@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AppShell from './components/AppShell.jsx';
 
 const Login             = lazy(() => import('./pages/Login.jsx'));
 const Dashboard         = lazy(() => import('./pages/Dashboard.jsx'));
@@ -72,12 +73,12 @@ export default function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/new-project" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
-          <Route path="/projects/:id/workspace" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
-          <Route path="/projects/:id/tasks"     element={<ProtectedRoute><TaskManagement /></ProtectedRoute>} />
-          <Route path="/settings"              element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/admin"               element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          <Route path="/dashboard"             element={<ProtectedRoute><AppShell><Dashboard /></AppShell></ProtectedRoute>} />
+          <Route path="/new-project"           element={<ProtectedRoute><AppShell><NewProject /></AppShell></ProtectedRoute>} />
+          <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><ProjectWorkspace /></AppShell></ProtectedRoute>} />
+          <Route path="/projects/:id/tasks"    element={<ProtectedRoute><AppShell><TaskManagement /></AppShell></ProtectedRoute>} />
+          <Route path="/settings"              element={<ProtectedRoute><AppShell><Settings /></AppShell></ProtectedRoute>} />
+          <Route path="/admin"                 element={<ProtectedRoute><AppShell><Admin /></AppShell></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

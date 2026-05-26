@@ -263,8 +263,7 @@ export default function ProjectWorkspace() {
 
       {/* Top bar */}
       <header className="workspace-topbar">
-        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36, padding: '4px 12px' }}>← Dashboard</button>
-        <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 Tasks</button>
+        <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 משימות</button>
         <div className="workspace-topbar__title">
           <span>⚡</span>
           <span>{project?.title}</span>

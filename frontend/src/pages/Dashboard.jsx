@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectCurrentUser, logoutUser } from '../store/slices/authSlice.js';
-import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
+import { selectCurrentUser } from '../store/slices/authSlice.js';
 import { selectProjects, selectProjectsStatus, fetchProjects } from '../store/slices/projectsSlice.js';
-import NotificationBell from '../components/ui/NotificationBell.jsx';
 import { getSettings } from '../api/settings.api.js';
 
 const STATUS_COLORS = {
@@ -49,8 +47,7 @@ export default function Dashboard() {
   const user        = useSelector(selectCurrentUser);
   const projects    = useSelector(selectProjects);
   const status      = useSelector(selectProjectsStatus);
-  const lang        = useSelector(selectLanguage);
-  const [hasApiKey, setHasApiKey] = useState(null); // null = loading
+  const [hasApiKey, setHasApiKey] = useState(null);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchProjects());
@@ -59,29 +56,11 @@ export default function Dashboard() {
   useEffect(() => {
     getSettings()
       .then((s) => setHasApiKey(s.hasApiKey))
-      .catch(() => setHasApiKey(true)); // on error, don't block
+      .catch(() => setHasApiKey(true));
   }, []);
 
   return (
     <div className="dashboard-shell">
-      {/* Top bar */}
-      <header className="dashboard-topbar">
-        <div className="dashboard-topbar__brand">
-          <span className="dashboard-topbar__logo">⚡</span>
-          <span>Power Plan</span>
-        </div>
-        <div className="dashboard-topbar__actions">
-          <button type="button" className="btn-ghost" onClick={() => dispatch(toggleLanguage())} style={{ fontSize: 13 }}>
-            {lang === 'he' ? 'EN' : 'עב'}
-          </button>
-          <NotificationBell />
-          <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{user?.name}</span>
-          <button type="button" className="btn-secondary" onClick={() => dispatch(logoutUser())} style={{ fontSize: 12, padding: '6px 12px', minHeight: 'auto' }}>
-            {t('auth.logout')}
-          </button>
-        </div>
-      </header>
-
       {/* Setup banner — shown until Anthropic key is configured */}
       {hasApiKey === false && (
         <div className="dashboard-setup-banner">
@@ -107,10 +86,6 @@ export default function Dashboard() {
               שלום, {user?.name} 👋
             </p>
           </div>
-          {user?.role === 'admin' && (
-            <button className="btn-ghost" onClick={() => navigate('/admin')} style={{ minHeight: 36, padding: '4px 14px', marginInlineEnd: 4 }}>🔧 Admin</button>
-          )}
-          <button className="btn-ghost" onClick={() => navigate('/settings')} style={{ minHeight: 36, padding: '4px 14px', marginInlineEnd: 8 }}>⚙ הגדרות</button>
           <button className="btn-new-project" onClick={() => navigate('/new-project')}>
             + {t('dashboard.newProject')}
           </button>

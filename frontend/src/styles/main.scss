@@ -887,19 +887,53 @@ input, select, textarea {
   .sprint-column { border-inline-end: 0; border-bottom: 1px solid var(--border); }
 }
 
+// ── AppShell global top bar ───────────────────────────────────────────────────
+.app-shell {
+  display: flex; flex-direction: column; min-height: 100vh;
+  &__content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+}
+
+.app-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 44px; padding: 0 16px;
+  background: var(--surface-1); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; z-index: 100; position: sticky; top: 0;
+
+  &__start { display: flex; align-items: center; gap: 4px; }
+  &__end   { display: flex; align-items: center; gap: 4px; }
+
+  &__brand {
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 800; font-size: 14px; color: var(--text);
+    padding: 4px 10px; border-radius: $radius;
+    &:hover { background: var(--surface-3); }
+  }
+  &__brand-icon { font-size: 16px; }
+  &__brand-name { @media (max-width: 480px) { display: none; } }
+
+  &__home { font-size: 13px; }
+  &__lang { font-size: 12px; padding: 4px 8px; min-height: auto; }
+  &__username {
+    font-size: 12px; color: var(--text-muted);
+    max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    @media (max-width: 640px) { display: none; }
+  }
+  &__settings { font-size: 16px; padding: 4px 8px; min-height: auto;
+    &--active { color: var(--brand-primary-light); }
+  }
+  &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
+}
+
 // ── Settings Page ──────────────────────────────────────────────────────────
 
 .settings-page {
-  min-height: 100vh; background: var(--bg); color: var(--text);
+  min-height: 0; background: var(--bg); color: var(--text);
 
-  &__topbar {
-    display: flex; align-items: center; gap: 16px; padding: 16px 24px;
-    border-bottom: 1px solid var(--border); background: var(--surface-1);
-  }
-  &__title { font-size: 18px; font-weight: 700; margin: 0; }
+  &__heading { padding: 24px 24px 0; max-width: 860px; margin: 0 auto; }
+  &__title { font-size: 20px; font-weight: 800; margin: 0; }
   &__loading { display: flex; justify-content: center; padding: 80px; }
   &__load-error { padding: 20px 24px; color: #f87171; }
-  &__body { max-width: 860px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 40px; }
+  &__body { max-width: 860px; margin: 0 auto; padding: 24px 24px 48px; display: flex; flex-direction: column; gap: 40px; }
 }
 
 .settings-section {

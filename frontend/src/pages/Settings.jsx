@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   getSettings, updatePlan, updateApiKey, deleteApiKey,
   updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
@@ -195,7 +194,6 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
 }
 
 export default function Settings() {
-  const navigate    = useNavigate();
   const [settings,    setSettings]    = useState(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError,   setPlanError]   = useState('');
@@ -224,9 +222,8 @@ export default function Settings() {
 
   return (
     <div className="settings-page">
-      <div className="settings-page__topbar">
-        <button className="btn-ghost" onClick={() => navigate('/dashboard')}>← חזור</button>
-        <h1 className="settings-page__title">הגדרות חשבון</h1>
+      <div className="settings-page__heading">
+        <h1 className="settings-page__title">⚙ הגדרות חשבון</h1>
       </div>
 
       {loadError && <div className="settings-page__load-error">{loadError}</div>}
@@ -249,9 +246,9 @@ export default function Settings() {
             <strong>הכל מוכן!</strong>
             <span> מפתח ה-AI מוגדר — אפשר להתחיל לבנות.</span>
           </div>
-          <button className="btn btn--primary" onClick={() => navigate('/new-project')}>
+          <a href="/new-project" className="btn btn--primary">
             התחל לבנות אפליקציה →
-          </button>
+          </a>
         </div>
       )}
 
