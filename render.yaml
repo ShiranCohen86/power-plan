@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: power-plan-backend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://power-plan-backend.onrender.com
+      # All secrets (MONGODB_URI, JWT_SECRET, ANTHROPIC_API_KEY, ENCRYPTION_KEY, etc.)
+      # must be added in Render dashboard → Environment — never commit them here
