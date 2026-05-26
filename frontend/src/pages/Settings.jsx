@@ -258,7 +258,7 @@ export default function Settings() {
       {loadError && <div className="settings-page__load-error">{loadError}</div>}
 
       {!settings && !loadError && (
-        <div className="settings-page__loading"><div className="spinner" /></div>
+        <div className="settings-page__loading"><div className="pwa-spinner" /></div>
       )}
 
       {settings && !settings.hasApiKey && (

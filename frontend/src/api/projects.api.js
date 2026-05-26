@@ -32,11 +32,17 @@ export const setProjectApiKey      = (id, apiKey) =>
 export const deleteProjectApiKey   = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}/settings/api-key` });
 
-export const setProjectGithubToken = (id, token) =>
-  safeRequest({ method: 'put', url: `/projects/${id}/settings/github-token`, data: { token } });
+export const setProjectGithubToken    = (id, token) =>
+  safeRequest({ method: 'put',    url: `/projects/${id}/settings/github-token`, data: { token } });
 
-export const setProjectRenderToken = (id, token) =>
-  safeRequest({ method: 'put', url: `/projects/${id}/settings/render-token`, data: { token } });
+export const deleteProjectGithubToken = (id) =>
+  safeRequest({ method: 'delete', url: `/projects/${id}/settings/github-token` });
+
+export const setProjectRenderToken    = (id, token) =>
+  safeRequest({ method: 'put',    url: `/projects/${id}/settings/render-token`, data: { token } });
+
+export const deleteProjectRenderToken = (id) =>
+  safeRequest({ method: 'delete', url: `/projects/${id}/settings/render-token` });
 
 /**
  * Opens an SSE connection to stream the next discovery question.

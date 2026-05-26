@@ -15,9 +15,10 @@ import {
 import { getProject, getProjectSettings, getMeetings } from '../api/projects.api';
 import { getRateLimit } from '../api/settings.api';
 
-import PhaseList          from '../components/workspace/PhaseList';
-import LiveFeed           from '../components/workspace/LiveFeed';
-import ApprovalBar        from '../components/workspace/ApprovalBar';
+import PhaseList               from '../components/workspace/PhaseList';
+import LiveFeed                from '../components/workspace/LiveFeed';
+import ApprovalBar             from '../components/workspace/ApprovalBar';
+import ProjectSettingsModal    from '../components/workspace/ProjectSettingsModal';
 import QuotaBanner        from '../components/workspace/QuotaBanner';
 import DeploymentStatus   from '../components/workspace/DeploymentStatus';
 import CelebrationOverlay from '../components/workspace/CelebrationOverlay';
@@ -63,6 +64,7 @@ export default function ProjectWorkspace() {
   const [hasApiKey, setHasApiKey] = useState(null); // null = loading
   const [usingFallback, setUsingFallback] = useState(false);
   const [rateLimit, setRateLimit] = useState(null); // { used, remaining, maxPerHour, resetsAt }
+  const [showProjectSettings, setShowProjectSettings] = useState(false);
 
   // Live Company Experience state
   const [activeFeedTab, setActiveFeedTab]       = useState('narrative');
@@ -382,6 +384,7 @@ export default function ProjectWorkspace() {
       {/* Top bar */}
       <header className="workspace-topbar">
         <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 משימות</button>
+        <button className="btn-ghost" onClick={() => setShowProjectSettings(true)} style={{ minHeight: 36, padding: '4px 12px' }} title="הגדרות פרויקט">⚙️ הגדרות</button>
         {isRunning && (
           <button
             className="btn-ghost"
@@ -480,6 +483,16 @@ export default function ProjectWorkspace() {
         <div className="workspace-deploy-overlay">
           <DeploymentStatus steps={deploySteps} liveUrl={liveUrl} failed={deployFailed} />
         </div>
+      )}
+
+      {/* Project settings modal */}
+      {showProjectSettings && (
+        <ProjectSettingsModal
+          projectId={id}
+          projectTitle={project?.title}
+          onClose={() => setShowProjectSettings(false)}
+          onKeyUpdated={() => setHasApiKey(true)}
+        />
       )}
 
       {/* 3-panel layout */}
