@@ -248,10 +248,16 @@ export default function ProjectWorkspace() {
   const isDeploying = project?.status === 'deploying' || Object.keys(deploySteps).length > 0;
   const isQuotaPaused = project?.status === 'quota_paused' || quotaError;
 
-  const hasPhases   = phases.length > 0;
-  const isRunning   = phases.some((p) => p.status === 'running');
-  const notStarted  = !hasPhases;
-  const awaitPhase  = phases.find((p) => p.index === awaitingPhase);
+  const hasPhases      = phases.length > 0;
+  const isRunning      = phases.some((p) => p.status === 'running');
+  const notStarted     = !hasPhases;
+  const awaitPhase     = phases.find((p) => p.index === awaitingPhase);
+  const projectStatus  = project?.status;
+  const isOnboarding   = projectStatus === 'onboarding';
+  const isPaused       = projectStatus === 'paused';
+  const isFailed       = projectStatus === 'failed';
+  const canStart       = projectStatus === 'planning' && notStarted;
+  const canResume      = isPaused || isFailed;
 
   return (
     <div className="workspace">
@@ -333,10 +339,35 @@ export default function ProjectWorkspace() {
             }}
           />
 
-          {notStarted && (
+          {/* Discovery not complete — guide user back */}
+          {isOnboarding && (
+            <div className="workspace-discovery-cta">
+              <p className="workspace-discovery-cta__text">
+                השאלון לא הושלם — יש לסיים אותו לפני שמתחילים את הפייפליין.
+              </p>
+              <button
+                className="btn btn--secondary btn--full"
+                onClick={() => navigate('/new-project')}
+              >
+                ← השלם שאלון גילוי
+              </button>
+            </div>
+          )}
+
+          {/* Ready to start */}
+          {canStart && (
             <div className="workspace-start-btn">
               <button className="btn btn--primary btn--full" onClick={handleStart}>
                 🚀 התחל את פייפליין התכנון
+              </button>
+            </div>
+          )}
+
+          {/* Paused or failed — resume */}
+          {canResume && (
+            <div className="workspace-start-btn">
+              <button className="btn btn--primary btn--full" onClick={handleStart}>
+                {isPaused ? '▶️ המשך Pipeline' : '🔄 נסה שוב'}
               </button>
             </div>
           )}
@@ -369,10 +400,15 @@ export default function ProjectWorkspace() {
                   <div className="pwa-spinner" style={{ width: 48, height: 48 }} />
                   <p>Claude עובד על השלב הזה...</p>
                 </div>
+              ) : isOnboarding ? (
+                <div className="workspace-empty">
+                  <div style={{ fontSize: 48 }}>💬</div>
+                  <p>יש להשלים את שאלון הגילוי תחילה</p>
+                </div>
               ) : notStarted ? (
                 <div className="workspace-empty">
                   <div style={{ fontSize: 48 }}>🚀</div>
-                  <p>Start the planning pipeline to begin</p>
+                  <p>לחץ "התחל" בסרגל הצד כדי להתחיל את פייפליין התכנון</p>
                 </div>
               ) : (
                 <div className="workspace-empty">
