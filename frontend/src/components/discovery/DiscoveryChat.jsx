@@ -133,7 +133,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
       {/* Error card shown after an error */}
       {hasError && (
         <div className="discovery-error-card">
-          <div className="discovery-error-card__icon">{isCreditsError ? '💳' : '⚠️'}</div>
+          <div className="discovery-error-card__icon">{isSettingsError ? '💳' : '⚠️'}</div>
           <div className="discovery-error-card__msg">{lastError}</div>
           <div className="discovery-error-card__actions">
             {isSettingsError ? (

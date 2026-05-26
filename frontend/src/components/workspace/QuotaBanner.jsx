@@ -25,7 +25,10 @@ export default function QuotaBanner({ message, plan, projectId }) {
           </div>
         ) : (
           <p className="quota-banner__pro-msg">
-            אנא צור קשר עם תמיכת Power Plan ונחדש את הפרויקט שלך בהקדם.
+            אנא צור קשר עם תמיכת Power Plan ונחדש את הפרויקט שלך בהקדם.{' '}
+            <a href="mailto:support@powerplan.app" className="quota-banner__contact-link">
+              support@powerplan.app →
+            </a>
           </p>
         )}
       </div>

@@ -336,7 +336,7 @@ export default function ProjectWorkspace() {
           {notStarted && (
             <div className="workspace-start-btn">
               <button className="btn btn--primary btn--full" onClick={handleStart}>
-                🚀 Start Planning Pipeline
+                🚀 התחל את פייפליין התכנון
               </button>
             </div>
           )}
@@ -367,7 +367,7 @@ export default function ProjectWorkspace() {
               {isRunning ? (
                 <div className="workspace-empty__running">
                   <div className="pwa-spinner" style={{ width: 48, height: 48 }} />
-                  <p>Claude is working on this phase...</p>
+                  <p>Claude עובד על השלב הזה...</p>
                 </div>
               ) : notStarted ? (
                 <div className="workspace-empty">

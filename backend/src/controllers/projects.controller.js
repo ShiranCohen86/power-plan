@@ -48,6 +48,19 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Discovery already completed' });
   }
 
+  // Validate answers array
+  const answers = req.body.answers;
+  if (answers !== undefined) {
+    if (!Array.isArray(answers) || answers.length > 20) {
+      return res.status(400).json({ error: 'Invalid answers format' });
+    }
+    for (const a of answers) {
+      if (!a || typeof a.question !== 'string' || typeof a.answer !== 'string') {
+        return res.status(400).json({ error: 'Invalid answer object' });
+      }
+    }
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -55,9 +68,16 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
 
   // Re-fetch project with encrypted key field
   const projectWithKey = await Project.findById(req.params.id).select('+settings.anthropicApiKey');
-  const apiKey = projectWithKey?.settings?.anthropicApiKey
-    ? decrypt(projectWithKey.settings.anthropicApiKey)
-    : null;
+  let apiKey = null;
+  if (projectWithKey?.settings?.anthropicApiKey) {
+    try {
+      apiKey = decrypt(projectWithKey.settings.anthropicApiKey);
+    } catch {
+      res.write(`data: ${JSON.stringify({ error: 'שגיאה בקריאת מפתח ה-API — נסה להכניס מחדש בהגדרות הפרויקט.' })}\n\n`);
+      res.end();
+      return;
+    }
+  }
 
   if (!apiKey) {
     res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic לפרויקט זה. הכנס מפתח בהגדרות הפרויקט.' })}\n\n`);
@@ -69,7 +89,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
     await discoveryService.streamNextQuestion(res, {
       idea:       project.idea,
       title:      project.title,
-      answers:    req.body.answers || [],
+      answers:    answers || [],
       userPlan:   'starter',
       userApiKey: apiKey,
     });

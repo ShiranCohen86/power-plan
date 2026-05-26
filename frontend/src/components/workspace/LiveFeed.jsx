@@ -11,6 +11,9 @@ const CONSULTANT_EMOJI = {
   mia:  '💻',
 };
 
+const SAFE_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{2,30})$/;
+const safeColor = (c) => (c && SAFE_COLOR_RE.test(c) ? c : undefined);
+
 const EVENT_ICON = {
   started:      '▶️',
   completed:    '✅',
@@ -138,7 +141,7 @@ export default function LiveFeed({
                 <div key={i} className={`meeting-msg meeting-msg--${msg.type}`}>
                   <div className="meeting-msg__header">
                     <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
-                    <span className="meeting-msg__name" style={{ color: msg.color }}>
+                    <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>
                       {msg.displayName}
                     </span>
                     <span className={`meeting-msg__type-badge meeting-msg__type-badge--${msg.type}`}>
@@ -185,7 +188,7 @@ export default function LiveFeed({
                       {msg.emoji || CONSULTANT_EMOJI[msg.consultantId] || '🌐'}
                     </span>
                     <div className="meeting-msg__name-block">
-                      <span className="meeting-msg__name" style={{ color: msg.color }}>
+                      <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>
                         {msg.name}
                       </span>
                       <span className="meeting-msg__subrole">{msg.role}</span>

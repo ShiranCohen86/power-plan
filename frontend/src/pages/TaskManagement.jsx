@@ -7,8 +7,8 @@ import EpicGroup from '../components/tasks/EpicGroup';
 import SprintBoard from '../components/tasks/SprintBoard';
 
 const VIEWS = [
-  { key: 'epics',   label: 'Epics & Features' },
-  { key: 'sprints', label: 'Sprint Board' },
+  { key: 'epics',   label: 'אפיקים ופיצ\'רים' },
+  { key: 'sprints', label: 'לוח ספרינטים' },
 ];
 
 export default function TaskManagement() {
@@ -36,28 +36,28 @@ export default function TaskManagement() {
     <div className="task-management">
       <div className="task-management__header">
         <div className="task-management__breadcrumb">
-          <Link to="/dashboard" className="task-management__back">← Dashboard</Link>
+          <Link to="/dashboard" className="task-management__back">← דשבורד</Link>
           {project && (
             <>
               <span className="task-management__sep">/</span>
-              <Link to={`/projects/${projectId}`} className="task-management__back">
+              <Link to={`/projects/${projectId}/workspace`} className="task-management__back">
                 {project.title}
               </Link>
             </>
           )}
           <span className="task-management__sep">/</span>
-          <span>Tasks</span>
+          <span>משימות</span>
         </div>
 
         <div className="task-management__stats">
           <span className="task-management__stat">
-            <strong>{totalTasks}</strong> tasks
+            <strong>{totalTasks}</strong> משימות
           </span>
           <span className="task-management__stat">
-            <strong>{doneTasks}</strong> done
+            <strong>{doneTasks}</strong> הושלמו
           </span>
           <span className="task-management__stat">
-            <strong>{epics.length}</strong> epics
+            <strong>{epics.length}</strong> אפיקים
           </span>
         </div>
       </div>

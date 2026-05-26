@@ -59,8 +59,8 @@ export default function Admin() {
         adminApi.getStats(),
         adminApi.getLessons(),
       ]);
-      setStats(statsRes.data);
-      setLessons(lessonsRes.data.lessons);
+      setStats(statsRes);
+      setLessons(lessonsRes.lessons);
     } catch {
       setError('Failed to load admin data');
     } finally {
@@ -74,11 +74,11 @@ export default function Admin() {
     setSubmitting(true);
     try {
       if (editId) {
-        const res = await adminApi.updateLesson(editId, formData);
-        setLessons((prev) => prev.map((l) => l._id === editId ? res.data : l));
+        const updated = await adminApi.updateLesson(editId, formData);
+        setLessons((prev) => prev.map((l) => l._id === editId ? updated : l));
       } else {
-        const res = await adminApi.createLesson(formData);
-        setLessons((prev) => [res.data, ...prev]);
+        const created = await adminApi.createLesson(formData);
+        setLessons((prev) => [created, ...prev]);
       }
       setShowForm(false);
       setFormData({ agentType: '', category: '', mistake: '', lesson: '' });
@@ -98,9 +98,11 @@ export default function Admin() {
 
   async function toggleActive(lesson) {
     try {
-      const res = await adminApi.updateLesson(lesson._id, { isActive: !lesson.isActive });
-      setLessons((prev) => prev.map((l) => l._id === lesson._id ? res.data : l));
-    } catch {}
+      const updated = await adminApi.updateLesson(lesson._id, { isActive: !lesson.isActive });
+      setLessons((prev) => prev.map((l) => l._id === lesson._id ? updated : l));
+    } catch {
+      setError('שגיאה בעדכון הלקח — נסה שוב');
+    }
   }
 
   async function deleteLesson(id) {
@@ -108,18 +110,25 @@ export default function Admin() {
     try {
       await adminApi.deleteLesson(id);
       setLessons((prev) => prev.filter((l) => l._id !== id));
-    } catch {}
+    } catch {
+      setError('שגיאה במחיקת הלקח — נסה שוב');
+    }
   }
 
   if (loading) return <div className="workspace-loading"><div className="pwa-spinner" /></div>;
-  if (error)   return <div className="workspace-error">{error}</div>;
 
   return (
     <div className="admin-shell">
       <header className="admin-topbar">
-        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36 }}>← Dashboard</button>
-        <h1 className="admin-topbar__title">⚙ Admin</h1>
+        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36 }}>← דשבורד</button>
+        <h1 className="admin-topbar__title">⚙ ניהול מערכת</h1>
       </header>
+
+      {error && (
+        <div className="alert alert--error" style={{ margin: '16px 24px', cursor: 'pointer' }} onClick={() => setError('')}>
+          {error} ✕
+        </div>
+      )}
 
       <main className="admin-main">
         {/* Platform Setup */}

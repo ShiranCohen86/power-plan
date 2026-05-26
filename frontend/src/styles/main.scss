@@ -1051,6 +1051,7 @@ input, select, textarea {
     ol { margin: 0; padding-inline-start: 20px; line-height: 2.1; }
   }
   &__pro-msg { font-size: 13px; color: var(--text-muted); margin: 0; }
+  &__contact-link { color: #fbbf24; text-decoration: underline; }
 
   &__actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 }

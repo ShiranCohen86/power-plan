@@ -108,6 +108,7 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
             placeholder={cfg.placeholder}
             value={value}
             onChange={(e) => setValue(e.target.value)}
+            disabled={saving}
             autoFocus
             dir="ltr"
           />

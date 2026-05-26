@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getStats } from '../../api/admin.api';
 import { safeRequest } from '../../api/request';
 
 async function fetchSetupStatus() {
-  const res = await safeRequest({ method: 'get', url: '/admin/setup-status' });
-  return res.data;
+  return safeRequest({ method: 'get', url: '/admin/setup-status' });
 }
 
 // ── Step component ────────────────────────────────────────────────────────────
