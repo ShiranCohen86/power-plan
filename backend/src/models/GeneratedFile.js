@@ -6,6 +6,7 @@ const GeneratedFileSchema = new mongoose.Schema(
     phaseId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Phase',   required: true },
     filePath:  { type: String, required: true },
     content:   { type: String, required: true },
+    r2Key:     { type: String, default: '' },  // R2 object key for external download (optional)
     language:  { type: String, default: 'text' },
     status:    { type: String, enum: ['generated', 'validated', 'failed'], default: 'generated' },
   },

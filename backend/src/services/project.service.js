@@ -15,8 +15,26 @@ async function create({ title, idea, ownerId }) {
   return project.toObject();
 }
 
-async function listByOwner(ownerId) {
-  return Project.find({ ownerId }).sort('-createdAt').lean();
+const SORT_MAP = {
+  date:       { createdAt: -1 },
+  status:     { status: 1, createdAt: -1 },
+  completion: { completionPercent: -1, createdAt: -1 },
+};
+
+async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date' } = {}) {
+  const query = { ownerId };
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(escaped, 'i');
+    query.$or = [{ title: re }, { idea: re }];
+  }
+  const sortQuery = SORT_MAP[sort] || SORT_MAP.date;
+  const skip = (page - 1) * limit;
+  const [items, total] = await Promise.all([
+    Project.find(query).sort(sortQuery).skip(skip).limit(limit).lean(),
+    Project.countDocuments(query),
+  ]);
+  return { items, total, page, totalPages: Math.ceil(total / limit) || 1 };
 }
 
 async function getById(id, ownerId) {

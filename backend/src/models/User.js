@@ -32,6 +32,7 @@ const UserSchema = new mongoose.Schema(
       githubToken:     { type: String, select: false }, // encrypted AES-256
       renderApiKey:    { type: String, select: false }, // encrypted AES-256
     },
+    pipelineStarts: { type: [Date], select: false, default: [] },
   },
   { timestamps: true },
 );

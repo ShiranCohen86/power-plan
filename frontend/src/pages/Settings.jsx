@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   getSettings, updatePlan, updateApiKey, deleteApiKey,
   updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
+  validateApiKey,
 } from '../api/settings.api';
 
 const PLANS = [
@@ -88,21 +89,34 @@ function PlanCard({ plan, currentPlan, hasApiKey, onSelect, loading }) {
   );
 }
 
-function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, saving, saveError, inputProps }) {
-  const [mode, setMode]   = useState('idle');
-  const [value, setValue] = useState('');
-  const [err, setErr]     = useState('');
-  const [busy, setBusy]   = useState(false);
+function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, saving, saveError, inputProps, onValidate }) {
+  const [mode, setMode]         = useState('idle');
+  const [value, setValue]       = useState('');
+  const [err, setErr]           = useState('');
+  const [busy, setBusy]         = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validResult, setValidResult] = useState(null); // null | { valid, error }
 
   async function handleSave() {
     if (!value.trim()) return;
     setBusy(true); setErr('');
     try {
       await onSave(value.trim());
-      setMode('idle'); setValue('');
+      setMode('idle'); setValue(''); setValidResult(null);
     } catch (e) {
       setErr(e.message || 'שגיאה בשמירה');
     } finally { setBusy(false); }
+  }
+
+  async function handleValidate() {
+    if (!value.trim() || !onValidate) return;
+    setValidating(true); setValidResult(null);
+    try {
+      const res = await onValidate(value.trim());
+      setValidResult(res);
+    } catch {
+      setValidResult({ valid: false, error: 'שגיאת רשת — נסה שוב' });
+    } finally { setValidating(false); }
   }
 
   async function handleDelete() {
@@ -161,16 +175,31 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
             className="settings-apikey__input"
             placeholder={inputProps?.placeholder || ''}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => { setValue(e.target.value); setValidResult(null); }}
             autoComplete="off"
             dir="ltr"
           />
           {err && <p className="settings-apikey__error">{err}</p>}
+          {validResult && (
+            <p style={{ fontSize: 13, marginTop: 6, color: validResult.valid ? 'var(--success, #16a34a)' : 'var(--danger)' }}>
+              {validResult.valid ? '✓ המפתח תקין ועובד' : `✗ ${validResult.error}`}
+            </p>
+          )}
           <div className="settings-apikey__form-actions">
+            {onValidate && (
+              <button
+                className="btn btn--secondary"
+                onClick={handleValidate}
+                disabled={validating || !value.trim()}
+                style={{ fontSize: 13 }}
+              >
+                {validating ? 'בודק...' : '🔍 בדוק מפתח'}
+              </button>
+            )}
             <button className="btn btn--primary" onClick={handleSave} disabled={busy || !value.trim()}>
               {busy ? 'שומר...' : 'שמור'}
             </button>
-            <button className="btn btn--secondary" onClick={() => { setMode('idle'); setValue(''); setErr(''); }}>
+            <button className="btn btn--secondary" onClick={() => { setMode('idle'); setValue(''); setErr(''); setValidResult(null); }}>
               ביטול
             </button>
           </div>
@@ -286,6 +315,7 @@ export default function Settings() {
               subtitle="נדרש לפני שלב הניתוח — מאפשר ל-Power Plan לדבר עם Claude בשמך."
               hint={settings.apiKeyHint}
               hasToken={settings.hasApiKey}
+              onValidate={(key) => validateApiKey(key)}
               onSave={async (v) => {
                 const res = await updateApiKey(v);
                 setSettings((s) => ({ ...s, hasApiKey: res.hasApiKey, apiKeyHint: res.apiKeyHint }));

@@ -30,6 +30,7 @@ export function useProjectSocket(projectId, handlers = {}) {
       'phase:approved':            wrap('onPhaseApproved'),
       'phase:refining':            wrap('onPhaseRefining'),
       'phase:failed':              wrap('onPhaseFailed'),
+      'meeting:scheduled':         wrap('onMeetingScheduled'),
       'meeting:started':           wrap('onMeetingStarted'),
       'meeting:message':           wrap('onMeetingMessage'),
       'meeting:completed':         wrap('onMeetingCompleted'),

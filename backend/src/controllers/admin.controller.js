@@ -1,4 +1,5 @@
 const Lesson      = require('../models/Lesson');
+const Phase       = require('../models/Phase');
 const asyncHandler = require('../utils/asyncHandler');
 
 // ── Lessons CRUD (admin only) ─────────────────────────────────────────────────
@@ -90,6 +91,50 @@ exports.platformSetupStatus = asyncHandler(async (req, res) => {
                            services.atlas.configured;
 
   res.json({ services, allConfigured, pipelineReady, deploymentReady });
+});
+
+// ── Pipeline analytics ────────────────────────────────────────────────────────
+
+exports.getAnalytics = asyncHandler(async (req, res) => {
+  const Project = require('../models/Project');
+
+  const [
+    totalProjects,
+    liveProjects,
+    failedProjects,
+    tokenAgg,
+    statusCounts,
+  ] = await Promise.all([
+    Project.countDocuments(),
+    Project.countDocuments({ status: 'live' }),
+    Project.countDocuments({ status: 'failed' }),
+    // Average tokens per phase across all completed phases
+    Phase.aggregate([
+      { $match: { status: 'completed', tokensUsed: { $gt: 0 } } },
+      { $group: { _id: '$type', avgTokens: { $avg: '$tokensUsed' }, count: { $sum: 1 } } },
+      { $sort: { avgTokens: -1 } },
+    ]),
+    // Project count by status
+    Project.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const completionRate = totalProjects > 0
+    ? Math.round((liveProjects / totalProjects) * 100)
+    : 0;
+
+  const statusMap = {};
+  for (const s of statusCounts) statusMap[s._id] = s.count;
+
+  res.json({
+    totalProjects,
+    liveProjects,
+    failedProjects,
+    completionRate,
+    byStatus: statusMap,
+    avgTokensByPhase: tokenAgg,
+  });
 });
 
 // ── Platform stats ────────────────────────────────────────────────────────────

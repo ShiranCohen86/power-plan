@@ -30,22 +30,34 @@ const MEETING_PARTICIPANTS = {
   devops_strategy:     ['devops', 'cto', 'security'],
 };
 
-async function runMeeting(projectId, phaseId, phaseType, documentContent) {
+async function runMeeting(projectId, phaseId, phaseType, documentContent, phaseIndex = null, existingMeetingId = null) {
   const participantKeys = MEETING_PARTICIPANTS[phaseType] || ['pm', 'cto'];
   const participants    = participantKeys.map((k) => TEAM[k]);
 
-  const meeting = await Meeting.create({
-    projectId,
-    phaseId,
-    type:         phaseType,
-    participants: participantKeys,
-    status:       'running',
-    startedAt:    new Date(),
-  });
+  let meeting;
+  if (existingMeetingId) {
+    meeting = await Meeting.findByIdAndUpdate(
+      existingMeetingId,
+      { participants: participantKeys, status: 'running', startedAt: new Date() },
+      { new: true },
+    );
+  } else {
+    meeting = await Meeting.create({
+      projectId,
+      phaseId,
+      type:         phaseType,
+      participants: participantKeys,
+      status:       'running',
+      startedAt:    new Date(),
+    });
+  }
 
+  const startedAt = meeting.startedAt || new Date();
   emitToProject(projectId, 'meeting:started', {
     meetingId:    meeting._id,
+    phaseIndex,
     phaseType,
+    startedAt,
     participants: participants.map((p) => ({ name: p.name, role: p.role, color: p.color })),
   });
 
@@ -143,6 +155,7 @@ RULES:
 
   emitToProject(projectId, 'meeting:completed', {
     meetingId:         meeting._id,
+    phaseIndex,
     improvementsCount: improvements,
     updatedSummary:    parsed.decision || '',
   });

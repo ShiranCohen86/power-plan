@@ -6,8 +6,9 @@ const MeetingSchema = new Schema({
   phaseId:           { type: Schema.Types.ObjectId, ref: 'Phase',   required: true },
   type:              { type: String, required: true },
   participants:      [String],
-  status:            { type: String, enum: ['running', 'completed'], default: 'running' },
+  status:            { type: String, enum: ['scheduled', 'running', 'completed'], default: 'running' },
   improvementsCount: { type: Number, default: 0 },
+  scheduledAt:       Date,
   startedAt:         { type: Date, default: Date.now },
   completedAt:       Date,
 }, { timestamps: true });

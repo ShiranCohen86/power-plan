@@ -6,6 +6,7 @@ const agentlog         = require('./agentlog.service');
 const { getAgent }     = require('./ai/agents.registry');
 const { parseFiles }   = require('./file-parser.service');
 const { scan }         = require('./secret-scanner.service');
+const r2               = require('./r2.service');
 const queue            = require('./pipeline-queue.service');
 const { decrypt }      = require('./encryption.service');
 const User             = require('../models/User');
@@ -190,9 +191,21 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
     }
 
     // Upsert — ReviewAgent may overwrite files from earlier phases
+    // Content is always saved to MongoDB for context chaining in subsequent phases.
+    // If R2 is configured, also upload a copy there for user download/external access.
+    let r2Key = '';
+    if (r2.isConfigured()) {
+      try {
+        r2Key = await r2.upload(r2.buildKey(projectId, file.filePath), file.content);
+      } catch (err) {
+        logger.warn('codegen-runner: R2 upload failed (non-fatal)', { error: err.message, filePath: file.filePath });
+      }
+    }
+
     await GeneratedFile.findOneAndUpdate(
       { projectId, filePath: file.filePath },
-      { projectId, phaseId: phase._id, filePath: file.filePath, content: file.content, language: file.language, status },
+      { projectId, phaseId: phase._id, filePath: file.filePath,
+        content: file.content, r2Key, language: file.language, status },
       { upsert: true, new: true },
     );
 

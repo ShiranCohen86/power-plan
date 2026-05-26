@@ -8,6 +8,7 @@ router.use(authenticate, authorize('admin'));
 
 router.get   ('/setup-status',   ctrl.platformSetupStatus);
 router.get   ('/stats',          ctrl.platformStats);
+router.get   ('/analytics',      ctrl.getAnalytics);
 router.get   ('/lessons',        ctrl.listLessons);
 router.post  ('/lessons',        ctrl.createLesson);
 router.patch ('/lessons/:id',    ctrl.updateLesson);

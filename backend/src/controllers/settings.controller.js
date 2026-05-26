@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError     = require('../utils/ApiError');
 const User         = require('../models/User');
 const { encrypt, decrypt } = require('../services/encryption.service');
+const Anthropic    = require('@anthropic-ai/sdk');
 
 // GET /api/settings
 exports.getSettings = asyncHandler(async (req, res) => {
@@ -108,6 +109,53 @@ exports.deleteRenderToken = asyncHandler(async (req, res) => {
   if (user.settings) user.settings.renderApiKey = undefined;
   await user.save();
   res.json({ hasRenderToken: false });
+});
+
+// GET /api/settings/rate-limit
+// Returns how many pipeline starts the user has used this hour and how many remain.
+exports.getRateLimit = asyncHandler(async (req, res) => {
+  const HOUR_MS    = 60 * 60 * 1000;
+  const MAX_STARTS = 3;
+  const now        = Date.now();
+  const cutoff     = new Date(now - HOUR_MS);
+
+  const user   = await User.findById(req.user.id).select('+pipelineStarts').lean();
+  const recent = (user?.pipelineStarts || []).filter((t) => new Date(t) > cutoff).sort((a, b) => a - b);
+
+  const used      = recent.length;
+  const remaining = Math.max(0, MAX_STARTS - used);
+  const resetsAt  = recent[0] ? new Date(new Date(recent[0]).getTime() + HOUR_MS) : null;
+
+  res.json({ used, remaining, maxPerHour: MAX_STARTS, resetsAt });
+});
+
+// POST /api/settings/validate-key
+// Body: { apiKey: 'sk-ant-...' }
+// Makes a minimal Anthropic API call to confirm the key is live; returns { valid, error? }
+exports.validateApiKey = asyncHandler(async (req, res) => {
+  const { apiKey } = req.body;
+  if (!apiKey?.startsWith('sk-ant-')) {
+    return res.json({ valid: false, error: 'מפתח לא תקין — חייב להתחיל עם sk-ant-' });
+  }
+  try {
+    const client = new Anthropic({ apiKey });
+    // Cheapest possible call: 1 input token, 1 output token
+    await client.messages.create({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: 1,
+      messages:   [{ role: 'user', content: 'hi' }],
+    });
+    res.json({ valid: true });
+  } catch (err) {
+    const msg = err?.message || '';
+    if (msg.includes('authentication') || msg.includes('invalid') || msg.includes('401')) {
+      res.json({ valid: false, error: 'מפתח לא תקין — בדוק שהעתקת נכון' });
+    } else if (msg.includes('credit') || msg.includes('billing') || msg.includes('balance')) {
+      res.json({ valid: false, error: 'מפתח תקין אך אין קרדיט — טען קרדיט ב-console.anthropic.com' });
+    } else {
+      res.json({ valid: false, error: 'לא ניתן לאמת את המפתח כעת — נסה שוב' });
+    }
+  }
 });
 
 function _maskKey(key) {

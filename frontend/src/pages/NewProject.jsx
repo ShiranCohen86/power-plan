@@ -1,26 +1,58 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import IdeaInput from '../components/discovery/IdeaInput';
 import DiscoveryChat from '../components/discovery/DiscoveryChat';
 import SettingsGate from '../components/SettingsGate';
 import { createNewProject } from '../store/slices/projectsSlice';
-import { discoveryComplete } from '../api/projects.api';
+import { discoveryComplete, getProject, getProjectSettings } from '../api/projects.api';
 
 const STEP_IDEA      = 'idea';
-const STEP_GATE      = 'gate';       // Anthropic key missing for this project
+const STEP_GATE      = 'gate';
 const STEP_DISCOVERY = 'discovery';
 
 export default function NewProject() {
-  const { t }    = useTranslation();
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const { t }          = useTranslation();
+  const dispatch       = useDispatch();
+  const navigate       = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [step, setStep]         = useState(STEP_IDEA);
   const [project, setProject]   = useState(null);
   const [creating, setCreating] = useState(false);
   const [error, setError]       = useState('');
+
+  // Resume an existing onboarding project from the dashboard
+  const resumeId = searchParams.get('resumeId');
+  useEffect(() => {
+    if (!resumeId) return;
+    (async () => {
+      setCreating(true);
+      try {
+        const [proj, settings] = await Promise.all([
+          getProject(resumeId),
+          getProjectSettings(resumeId).catch(() => null),
+        ]);
+        if (proj.status !== 'onboarding') {
+          navigate(`/projects/${resumeId}/workspace`);
+          return;
+        }
+        setProject(proj);
+        // Show settings gate if no API key, otherwise go straight to discovery
+        if (settings?.hasApiKey) {
+          setStep(STEP_DISCOVERY);
+        } else {
+          setStep(STEP_GATE);
+        }
+      } catch {
+        setError('לא ניתן לטעון את הפרויקט — נסה שוב');
+      } finally {
+        setCreating(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumeId]);
 
   async function handleIdeaSubmit({ title, idea }) {
     setCreating(true);
@@ -28,7 +60,6 @@ export default function NewProject() {
     try {
       const result = await dispatch(createNewProject({ title, idea })).unwrap();
       setProject(result);
-      // Always show the key gate — key is per-project
       setStep(STEP_GATE);
     } catch (err) {
       setError(err?.message || String(err));
@@ -51,7 +82,13 @@ export default function NewProject() {
       <div className="new-project-card">
         {error && <div className="alert alert--error">{error}</div>}
 
-        {step === STEP_IDEA && (
+        {creating && step === STEP_IDEA && (
+          <div style={{ textAlign: 'center', padding: 32 }}>
+            <div className="pwa-spinner" />
+          </div>
+        )}
+
+        {!creating && step === STEP_IDEA && (
           <IdeaInput onSubmit={handleIdeaSubmit} loading={creating} />
         )}
 

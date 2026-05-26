@@ -87,7 +87,7 @@ export default function App() {
           <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><ProjectWorkspace /></AppShell></ProtectedRoute>} />
           <Route path="/projects/:id/tasks"    element={<ProtectedRoute><AppShell><TaskManagement /></AppShell></ProtectedRoute>} />
           <Route path="/settings"              element={<ProtectedRoute><AppShell><Settings /></AppShell></ProtectedRoute>} />
-          <Route path="/admin"                 element={<ProtectedRoute><AppShell><Admin /></AppShell></ProtectedRoute>} />
+          <Route path="/admin"                 element={<ProtectedRoute roles={['admin']}><AppShell><Admin /></AppShell></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

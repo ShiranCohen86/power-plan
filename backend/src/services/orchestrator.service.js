@@ -1,17 +1,17 @@
 const Project = require('../models/Project');
 const Phase   = require('../models/Phase');
+const User    = require('../models/User');
 const { startPlanning } = require('./planning-runner.service');
 const { emitToProject } = require('../sockets');
 const ApiError = require('../utils/ApiError');
 const logger   = require('../utils/logger');
 
-// Rate limiting: max 3 pipeline starts per user per hour
-const startHistory = new Map(); // userId → [timestamp, ...]
-const HOUR_MS      = 60 * 60 * 1000;
-const MAX_STARTS   = 3;
+// Rate limiting: max 3 pipeline starts per user per hour — persisted in MongoDB
+const HOUR_MS    = 60 * 60 * 1000;
+const MAX_STARTS = 3;
 
 async function startPipeline(projectId, userId) {
-  _checkRateLimit(userId);
+  await _checkRateLimit(userId);
 
   const project = await Project.findById(projectId);
   if (!project) throw ApiError.notFound('Project not found');
@@ -33,7 +33,15 @@ async function startPipeline(projectId, userId) {
     await project.save();
   }
 
-  _recordStart(userId);
+  // Validate API key exists before firing — throws before fire-and-forget so error reaches frontend
+  const hasKey = await _hasApiKey(projectId, project.ownerId);
+  if (!hasKey) {
+    throw ApiError.badRequest(
+      'מפתח Anthropic לא מוגדר — הגדר מפתח API בהגדרות הפרויקט או בהגדרות החשבון לפני הפעלת הפייפליין',
+    );
+  }
+
+  await _recordStart(userId);
   logger.info('orchestrator: starting pipeline', { projectId, userId });
 
   emitToProject(projectId, 'pipeline:started', { projectId });
@@ -72,22 +80,37 @@ async function getPipelineStatus(projectId, userId) {
   return { project, phases };
 }
 
-function _checkRateLimit(userId) {
-  const key     = String(userId);
-  const now     = Date.now();
-  const history = (startHistory.get(key) || []).filter((t) => now - t < HOUR_MS);
-
-  if (history.length >= MAX_STARTS) {
+async function _checkRateLimit(userId) {
+  const cutoff = new Date(Date.now() - HOUR_MS);
+  const user   = await User.findById(userId).select('+pipelineStarts').lean();
+  const recent = (user?.pipelineStarts || []).filter((t) => t > cutoff);
+  if (recent.length >= MAX_STARTS) {
     throw ApiError.badRequest(`Rate limit: max ${MAX_STARTS} pipeline starts per hour`);
   }
 }
 
-function _recordStart(userId) {
-  const key     = String(userId);
-  const now     = Date.now();
-  const history = (startHistory.get(key) || []).filter((t) => now - t < HOUR_MS);
-  history.push(now);
-  startHistory.set(key, history);
+async function _recordStart(userId) {
+  const cutoff = new Date(Date.now() - HOUR_MS);
+  // Aggregation pipeline update: prune old entries + push new one atomically
+  await User.findByIdAndUpdate(userId, [
+    {
+      $set: {
+        pipelineStarts: {
+          $concatArrays: [
+            { $filter: { input: { $ifNull: ['$pipelineStarts', []] }, cond: { $gte: ['$$this', cutoff] } } },
+            [new Date()],
+          ],
+        },
+      },
+    },
+  ]);
+}
+
+async function _hasApiKey(projectId, ownerId) {
+  const project = await Project.findById(projectId).select('+settings.anthropicApiKey').lean();
+  if (project?.settings?.anthropicApiKey) return true;
+  const user = await User.findById(ownerId).select('+settings.anthropicApiKey').lean();
+  return !!(user?.settings?.anthropicApiKey);
 }
 
 module.exports = { startPipeline, pausePipeline, getPipelineStatus };

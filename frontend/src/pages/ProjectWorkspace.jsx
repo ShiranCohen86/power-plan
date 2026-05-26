@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import SafeMarkdown from '../components/ui/SafeMarkdown';
+import { PLANNING_PHASES, PHASE_LEAD } from '../utils/phaseConfig';
 
 import { selectProjectById, updateProject } from '../store/slices/projectsSlice';
 import { useProjectSocket } from '../hooks/useProjectSocket';
@@ -11,7 +12,8 @@ import {
   startPipeline, pausePipeline, approvePhase, refinePhase,
   getPipelineStatus, getPhaseDocument,
 } from '../api/pipeline.api';
-import { getProject, getProjectSettings } from '../api/projects.api';
+import { getProject, getProjectSettings, getMeetings } from '../api/projects.api';
+import { getRateLimit } from '../api/settings.api';
 
 import PhaseList          from '../components/workspace/PhaseList';
 import LiveFeed           from '../components/workspace/LiveFeed';
@@ -60,20 +62,50 @@ export default function ProjectWorkspace() {
   const [consultantsRunning, setConsultantsRunning] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(null); // null = loading
   const [usingFallback, setUsingFallback] = useState(false);
+  const [rateLimit, setRateLimit] = useState(null); // { used, remaining, maxPerHour, resetsAt }
 
-  // Load project + pipeline status
+  // Live Company Experience state
+  const [activeFeedTab, setActiveFeedTab]       = useState('narrative');
+  const [scheduledMeeting, setScheduledMeeting] = useState(null); // { phaseIndex, scheduledAt }
+  const [isMeetingLive, setIsMeetingLive]       = useState(false);
+  const [missedMeeting, setMissedMeeting]       = useState(false);
+  const wasWatchingRef                           = useRef(false);
+  const pageLoadTimeRef                          = useRef(Date.now());
+
+  // Load project + pipeline status + historical meetings
   useEffect(() => {
     (async () => {
       try {
-        const [projRes, statusRes, settingsRes] = await Promise.all([
+        const [projRes, statusRes, settingsRes, meetingsRes, rateLimitRes] = await Promise.all([
           getProject(id),
           getPipelineStatus(id),
           getProjectSettings(id).catch(() => null),
+          getMeetings(id).catch(() => []),
+          getRateLimit().catch(() => null),
         ]);
+
+        // Onboarding projects have no workspace yet — redirect to discovery flow
+        if (projRes.status === 'onboarding') {
+          navigate(`/new-project?resumeId=${id}`);
+          return;
+        }
+
         setProject(projRes);
         setPhases(statusRes.phases || []);
-        setHasApiKey(settingsRes ? settingsRes.hasApiKey : true);
+        setHasApiKey(settingsRes?.hasApiKey ?? false);
         setUsingFallback(settingsRes?.usingFallback || false);
+        if (rateLimitRes) setRateLimit(rateLimitRes);
+
+        // Pre-populate meeting tab with historical messages, injecting phase separators
+        if (meetingsRes?.length) {
+          const allMsgs = [];
+          for (const m of meetingsRes) {
+            const cfg = PLANNING_PHASES.find((p) => p.index === m.phaseIndex);
+            allMsgs.push({ _isSeparator: true, phaseIndex: m.phaseIndex, label: cfg?.nameHe || `שלב ${m.phaseIndex}` });
+            allMsgs.push(...m.messages);
+          }
+          setMeetingMsgs(allMsgs);
+        }
 
         // If there's a phase awaiting approval, set it
         const waiting = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
@@ -96,15 +128,21 @@ export default function ProjectWorkspace() {
       setActiveDoc(res);
     } catch {
       setActiveDoc(null);
+      toast.error('לא ניתן לטעון את מסמך השלב — נסה שוב');
     }
   }
 
   // WebSocket event handlers
   useProjectSocket(id, {
+    onPhaseRefining: ({ phaseIndex }) => {
+      setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'running' }));
+      setAwaiting(null);
+      setRefineOpen(false);
+      setNarrative('');
+    },
     onPhaseStarted: ({ phaseIndex, agentName }) => {
       setActive(phaseIndex);
       setNarrative('');
-      setMeetingMsgs([]);
       setActiveAgent(agentName);
       setTechLogs((prev) => [...prev, { agentName, event: 'started', timestamp: new Date() }]);
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'running', agentName }));
@@ -135,11 +173,28 @@ export default function ProjectWorkspace() {
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'failed', errorMessage: err }));
       setProject((p) => p ? { ...p, status: 'failed' } : p);
     },
-    onMeetingStarted: ({ participants }) => {
-      setMeetingMsgs([]);
+    onMeetingScheduled: ({ phaseIndex, scheduledAt }) => {
+      setScheduledMeeting({ phaseIndex, scheduledAt: new Date(scheduledAt) });
+    },
+    onMeetingStarted: ({ phaseIndex, phaseType, startedAt }) => {
+      // Detect if user was watching: on meeting tab, or page loaded before meeting started
+      const loadedBeforeMeeting = startedAt && new Date(startedAt) > new Date(pageLoadTimeRef.current);
+      wasWatchingRef.current = activeFeedTab === 'meeting' || !loadedBeforeMeeting;
+      setScheduledMeeting(null);
+      setIsMeetingLive(true);
+      const cfg = PLANNING_PHASES.find((p) => p.type === phaseType || p.index === phaseIndex);
+      setMeetingMsgs((prev) => [
+        ...prev,
+        { _isSeparator: true, phaseIndex, phaseType, label: cfg?.nameHe || phaseType },
+      ]);
     },
     onMeetingMessage: (msg) => {
       setMeetingMsgs((prev) => [...prev, msg]);
+    },
+    onMeetingCompleted: () => {
+      setIsMeetingLive(false);
+      if (!wasWatchingRef.current) setMissedMeeting(true);
+      wasWatchingRef.current = false;
     },
     onPlanningComplete: () => {
       setProject((p) => p ? { ...p, completionPercent: 50 } : p);
@@ -209,9 +264,12 @@ export default function ProjectWorkspace() {
   }
 
   async function handleStart() {
+    if (hasApiKey === false) return;
     try {
       await startPipeline(id);
       toast.success('הפייפליין התחיל!');
+      // Refresh rate limit counter after a successful start
+      getRateLimit().then(setRateLimit).catch(() => {});
     } catch (err) {
       handleActionError(err);
     }
@@ -255,11 +313,11 @@ export default function ProjectWorkspace() {
     try {
       await refinePhase(id, awaitingPhase, refineFeedback);
       setRefineOpen(false);
-      setRefineFeedback('');
+      setRefineFeedback('');  // only clear on success
       setNarrative('');
       toast.success('בקשת התיקון נשלחה — Claude מעדכן...');
     } catch (err) {
-      handleActionError(err);
+      handleActionError(err);  // feedback text preserved for retry
     }
   }
 
@@ -299,8 +357,8 @@ export default function ProjectWorkspace() {
   const isFailed       = projectStatus === 'failed';
   const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
   const hasStalledPhase = phases.some((p) => p.status === 'failed' || p.status === 'interrupted');
-  const canStart       = notStarted && !inProgress;
-  const canResume      = (isPaused || isFailed || hasStalledPhase) && !isRunning && hasPhases;
+  const canStart       = notStarted && !inProgress && !isQuotaPaused;
+  const canResume      = (isPaused || isFailed || hasStalledPhase) && !isRunning && hasPhases && !isQuotaPaused;
 
   // Estimated time remaining: each planning phase ≈ 2.5 min
   const TOTAL_PLANNING = 12;
@@ -350,6 +408,17 @@ export default function ProjectWorkspace() {
         {showEstTime && (
           <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
             ~{estMinutes} דק׳
+          </span>
+        )}
+        {rateLimit && rateLimit.used > 0 && (
+          <span
+            title={rateLimit.resetsAt ? `מתאפס ב-${new Date(rateLimit.resetsAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : ''}
+            style={{
+              fontSize: 11, whiteSpace: 'nowrap', cursor: 'default',
+              color: rateLimit.remaining === 0 ? 'var(--danger)' : 'var(--text-muted)',
+            }}
+          >
+            🚀 {rateLimit.remaining}/{rateLimit.maxPerHour} starts
           </span>
         )}
         <div className="workspace-topbar__status">
@@ -475,20 +544,6 @@ export default function ProjectWorkspace() {
                 </button>
               </div>
               <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
-
-              {awaitingPhase === activePhaseIndex && (
-                <ApprovalBar
-                  phaseIndex={awaitingPhase}
-                  refineCount={awaitPhase?.refineCount || 0}
-                  refineOpen={refineOpen}
-                  refineFeedback={refineFeedback}
-                  onRefineOpen={() => setRefineOpen(true)}
-                  onRefineClose={() => setRefineOpen(false)}
-                  onRefineFeedbackChange={setRefineFeedback}
-                  onApprove={handleApprove}
-                  onRefineSubmit={handleRefine}
-                />
-              )}
             </div>
           ) : (
             <div className="workspace-empty">
@@ -510,6 +565,21 @@ export default function ProjectWorkspace() {
               )}
             </div>
           )}
+
+          {/* ApprovalBar: always rendered when phase awaits approval — independent of doc load success */}
+          {awaitingPhase === activePhaseIndex && (
+            <ApprovalBar
+              phaseIndex={awaitingPhase}
+              refineCount={awaitPhase?.refineCount || 0}
+              refineOpen={refineOpen}
+              refineFeedback={refineFeedback}
+              onRefineOpen={() => setRefineOpen(true)}
+              onRefineClose={() => setRefineOpen(false)}
+              onRefineFeedbackChange={setRefineFeedback}
+              onApprove={handleApprove}
+              onRefineSubmit={handleRefine}
+            />
+          )}
         </main>
 
         {/* Right: Live feed */}
@@ -521,6 +591,14 @@ export default function ProjectWorkspace() {
           techLogs={techLogs}
           isRunning={isRunning}
           activeAgent={activeAgent}
+          activeTab={activeFeedTab}
+          onTabChange={setActiveFeedTab}
+          scheduledMeeting={scheduledMeeting}
+          isMeetingLive={isMeetingLive}
+          missedMeeting={missedMeeting}
+          onClearMissed={() => setMissedMeeting(false)}
+          onJoinMeeting={() => setActiveFeedTab('meeting')}
+          activePhaseIndex={activePhaseIndex}
         />
       </div>
     </div>

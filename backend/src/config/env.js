@@ -16,6 +16,7 @@ const env = {
   ANTHROPIC_MODEL_STARTER: process.env.ANTHROPIC_MODEL_STARTER || 'claude-haiku-4-5-20251001',
   PIPELINE_MAX_CONCURRENT: parseInt(process.env.PIPELINE_MAX_CONCURRENT, 10) || 5,
   ENCRYPTION_KEY:         process.env.ENCRYPTION_KEY || '',
+  MEETING_PRE_DELAY_MS:   parseInt(process.env.MEETING_PRE_DELAY_MS, 10) || 20000,
 
   // MongoDB Atlas (Power Plan's shared cluster)
   ATLAS_PUBLIC_KEY:   process.env.ATLAS_PUBLIC_KEY  || '',
@@ -42,6 +43,15 @@ const env = {
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
 
   RETURN_DEV_TOKEN: process.env.RETURN_DEV_TOKEN === 'true',
+
+  // Redis (optional) — Socket.io pub/sub adapter for multi-instance deployments
+  REDIS_URL: process.env.REDIS_URL || '',
+
+  // Cloudflare R2 (optional) — object storage for generated code files
+  CF_R2_ACCOUNT_ID:        process.env.CF_R2_ACCOUNT_ID        || '',
+  CF_R2_ACCESS_KEY_ID:     process.env.CF_R2_ACCESS_KEY_ID     || '',
+  CF_R2_SECRET_ACCESS_KEY: process.env.CF_R2_SECRET_ACCESS_KEY || '',
+  CF_R2_BUCKET_NAME:       process.env.CF_R2_BUCKET_NAME       || 'power-plan-files',
 };
 
 if (env.NODE_ENV === 'production') {
@@ -53,6 +63,9 @@ if (env.NODE_ENV === 'production') {
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error('FATAL: ANTHROPIC_API_KEY must be set in production');
+  }
+  if (!process.env.ENCRYPTION_KEY) {
+    throw new Error('FATAL: ENCRYPTION_KEY must be set in production — all stored API keys will be unencrypted otherwise');
   }
 }
 

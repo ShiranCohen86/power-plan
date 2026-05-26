@@ -15,6 +15,9 @@ router.delete('/:id', validate(projectValidator.objectId), projectsController.de
 router.post('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);
 router.post('/:id/discovery/complete', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryComplete);
 
+// Meeting history
+router.get('/:id/meetings', validate(projectValidator.objectId), projectsController.getMeetings);
+
 // Per-project settings
 router.get   ('/:id/settings',              projectsController.getProjectSettings);
 router.put   ('/:id/settings/api-key',      projectsController.setProjectApiKey);

@@ -1,7 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const orchestrator = require('../services/orchestrator.service');
 const planningRunner = require('../services/planning-runner.service');
+const projectService = require('../services/project.service');
 const ApiError = require('../utils/ApiError');
+const { emitToProject } = require('../sockets');
+const logger = require('../utils/logger');
 
 exports.start = asyncHandler(async (req, res) => {
   await orchestrator.startPipeline(req.params.projectId, req.user.id);
@@ -22,6 +25,9 @@ exports.approve = asyncHandler(async (req, res) => {
   const { phaseIndex } = req.body;
   if (phaseIndex == null) throw ApiError.badRequest('phaseIndex required');
 
+  // Ownership check — throws 403 if user doesn't own the project
+  await projectService.getById(req.params.projectId, req.user.id);
+
   await planningRunner.approvePhase(req.params.projectId, Number(phaseIndex));
   res.json({ message: 'Phase approved, pipeline resuming' });
 });
@@ -31,8 +37,14 @@ exports.refine = asyncHandler(async (req, res) => {
   if (phaseIndex == null) throw ApiError.badRequest('phaseIndex required');
   if (!feedback?.trim())  throw ApiError.badRequest('feedback required');
 
+  // Ownership check — throws 403 if user doesn't own the project
+  await projectService.getById(req.params.projectId, req.user.id);
+
   // Respond immediately; refinement runs in background
   res.status(202).json({ message: 'Refinement started' });
 
-  planningRunner.refinePhase(req.params.projectId, Number(phaseIndex), feedback).catch(() => {});
+  planningRunner.refinePhase(req.params.projectId, Number(phaseIndex), feedback).catch((err) => {
+    logger.error('pipeline.controller: refine failed', { projectId: req.params.projectId, error: err.message });
+    emitToProject(req.params.projectId, 'pipeline:error', { error: err.message });
+  });
 });

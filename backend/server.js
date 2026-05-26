@@ -11,7 +11,7 @@ async function start() {
   await connectDB();
 
   const { initSocket } = require('./src/sockets');
-  initSocket(server);
+  await initSocket(server);
 
   server.listen(env.PORT, () => {
     logger.info(`Power Plan backend listening on port ${env.PORT} [${env.NODE_ENV}]`);

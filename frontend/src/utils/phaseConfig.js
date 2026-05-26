@@ -204,6 +204,17 @@ export const CODEGEN_PHASES = [
 
 export const ALL_PHASES = [...PLANNING_PHASES, ...CODEGEN_PHASES];
 
+// Maps planning phase index → which team member leads that phase (for team status strip)
+export const PHASE_LEAD = {
+  0: 'pm', 1: 'pm', 2: 'pm',
+  3: 'ux',
+  4: 'cto', 5: 'cto', 7: 'cto', 8: 'cto',
+  6: 'backend',
+  9: 'pm',
+  10: 'qa',
+  11: 'devops',
+};
+
 export const TEAM_MEMBERS = {
   cto:      { name: 'Sarah', role: 'CTO',           color: '#7c3aed', emoji: '🏗️' },
   pm:       { name: 'David', role: 'Product Manager', color: '#2563eb', emoji: '👨‍💼' },

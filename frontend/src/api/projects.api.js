@@ -3,8 +3,12 @@ import { safeRequest } from './request';
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
 
-export const listProjects = () =>
-  safeRequest({ method: 'get', url: '/projects' });
+export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date' } = {}) => {
+  const params = { page, limit };
+  if (search) params.search = search;
+  if (sort && sort !== 'date') params.sort = sort;
+  return safeRequest({ method: 'get', url: '/projects', params });
+};
 
 export const getProject = (id) =>
   safeRequest({ method: 'get', url: `/projects/${id}` });
@@ -14,6 +18,9 @@ export const deleteProject = (id) =>
 
 export const discoveryComplete = (id, answers) =>
   safeRequest({ method: 'post', url: `/projects/${id}/discovery/complete`, data: { answers } });
+
+export const getMeetings = (id) =>
+  safeRequest({ method: 'get', url: `/projects/${id}/meetings` });
 
 // Per-project settings
 export const getProjectSettings    = (id) =>

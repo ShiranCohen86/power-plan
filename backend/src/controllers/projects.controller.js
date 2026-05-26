@@ -4,6 +4,8 @@ const projectService = require('../services/project.service');
 const discoveryService = require('../services/discovery.service');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Meeting = require('../models/Meeting');
+const MeetingMessage = require('../models/MeetingMessage');
 const { encrypt, decrypt } = require('../services/encryption.service');
 
 function friendlyAIError(err) {
@@ -35,9 +37,15 @@ exports.deleteProject = asyncHandler(async (req, res) => {
   res.status(204).end();
 });
 
+const VALID_SORTS = new Set(['date', 'status', 'completion']);
+
 exports.list = asyncHandler(async (req, res) => {
-  const projects = await projectService.listByOwner(req.user.id);
-  res.json({ items: projects });
+  const page   = Math.max(1, parseInt(req.query.page,  10) || 1);
+  const limit  = Math.min(50, parseInt(req.query.limit, 10) || 12);
+  const search = (req.query.search || '').slice(0, 100);
+  const sort   = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
+  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort });
+  res.json(result);
 });
 
 exports.getOne = asyncHandler(async (req, res) => {
@@ -133,6 +141,36 @@ exports.discoveryComplete = asyncHandler(async (req, res) => {
     req.body.answers,
   );
   res.json(project);
+});
+
+// Returns all meeting messages for a project grouped by phaseIndex, oldest first.
+// Used to replay meeting history when workspace is loaded after the fact.
+exports.getMeetings = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const meetings = await Meeting.find({ projectId: req.params.id }).sort('startedAt').lean();
+  if (!meetings.length) return res.json([]);
+
+  const meetingIds = meetings.map((m) => m._id);
+  const messages   = await MeetingMessage.find({ meetingId: { $in: meetingIds } }).sort('timestamp').lean();
+
+  const meetingById = new Map(meetings.map((m) => [String(m._id), m]));
+  const grouped = meetings.map((m) => ({
+    phaseIndex: m.type,
+    meetingId:  String(m._id),
+    participants: m.participants,
+    startedAt:  m.startedAt,
+    messages:   [],
+  }));
+  const groupedById = new Map(grouped.map((g) => [g.meetingId, g]));
+
+  for (const msg of messages) {
+    const g = groupedById.get(String(msg.meetingId));
+    if (g) g.messages.push({ role: msg.role, displayName: msg.displayName, color: msg.color, message: msg.message, type: msg.type });
+  }
+
+  res.json(grouped.filter((g) => g.messages.length > 0));
 });
 
 // ── Per-project settings ───────────────────────────────────────────────────

@@ -1,4 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { TEAM_MEMBERS, PHASE_LEAD } from '../../utils/phaseConfig';
+import MeetingCountdownBanner from './MeetingCountdownBanner';
+import TeamMemberAvatar from './TeamMemberAvatar';
 
 const ROLE_EMOJI = {
   cto: '🏗️', pm: '👨‍💼', ux: '🎨', backend: '⚙️',
@@ -25,68 +28,108 @@ const EVENT_ICON = {
 export default function LiveFeed({
   narrative, meetingMsgs, consultantMsgs = [], consultantsRunning = false,
   techLogs, isRunning, activeAgent,
+  // Controlled tab
+  activeTab, onTabChange,
+  // Live Company Experience
+  scheduledMeeting, isMeetingLive, missedMeeting, onClearMissed, onJoinMeeting,
+  activePhaseIndex,
 }) {
-  const [tab, setTab] = useState('narrative');
-  const narrativeRef  = useRef(null);
-  const meetingRef    = useRef(null);
-  const consultRef    = useRef(null);
-  const techRef       = useRef(null);
+  const narrativeRef = useRef(null);
+  const meetingRef   = useRef(null);
+  const consultRef   = useRef(null);
+  const techRef      = useRef(null);
 
   // Auto-scroll narrative
   useEffect(() => {
-    if (tab === 'narrative' && narrativeRef.current) {
+    if (activeTab === 'narrative' && narrativeRef.current) {
       narrativeRef.current.scrollTop = narrativeRef.current.scrollHeight;
     }
-  }, [narrative, tab]);
+  }, [narrative, activeTab]);
 
-  // Auto-switch to meeting when internal meeting messages arrive
+  // Auto-switch to meeting when messages arrive (only if not already there)
   useEffect(() => {
+    if (meetingMsgs.length > 0 && activeTab !== 'meeting') {
+      onTabChange('meeting');
+    }
     if (meetingMsgs.length > 0) {
-      setTab('meeting');
       setTimeout(() => {
         meetingRef.current?.scrollTo({ top: meetingRef.current.scrollHeight, behavior: 'smooth' });
       }, 50);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingMsgs.length]);
 
-  // Auto-switch to consultants when external consultant messages arrive
+  // Auto-switch to consultants when consultant messages arrive
   useEffect(() => {
     if (consultantMsgs.length > 0) {
-      setTab('consultants');
+      onTabChange('consultants');
       setTimeout(() => {
         consultRef.current?.scrollTo({ top: consultRef.current.scrollHeight, behavior: 'smooth' });
       }, 50);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultantMsgs.length]);
 
-  // Auto-scroll tech
+  // Auto-scroll tech log
   useEffect(() => {
-    if (tab === 'tech' && techRef.current) {
+    if (activeTab === 'tech' && techRef.current) {
       techRef.current.scrollTop = techRef.current.scrollHeight;
     }
-  }, [techLogs, tab]);
+  }, [techLogs, activeTab]);
+
+  // Compute team member statuses
+  function getMemberStatus(key) {
+    if (isMeetingLive) return 'in-meeting';
+    if (isRunning && PHASE_LEAD[activePhaseIndex] === key) return 'working';
+    return 'idle';
+  }
 
   return (
     <aside className="live-feed">
+      {/* Team status strip — always visible */}
+      <div className="team-status-strip">
+        {Object.entries(TEAM_MEMBERS).map(([key, member]) => (
+          <TeamMemberAvatar
+            key={key}
+            memberKey={key}
+            member={member}
+            status={getMemberStatus(key)}
+          />
+        ))}
+      </div>
+
+      {/* Meeting countdown / live banner */}
+      {(scheduledMeeting || isMeetingLive) && (
+        <div style={{ padding: '0 8px 0' }}>
+          <MeetingCountdownBanner
+            scheduledAt={scheduledMeeting?.scheduledAt}
+            isLive={isMeetingLive}
+            onJoin={onJoinMeeting}
+          />
+        </div>
+      )}
+
+      {/* Tabs */}
       <div className="live-feed__tabs">
         <button
-          className={`live-feed__tab${tab === 'narrative' ? ' live-feed__tab--active' : ''}`}
-          onClick={() => setTab('narrative')}
+          className={`live-feed__tab${activeTab === 'narrative' ? ' live-feed__tab--active' : ''}`}
+          onClick={() => onTabChange('narrative')}
         >
           🤔 Claude
         </button>
         <button
-          className={`live-feed__tab${tab === 'meeting' ? ' live-feed__tab--active' : ''}`}
-          onClick={() => setTab('meeting')}
+          className={`live-feed__tab${activeTab === 'meeting' ? ' live-feed__tab--active' : ''}`}
+          onClick={() => onTabChange('meeting')}
         >
           🏢 ישיבה
           {meetingMsgs.length > 0 && (
             <span className="live-feed__badge">{meetingMsgs.length}</span>
           )}
+          {isMeetingLive && <span className="live-feed__dot-pulse" />}
         </button>
         <button
-          className={`live-feed__tab${tab === 'consultants' ? ' live-feed__tab--active' : ''}`}
-          onClick={() => setTab('consultants')}
+          className={`live-feed__tab${activeTab === 'consultants' ? ' live-feed__tab--active' : ''}`}
+          onClick={() => onTabChange('consultants')}
         >
           🌐 יועצים
           {consultantsRunning && <span className="live-feed__dot-pulse" />}
@@ -95,15 +138,15 @@ export default function LiveFeed({
           )}
         </button>
         <button
-          className={`live-feed__tab${tab === 'tech' ? ' live-feed__tab--active' : ''}`}
-          onClick={() => setTab('tech')}
+          className={`live-feed__tab${activeTab === 'tech' ? ' live-feed__tab--active' : ''}`}
+          onClick={() => onTabChange('tech')}
         >
           📊 טכני
         </button>
       </div>
 
       {/* Narrative tab */}
-      {tab === 'narrative' && (
+      {activeTab === 'narrative' && (
         <div className="live-feed__content" ref={narrativeRef}>
           {activeAgent && (
             <div className="live-feed__agent-badge">
@@ -128,36 +171,59 @@ export default function LiveFeed({
         </div>
       )}
 
-      {/* Internal meeting tab */}
-      {tab === 'meeting' && (
+      {/* Meeting tab */}
+      {activeTab === 'meeting' && (
         <div className="live-feed__content" ref={meetingRef}>
+          {/* Missed meeting banner */}
+          {missedMeeting && (
+            <div className="missed-meeting-banner">
+              <span>📋 פספסת את הפגישה — הנה הסיכום</span>
+              <button onClick={onClearMissed}>✕</button>
+            </div>
+          )}
+
           {meetingMsgs.length === 0 ? (
             <div className="live-feed__empty">
               <p>הישיבה הפנימית תתחיל לאחר השלמת כל שלב</p>
             </div>
           ) : (
             <div className="live-feed__meeting">
-              {meetingMsgs.map((msg, i) => (
-                <div key={i} className={`meeting-msg meeting-msg--${msg.type}`}>
-                  <div className="meeting-msg__header">
-                    <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
-                    <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>
-                      {msg.displayName}
-                    </span>
-                    <span className={`meeting-msg__type-badge meeting-msg__type-badge--${msg.type}`}>
-                      {msg.type}
-                    </span>
+              {meetingMsgs.map((msg, i) => {
+                if (msg._isSeparator) {
+                  return (
+                    <div key={`sep-${i}`} className="meeting-phase-sep">
+                      <span className="meeting-phase-sep__label">{msg.label}</span>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={i} className={`meeting-msg meeting-msg--${msg.type}`}>
+                    <div className="meeting-msg__header">
+                      <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
+                      <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>
+                        {msg.displayName}
+                      </span>
+                      <span className={`meeting-msg__type-badge meeting-msg__type-badge--${msg.type}`}>
+                        {msg.type}
+                      </span>
+                    </div>
+                    <p className="meeting-msg__body">{msg.message}</p>
                   </div>
-                  <p className="meeting-msg__body">{msg.message}</p>
+                );
+              })}
+              {isMeetingLive && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                  <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
+                  הצוות דן...
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
       )}
 
       {/* External consultants tab */}
-      {tab === 'consultants' && (
+      {activeTab === 'consultants' && (
         <div className="live-feed__content" ref={consultRef}>
           {consultantMsgs.length === 0 ? (
             <div className="live-feed__empty">
@@ -175,7 +241,6 @@ export default function LiveFeed({
             </div>
           ) : (
             <div className="live-feed__meeting">
-              {/* Header */}
               <div className="consultants-header">
                 <span className="consultants-header__badge">External Review</span>
                 <span className="consultants-header__title">סקירת אפיון — Round 1</span>
@@ -213,7 +278,7 @@ export default function LiveFeed({
       )}
 
       {/* Tech log tab */}
-      {tab === 'tech' && (
+      {activeTab === 'tech' && (
         <div className="live-feed__content" ref={techRef}>
           {techLogs.length === 0 ? (
             <div className="live-feed__empty">

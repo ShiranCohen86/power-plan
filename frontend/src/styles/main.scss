@@ -628,6 +628,21 @@ input, select, textarea {
 
 // â”€â”€ Meeting messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+.meeting-phase-sep {
+  display: flex; align-items: center; gap: 8px; margin: 16px 0 8px;
+
+  &::before, &::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  &__label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    white-space: nowrap; padding: 2px 8px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: $radius-sm;
+  }
+}
+
 .meeting-msg {
   margin-bottom: 12px;
   padding: 10px 12px;
@@ -1491,4 +1506,98 @@ input, select, textarea {
 .new-project-checking {
   display: flex; align-items: center; justify-content: center;
   min-height: 200px;
+}
+
+// ── Live Company Experience ─────────────────────────────────────────────────
+
+// Team status strip (grid 4×2 above LiveFeed tabs)
+.team-status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+// Team member avatar
+.team-avatar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: $radius-sm;
+  cursor: default;
+  transition: background 0.15s;
+
+  &:hover { background: var(--surface-2); }
+
+  &__emoji {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  &__name {
+    font-size: 9px; color: var(--text-muted); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  &__dot {
+    position: absolute; top: 4px; right: 4px;
+    width: 7px; height: 7px; border-radius: 50%;
+    border: 1.5px solid var(--surface-1);
+    background: #6b7280; // idle = gray
+  }
+  &--working &__dot    { background: #2563eb; animation: pulse 1.5s ease-in-out infinite; }
+  &--in-meeting &__dot { background: #22c55e; animation: pulse 1s ease-in-out infinite; }
+  &--just-finished &__dot { background: #f59e0b; }
+}
+
+// Meeting countdown / live join banner
+.meeting-countdown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(135deg, #1e1e3f 0%, #2d1b69 100%);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: $radius;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin: 6px 0 2px;
+
+  &--live {
+    border-color: rgba(34, 197, 94, 0.4);
+    background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 1.5s ease-in-out infinite;
+    margin-left: 6px; margin-bottom: -1px;
+  }
+}
+
+// Missed meeting banner (inside meeting tab)
+.missed-meeting-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #1e1b4b;
+  border: 1px solid rgba(67, 56, 202, 0.4);
+  border-radius: $radius;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+
+  button {
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    font-size: 14px; padding: 0 2px; line-height: 1;
+    &:hover { color: var(--text); }
+  }
 }

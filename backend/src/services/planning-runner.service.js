@@ -2,6 +2,10 @@ const Project        = require('../models/Project');
 const Phase          = require('../models/Phase');
 const Document       = require('../models/Document');
 const User           = require('../models/User');
+const Meeting        = require('../models/Meeting');
+const AgentLog       = require('../models/AgentLog');
+const Lesson         = require('../models/Lesson');
+const env            = require('../config/env');
 const agentlog       = require('./agentlog.service');
 const { getAgent }   = require('./ai/agents.registry');
 const { runMeeting } = require('./ai/meeting-runner.service');
@@ -70,6 +74,9 @@ async function startPlanning(projectId) {
       title: `📋 ${proj.title} — האפיון הושלם`,
       message: 'כל 12 שלבי התכנון הושלמו. Claude מתחיל לכתוב קוד.',
     }).catch(() => {});
+
+    // Auto-extract lessons from any agent errors in this project (fire-and-forget)
+    autoExtractLessons(projectId).catch(() => {});
 
     // External Consultants → then Codegen (fire-and-forget chain)
     const { runExternalConsultants } = require('./ai/external-consultants.orchestrator');
@@ -262,13 +269,23 @@ async function _runSinglePhase(projectId, phaseIndex, refineFeedback = null) {
     docId:      doc._id,
   });
 
-  // Run internal meeting (Pro plan only)
-  if (userCtx.plan === 'pro') {
-    try {
-      await runMeeting(projectId, phase._id, config.type, result.content);
-    } catch (err) {
-      logger.warn('planning-runner: meeting failed (non-fatal)', { projectId, phaseIndex, error: err.message });
-    }
+  // Run team meeting — emit scheduled event + brief delay for live-join experience
+  try {
+    const scheduledAt = new Date(Date.now() + env.MEETING_PRE_DELAY_MS);
+    // Pre-create meeting record so scheduledAt is saved
+    const meetingRecord = await Meeting.create({
+      projectId,
+      phaseId:     phase._id,
+      type:        config.type,
+      participants: [],
+      status:      'scheduled',
+      scheduledAt,
+    });
+    emitToProject(projectId, 'meeting:scheduled', { phaseIndex, scheduledAt, meetingId: meetingRecord._id });
+    await new Promise(r => setTimeout(r, env.MEETING_PRE_DELAY_MS));
+    await runMeeting(projectId, phase._id, config.type, result.content, phaseIndex, meetingRecord._id);
+  } catch (err) {
+    logger.warn('planning-runner: meeting failed (non-fatal)', { projectId, phaseIndex, error: err.message });
   }
 
   // Extract tasks from dev_planning phase in background
@@ -323,6 +340,55 @@ async function refinePhase(projectId, phaseIndex, feedback) {
     );
     emitToProject(projectId, 'phase:failed', { phaseIndex, error: err.message });
   }
+}
+
+// Maps agent names to Lesson.agentType enum values
+const AGENT_TO_TYPE = {
+  IdeaAnalystAgent:      'idea_understanding',
+  ProductDiscoveryAgent: 'product_discovery',
+  MarketAnalystAgent:    'market_analysis',
+  UXArchitectAgent:      'ux_architecture',
+  TechArchitectAgent:    'tech_architecture',
+  SystemDesignAgent:     'system_design',
+  DatabaseAgent:         'database_design',
+  AIAgentSystemAgent:    'ai_agent_system',
+  OrchestrationAgent:    'orchestration',
+  DevPlannerAgent:       'dev_planning',
+  QAAgent:               'qa_strategy',
+  DevOpsAgent:           'devops_strategy',
+};
+
+// Scans agent error logs for this project and upserts lessons in the knowledge base.
+// Called fire-and-forget after all planning phases complete.
+async function autoExtractLessons(projectId) {
+  const errorLogs = await AgentLog.find({ projectId, event: 'error' }).lean();
+  if (!errorLogs.length) return;
+
+  for (const log of errorLogs) {
+    const agentType = AGENT_TO_TYPE[log.agentName];
+    if (!agentType) continue;
+
+    const mistake = (log.metadata?.error || log.message || 'Unknown agent error').slice(0, 500);
+    if (!mistake || mistake.length < 10) continue;
+
+    // Upsert: increment occurrenceCount if the same mistake already exists for this agent
+    await Lesson.findOneAndUpdate(
+      { agentType, mistake: { $regex: mistake.slice(0, 60).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
+      {
+        $setOnInsert: {
+          category: 'spec_quality',
+          mistake,
+          lesson: 'ודא שהסוכן מקבל context מלא ושיש מספיק tokens להשלמת המשימה',
+          isActive: true,
+        },
+        $inc: { occurrenceCount: 1 },
+        $set: { lastSeenAt: new Date() },
+      },
+      { upsert: true },
+    );
+  }
+
+  logger.info('planning-runner: auto-extracted lessons', { projectId, count: errorLogs.length });
 }
 
 module.exports = { startPlanning, approvePhase, refinePhase };

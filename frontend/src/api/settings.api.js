@@ -23,3 +23,9 @@ export const updateRenderToken = (token) =>
 
 export const deleteRenderToken = () =>
   safeRequest({ method: 'delete', url: '/settings/render-token' });
+
+export const validateApiKey = (apiKey) =>
+  safeRequest({ method: 'post', url: '/settings/validate-key', data: { apiKey } });
+
+export const getRateLimit = () =>
+  safeRequest({ method: 'get', url: '/settings/rate-limit' });

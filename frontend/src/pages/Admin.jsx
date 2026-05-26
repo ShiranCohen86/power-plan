@@ -5,6 +5,21 @@ import { selectCurrentUser } from '../store/slices/authSlice';
 import * as adminApi from '../api/admin.api';
 import PlatformSetup from '../components/admin/PlatformSetup';
 
+const PHASE_LABELS = {
+  idea_understanding:  'Idea Analysis',
+  product_discovery:   'Product Discovery',
+  market_analysis:     'Market Analysis',
+  ux_architecture:     'UX Architecture',
+  tech_architecture:   'Tech Architecture',
+  system_design:       'System Design',
+  database_design:     'DB Design',
+  ai_agent_system:     'AI Agent System',
+  orchestration:       'Orchestration',
+  dev_planning:        'Dev Planning',
+  qa_strategy:         'QA Strategy',
+  devops_strategy:     'DevOps Strategy',
+};
+
 const AGENT_TYPES = [
   'idea_understanding', 'product_discovery', 'market_analysis', 'ux_architecture',
   'tech_architecture', 'system_design', 'database_design', 'ai_agent_system',
@@ -36,10 +51,11 @@ export default function Admin() {
   const navigate = useNavigate();
   const user     = useSelector(selectCurrentUser);
 
-  const [stats,   setStats]   = useState(null);
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [stats,     setStats]     = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [lessons,   setLessons]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
 
   // Add lesson form
   const [showForm,    setShowForm]    = useState(false);
@@ -55,11 +71,13 @@ export default function Admin() {
   async function load() {
     setLoading(true);
     try {
-      const [statsRes, lessonsRes] = await Promise.all([
+      const [statsRes, analyticsRes, lessonsRes] = await Promise.all([
         adminApi.getStats(),
+        adminApi.getAnalytics().catch(() => null),
         adminApi.getLessons(),
       ]);
       setStats(statsRes);
+      setAnalytics(analyticsRes);
       setLessons(lessonsRes.lessons);
     } catch {
       setError('Failed to load admin data');
@@ -145,6 +163,47 @@ export default function Admin() {
             <StatCard icon="🧠" label="לקחים פעילים"   value={stats?.activeLessons} />
           </div>
         </section>
+
+        {/* Analytics */}
+        {analytics && (
+          <section className="admin-section">
+            <h2 className="admin-section__title">📈 Pipeline Analytics</h2>
+            <div className="admin-stats-grid" style={{ marginBottom: 20 }}>
+              <StatCard icon="✅" label="שיעור השלמה" value={`${analytics.completionRate}%`} />
+              <StatCard icon="🌐" label="אפליקציות חיות" value={analytics.liveProjects} />
+              <StatCard icon="❌" label="פרויקטים שנכשלו" value={analytics.failedProjects} />
+              <StatCard icon="📁" label="סה״כ פרויקטים" value={analytics.totalProjects} />
+            </div>
+
+            {analytics.avgTokensByPhase?.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: 'var(--text-muted)' }}>
+                  ממוצע Tokens לשלב
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {analytics.avgTokensByPhase.map((p) => {
+                    const maxTokens = analytics.avgTokensByPhase[0]?.avgTokens || 1;
+                    const pct = Math.round((p.avgTokens / maxTokens) * 100);
+                    return (
+                      <div key={p._id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+                        <span style={{ width: 160, color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>
+                          {PHASE_LABELS[p._id] || p._id}
+                        </span>
+                        <div style={{ flex: 1, background: 'var(--surface-2, #1e1e2e)', borderRadius: 4, height: 8 }}>
+                          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: 'var(--brand-primary, #7c3aed)' }} />
+                        </div>
+                        <span style={{ width: 70, color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>
+                          {Math.round(p.avgTokens).toLocaleString()}
+                        </span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>×{p.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Lessons */}
         <section className="admin-section">
