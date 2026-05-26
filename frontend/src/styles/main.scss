@@ -1382,6 +1382,14 @@ input, select, textarea {
   animation: pulse 1.4s ease-in-out infinite;
 }
 
+// ── Workspace settings gate ───────────────────────────────────────────────────
+.workspace-settings-gate {
+  border-bottom: 1.5px solid rgba(124,58,237,0.3);
+  background: rgba(124,58,237,0.06);
+  padding: 32px 24px;
+  display: flex; justify-content: center;
+}
+
 // ── Dashboard setup banner ────────────────────────────────────────────────────
 .dashboard-setup-banner {
   background: linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(6,182,212,0.10) 100%);

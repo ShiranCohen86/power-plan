@@ -10,7 +10,7 @@ import {
   startPipeline, pausePipeline, approvePhase, refinePhase,
   getPipelineStatus, getPhaseDocument,
 } from '../api/pipeline.api';
-import { getProject } from '../api/projects.api';
+import { getProject, getProjectSettings } from '../api/projects.api';
 
 import PhaseList          from '../components/workspace/PhaseList';
 import LiveFeed           from '../components/workspace/LiveFeed';
@@ -18,6 +18,7 @@ import ApprovalBar        from '../components/workspace/ApprovalBar';
 import QuotaBanner        from '../components/workspace/QuotaBanner';
 import DeploymentStatus   from '../components/workspace/DeploymentStatus';
 import CelebrationOverlay from '../components/workspace/CelebrationOverlay';
+import SettingsGate       from '../components/SettingsGate';
 
 const STATUS_LABEL = {
   pending:            '⏳',
@@ -55,17 +56,20 @@ export default function ProjectWorkspace() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [consultantMsgs, setConsultantMsgs] = useState([]);
   const [consultantsRunning, setConsultantsRunning] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(null); // null = loading
 
   // Load project + pipeline status
   useEffect(() => {
     (async () => {
       try {
-        const [projRes, statusRes] = await Promise.all([
+        const [projRes, statusRes, settingsRes] = await Promise.all([
           getProject(id),
           getPipelineStatus(id),
+          getProjectSettings(id).catch(() => null),
         ]);
         setProject(projRes);
         setPhases(statusRes.phases || []);
+        setHasApiKey(settingsRes ? settingsRes.hasApiKey : true);
 
         // If there's a phase awaiting approval, set it
         const waiting = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
@@ -288,6 +292,17 @@ export default function ProjectWorkspace() {
           )}
         </div>
       </header>
+
+      {/* Missing API key banner — shown only when project has no key configured */}
+      {hasApiKey === false && (
+        <div className="workspace-settings-gate">
+          <SettingsGate
+            service="anthropic"
+            projectId={id}
+            onConfigured={() => setHasApiKey(true)}
+          />
+        </div>
+      )}
 
       {/* Quota exhausted banner */}
       {isQuotaPaused && (
