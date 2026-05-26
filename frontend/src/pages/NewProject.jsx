@@ -28,7 +28,7 @@ export default function NewProject() {
       setProject(result);
       setStep(STEP_DISCOVERY);
     } catch (err) {
-      setError(err);
+      setError(err?.message || String(err));
     } finally {
       setCreating(false);
     }
@@ -38,8 +38,8 @@ export default function NewProject() {
     try {
       await discoveryComplete(project._id, answers);
       navigate(`/projects/${project._id}/workspace`);
-    } catch {
-      setError(t('common.error'));
+    } catch (err) {
+      setError(err?.message || t('common.error'));
     }
   }
 

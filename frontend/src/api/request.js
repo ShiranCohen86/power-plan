@@ -90,9 +90,10 @@ httpClient.interceptors.response.use(
   },
 );
 
-export async function safeRequest(requestPromise) {
+export async function safeRequest(configOrPromise) {
   try {
-    const response = await requestPromise;
+    const isPromise = configOrPromise != null && typeof configOrPromise.then === 'function';
+    const response = await (isPromise ? configOrPromise : httpClient(configOrPromise));
     return response.data;
   } catch (rawError) {
     const status = rawError.response?.status;

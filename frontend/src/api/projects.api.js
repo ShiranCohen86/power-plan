@@ -20,9 +20,13 @@ export const discoveryComplete = (id, answers) =>
 export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
   const controller = new AbortController();
 
+  const token = localStorage.getItem('token');
   fetch(`/api/projects/${id}/discovery/next`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ answers }),
     signal: controller.signal,
   })
