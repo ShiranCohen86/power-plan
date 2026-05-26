@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
 import { selectProjects, selectProjectsStatus, fetchProjects } from '../store/slices/projectsSlice.js';
-import { getSettings } from '../api/settings.api.js';
 
 const STATUS_COLORS = {
   onboarding: '#7c3aed',
@@ -47,36 +46,12 @@ export default function Dashboard() {
   const user        = useSelector(selectCurrentUser);
   const projects    = useSelector(selectProjects);
   const status      = useSelector(selectProjectsStatus);
-  const [hasApiKey, setHasApiKey] = useState(null);
-
   useEffect(() => {
     if (status === 'idle') dispatch(fetchProjects());
   }, [dispatch, status]);
 
-  useEffect(() => {
-    getSettings()
-      .then((s) => setHasApiKey(s.hasApiKey))
-      .catch(() => setHasApiKey(true));
-  }, []);
-
   return (
     <div className="dashboard-shell">
-      {/* Setup banner — shown until Anthropic key is configured */}
-      {hasApiKey === false && (
-        <div className="dashboard-setup-banner">
-          <div className="dashboard-setup-banner__inner">
-            <span className="dashboard-setup-banner__icon">🔑</span>
-            <div className="dashboard-setup-banner__text">
-              <strong>צעד ראשון: הגדר את מפתח ה-AI שלך</strong>
-              <span>כדי להתחיל לבנות אפליקציות, Power Plan צריכה גישה ל-Claude. זה לוקח פחות מדקה.</span>
-            </div>
-            <button className="btn btn--primary" onClick={() => navigate('/settings')}>
-              ⚙️ הגדר עכשיו →
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main content */}
       <main className="dashboard-main">
         <div className="dashboard-header">

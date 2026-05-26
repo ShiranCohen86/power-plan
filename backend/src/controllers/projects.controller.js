@@ -1,8 +1,9 @@
 const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/ApiError');
 const projectService = require('../services/project.service');
 const discoveryService = require('../services/discovery.service');
-const User = require('../models/User');
-const { decrypt } = require('../services/encryption.service');
+const Project = require('../models/Project');
+const { encrypt, decrypt } = require('../services/encryption.service');
 
 function friendlyAIError(err) {
   const raw = err.message || '';
@@ -52,14 +53,14 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  // Fetch user's own API key (select: false field needs explicit select)
-  const user = await User.findById(req.user.id).select('+settings.anthropicApiKey');
-  const userApiKey = user?.settings?.anthropicApiKey
-    ? decrypt(user.settings.anthropicApiKey)
+  // Re-fetch project with encrypted key field
+  const projectWithKey = await Project.findById(req.params.id).select('+settings.anthropicApiKey');
+  const apiKey = projectWithKey?.settings?.anthropicApiKey
+    ? decrypt(projectWithKey.settings.anthropicApiKey)
     : null;
 
-  if (!userApiKey) {
-    res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic. עבור להגדרות והזן את המפתח שלך.' })}\n\n`);
+  if (!apiKey) {
+    res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic לפרויקט זה. הכנס מפתח בהגדרות הפרויקט.' })}\n\n`);
     res.end();
     return;
   }
@@ -69,8 +70,8 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       idea:       project.idea,
       title:      project.title,
       answers:    req.body.answers || [],
-      userPlan:   user.plan,
-      userApiKey,
+      userPlan:   'starter',
+      userApiKey: apiKey,
     });
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: friendlyAIError(err) })}\n\n`);
@@ -87,3 +88,84 @@ exports.discoveryComplete = asyncHandler(async (req, res) => {
   );
   res.json(project);
 });
+
+// ── Per-project settings ───────────────────────────────────────────────────
+
+exports.getProjectSettings = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id })
+    .select('+settings.anthropicApiKey +settings.githubToken +settings.renderApiKey');
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const s = project.settings || {};
+  res.json({
+    hasApiKey:       !!(s.anthropicApiKey),
+    hasGithubToken:  !!(s.githubToken),
+    hasRenderToken:  !!(s.renderApiKey),
+    apiKeyHint:      s.anthropicApiKey ? _maskKey(decrypt(s.anthropicApiKey)) : null,
+    githubTokenHint: s.githubToken     ? _maskKey(decrypt(s.githubToken))     : null,
+    renderTokenHint: s.renderApiKey    ? _maskKey(decrypt(s.renderApiKey))    : null,
+  });
+});
+
+exports.setProjectApiKey = asyncHandler(async (req, res) => {
+  const { apiKey } = req.body;
+  if (!apiKey?.startsWith('sk-ant-')) throw ApiError.badRequest('מפתח API לא תקין — חייב להתחיל עם "sk-ant-"');
+  const project = await _ownedProject(req);
+  if (!project.settings) project.settings = {};
+  project.settings.anthropicApiKey = encrypt(apiKey);
+  await project.save();
+  res.json({ hasApiKey: true, apiKeyHint: _maskKey(apiKey) });
+});
+
+exports.deleteProjectApiKey = asyncHandler(async (req, res) => {
+  const project = await _ownedProject(req);
+  if (project.settings) project.settings.anthropicApiKey = undefined;
+  await project.save();
+  res.json({ hasApiKey: false });
+});
+
+exports.setProjectGithubToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token?.startsWith('ghp_') && !token?.startsWith('github_pat_'))
+    throw ApiError.badRequest('קוד גישה GitHub לא תקין — חייב להתחיל עם "ghp_" או "github_pat_"');
+  const project = await _ownedProject(req);
+  if (!project.settings) project.settings = {};
+  project.settings.githubToken = encrypt(token);
+  await project.save();
+  res.json({ hasGithubToken: true, githubTokenHint: _maskKey(token) });
+});
+
+exports.deleteProjectGithubToken = asyncHandler(async (req, res) => {
+  const project = await _ownedProject(req);
+  if (project.settings) project.settings.githubToken = undefined;
+  await project.save();
+  res.json({ hasGithubToken: false });
+});
+
+exports.setProjectRenderToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token) throw ApiError.badRequest('token required');
+  const project = await _ownedProject(req);
+  if (!project.settings) project.settings = {};
+  project.settings.renderApiKey = encrypt(token);
+  await project.save();
+  res.json({ hasRenderToken: true, renderTokenHint: _maskKey(token) });
+});
+
+exports.deleteProjectRenderToken = asyncHandler(async (req, res) => {
+  const project = await _ownedProject(req);
+  if (project.settings) project.settings.renderApiKey = undefined;
+  await project.save();
+  res.json({ hasRenderToken: false });
+});
+
+async function _ownedProject(req) {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
+  if (!project) throw ApiError.notFound('Project not found');
+  return project;
+}
+
+function _maskKey(key) {
+  if (!key || key.length < 16) return '***';
+  return `${key.slice(0, 12)}...${key.slice(-4)}`;
+}

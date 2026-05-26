@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { updateApiKey, updateGithubToken, updateRenderToken } from '../api/settings.api';
+import { setProjectApiKey, setProjectGithubToken, setProjectRenderToken } from '../api/projects.api';
 
 const GATE_CONFIG = {
   anthropic: {
     icon: '🤖',
     title: 'נדרש מפתח AI (Anthropic)',
-    reason: 'כדי שClaudeיוכל לנתח את הרעיון שלך ולשאול שאלות, צריך מפתח API אישי מאנתרופיק.',
+    reason: 'כדי ש-Claude יוכל לנתח את הרעיון שלך ולשאול שאלות, צריך מפתח API מאנתרופיק.',
     cost: '💡 כל פרויקט שלם עולה בערך ₪1-5 — חיוב לפי שימוש בלבד.',
     placeholder: 'sk-ant-api03-...',
     howto: {
@@ -14,16 +14,15 @@ const GATE_CONFIG = {
       steps: [
         { html: 'היכנס לאתר <strong>console.anthropic.com</strong>' },
         { html: 'לחץ "API Keys" → "Create Key"' },
-        { html: 'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>)' },
+        { html: 'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן' },
       ],
     },
-    saveFn: (v) => updateApiKey(v),
-    resultKey: 'hasApiKey',
+    saveFn: (projectId, v) => setProjectApiKey(projectId, v),
   },
   github: {
     icon: '🐙',
     title: 'נדרש קוד גישה ל-GitHub',
-    reason: 'לפני שנתחיל לכתוב קוד, צריך מקום לשמור אותו. הקוד של האפליקציה שלך יישמר ב-GitHub שלך.',
+    reason: 'לפני שנתחיל לכתוב קוד, צריך מקום לשמור אותו. הקוד יישמר ב-GitHub שלך.',
     cost: '💡 GitHub חינמי לחלוטין.',
     placeholder: 'ghp_...',
     howto: {
@@ -34,8 +33,7 @@ const GATE_CONFIG = {
         { html: 'לחץ "Generate new token" → בחר scope: <code>repo</code> בלבד → העתק' },
       ],
     },
-    saveFn: (v) => updateGithubToken(v),
-    resultKey: 'hasGithubToken',
+    saveFn: (projectId, v) => setProjectGithubToken(projectId, v),
   },
   render: {
     icon: '🚀',
@@ -51,12 +49,11 @@ const GATE_CONFIG = {
         { html: 'העתק את ה-API key (מתחיל ב-<code>rnd_</code>)' },
       ],
     },
-    saveFn: (v) => updateRenderToken(v),
-    resultKey: 'hasRenderToken',
+    saveFn: (projectId, v) => setProjectRenderToken(projectId, v),
   },
 };
 
-export default function SettingsGate({ service, onConfigured }) {
+export default function SettingsGate({ service, projectId, onConfigured }) {
   const cfg = GATE_CONFIG[service];
   const [value, setValue]   = useState('');
   const [open, setOpen]     = useState(false);
@@ -67,7 +64,7 @@ export default function SettingsGate({ service, onConfigured }) {
     if (!value.trim()) return;
     setSaving(true); setError('');
     try {
-      await cfg.saveFn(value.trim());
+      await cfg.saveFn(projectId, value.trim());
       onConfigured();
     } catch (e) {
       setError(e.message || 'שגיאה בשמירה — נסה שוב');
@@ -88,7 +85,7 @@ export default function SettingsGate({ service, onConfigured }) {
             + הזן קוד גישה
           </button>
           <Link to="/settings" className="settings-gate__settings-link">
-            ניהול כל ההגדרות →
+            ניהול הגדרות כלליות →
           </Link>
         </div>
       )}
@@ -118,11 +115,7 @@ export default function SettingsGate({ service, onConfigured }) {
           {error && <p className="settings-gate__error">{error}</p>}
 
           <div className="settings-gate__actions">
-            <button
-              className="btn btn--primary"
-              onClick={handleSave}
-              disabled={saving || !value.trim()}
-            >
+            <button className="btn btn--primary" onClick={handleSave} disabled={saving || !value.trim()}>
               {saving ? 'שומר...' : 'שמור והמשך'}
             </button>
             <button className="btn btn--secondary" onClick={() => { setOpen(false); setValue(''); setError(''); }}>

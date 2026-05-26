@@ -12,6 +12,22 @@ export const getProject = (id) =>
 export const discoveryComplete = (id, answers) =>
   safeRequest({ method: 'post', url: `/projects/${id}/discovery/complete`, data: { answers } });
 
+// Per-project settings
+export const getProjectSettings    = (id) =>
+  safeRequest({ method: 'get', url: `/projects/${id}/settings` });
+
+export const setProjectApiKey      = (id, apiKey) =>
+  safeRequest({ method: 'put', url: `/projects/${id}/settings/api-key`, data: { apiKey } });
+
+export const deleteProjectApiKey   = (id) =>
+  safeRequest({ method: 'delete', url: `/projects/${id}/settings/api-key` });
+
+export const setProjectGithubToken = (id, token) =>
+  safeRequest({ method: 'put', url: `/projects/${id}/settings/github-token`, data: { token } });
+
+export const setProjectRenderToken = (id, token) =>
+  safeRequest({ method: 'put', url: `/projects/${id}/settings/render-token`, data: { token } });
+
 /**
  * Opens an SSE connection to stream the next discovery question.
  * Returns an AbortController so the caller can cancel the stream.

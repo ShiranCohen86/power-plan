@@ -34,6 +34,13 @@ const ProjectSchema = new mongoose.Schema(
       cloudinaryPreset:  String,
     },
 
+    // Per-project API keys — each project pays from its own account
+    settings: {
+      anthropicApiKey: { type: String, select: false }, // encrypted AES-256
+      githubToken:     { type: String, select: false }, // encrypted AES-256
+      renderApiKey:    { type: String, select: false }, // encrypted AES-256
+    },
+
     // Quota / pause tracking
     quotaPausedAt:   Date,
     quotaResumedAt:  Date,

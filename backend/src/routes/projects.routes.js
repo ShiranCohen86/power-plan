@@ -14,4 +14,13 @@ router.get('/:id',  validate(projectValidator.objectId), projectsController.getO
 router.post('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);
 router.post('/:id/discovery/complete', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryComplete);
 
+// Per-project settings
+router.get   ('/:id/settings',              projectsController.getProjectSettings);
+router.put   ('/:id/settings/api-key',      projectsController.setProjectApiKey);
+router.delete('/:id/settings/api-key',      projectsController.deleteProjectApiKey);
+router.put   ('/:id/settings/github-token', projectsController.setProjectGithubToken);
+router.delete('/:id/settings/github-token', projectsController.deleteProjectGithubToken);
+router.put   ('/:id/settings/render-token', projectsController.setProjectRenderToken);
+router.delete('/:id/settings/render-token', projectsController.deleteProjectRenderToken);
+
 module.exports = router;
