@@ -22,7 +22,7 @@ function signTokens(user) {
 
 function pushSession(user, { jtiHash, userAgent, ip }) {
   user.sessions.push({ jtiHash, userAgent, ip, lastSeen: new Date() });
-  if (user.sessions.length > 10) user.sessions = user.sessions.slice(-10);
+  if (user.sessions.length > 5) user.sessions = user.sessions.slice(-5);
 }
 
 // ── Signup ─────────────────────────────────────────────────────────────────

@@ -10,14 +10,15 @@ exports.getSettings = asyncHandler(async (req, res) => {
     .lean();
 
   const s = user.settings || {};
+  const safeDecrypt = (val) => { try { return val ? _maskKey(decrypt(val)) : null; } catch { return null; } };
   res.json({
     plan:            user.plan,
     hasApiKey:       !!(s.anthropicApiKey),
     hasGithubToken:  !!(s.githubToken),
     hasRenderToken:  !!(s.renderApiKey),
-    apiKeyHint:      s.anthropicApiKey ? _maskKey(decrypt(s.anthropicApiKey)) : null,
-    githubTokenHint: s.githubToken     ? _maskKey(decrypt(s.githubToken))     : null,
-    renderTokenHint: s.renderApiKey    ? _maskKey(decrypt(s.renderApiKey))    : null,
+    apiKeyHint:      safeDecrypt(s.anthropicApiKey),
+    githubTokenHint: safeDecrypt(s.githubToken),
+    renderTokenHint: safeDecrypt(s.renderApiKey),
   });
 });
 

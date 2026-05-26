@@ -66,6 +66,20 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  // Abort controller so we can cancel the Claude stream when client disconnects
+  const abortController = new AbortController();
+
+  // Close cleanly if client disconnects mid-stream
+  req.on('close', () => abortController.abort());
+
+  // Safety timeout — 5 minutes max per discovery question
+  const timeout = setTimeout(() => {
+    abortController.abort();
+    if (!res.writableEnded) res.end();
+  }, 5 * 60 * 1000);
+
+  const cleanup = () => clearTimeout(timeout);
+
   // Re-fetch project with encrypted key field
   const projectWithKey = await Project.findById(req.params.id).select('+settings.anthropicApiKey');
   let apiKey = null;
@@ -73,6 +87,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
     try {
       apiKey = decrypt(projectWithKey.settings.anthropicApiKey);
     } catch {
+      cleanup();
       res.write(`data: ${JSON.stringify({ error: 'שגיאה בקריאת מפתח ה-API — נסה להכניס מחדש בהגדרות הפרויקט.' })}\n\n`);
       res.end();
       return;
@@ -80,6 +95,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   }
 
   if (!apiKey) {
+    cleanup();
     res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic לפרויקט זה. הכנס מפתח בהגדרות הפרויקט.' })}\n\n`);
     res.end();
     return;
@@ -92,10 +108,14 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       answers:    answers || [],
       userPlan:   'starter',
       userApiKey: apiKey,
-    });
+    }, abortController.signal);
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: friendlyAIError(err) })}\n\n`);
-    res.end();
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ error: friendlyAIError(err) })}\n\n`);
+      res.end();
+    }
+  } finally {
+    cleanup();
   }
 });
 
@@ -117,13 +137,14 @@ exports.getProjectSettings = asyncHandler(async (req, res) => {
   if (!project) throw ApiError.notFound('Project not found');
 
   const s = project.settings || {};
+  const safeDecrypt = (val) => { try { return val ? _maskKey(decrypt(val)) : null; } catch { return null; } };
   res.json({
     hasApiKey:       !!(s.anthropicApiKey),
     hasGithubToken:  !!(s.githubToken),
     hasRenderToken:  !!(s.renderApiKey),
-    apiKeyHint:      s.anthropicApiKey ? _maskKey(decrypt(s.anthropicApiKey)) : null,
-    githubTokenHint: s.githubToken     ? _maskKey(decrypt(s.githubToken))     : null,
-    renderTokenHint: s.renderApiKey    ? _maskKey(decrypt(s.renderApiKey))    : null,
+    apiKeyHint:      safeDecrypt(s.anthropicApiKey),
+    githubTokenHint: safeDecrypt(s.githubToken),
+    renderTokenHint: safeDecrypt(s.renderApiKey),
   });
 });
 
