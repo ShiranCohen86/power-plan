@@ -40,4 +40,4 @@ Standard error response format and HTTP status code conventions.
 
 QUALITY: Endpoint definitions must be complete. Data flows must be specific, not abstract.`;
 
-module.exports = new BaseAgent('SystemDesignAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('SystemDesignAgent', SYSTEM_PROMPT, { docMode: true });

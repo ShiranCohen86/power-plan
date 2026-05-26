@@ -464,8 +464,14 @@ input, select, textarea {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 
-  &__title { display: flex; align-items: center; gap: 8px; font-weight: 700; flex: 1; font-size: 15px; }
-  &__status { display: flex; align-items: center; gap: 8px; }
+  &__title { display: flex; align-items: center; gap: 8px; font-weight: 700; flex: 1; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  // Join meeting button only visible when LiveFeed panel is hidden (mobile/tablet)
+  &__join-meeting { display: none; }
+}
+
+@media (max-width: 1279px) {
+  .workspace-topbar__join-meeting { display: inline-flex !important; }
 }
 
 .workspace-body {
@@ -497,10 +503,52 @@ input, select, textarea {
   }
 }
 
+.workspace-center {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .workspace-main {
   overflow-y: auto;
   padding: 24px;
   flex: 1;
+  min-height: 0;
+}
+
+.workspace-approval-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
+
+  &__bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+  }
+  &__info   { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+  &__label  { font-size: 13px; font-weight: 500; color: var(--text); }
+  &__refine-count { font-size: 11px; color: var(--text-subtle); }
+  &__hint   { font-size: 12px; color: var(--text-subtle); font-style: italic; }
+  &__actions { display: flex; align-items: center; gap: 8px; }
+
+  &__approve--unlocked { animation: footerUnlock 0.3s ease; }
+
+  .btn--primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  &__refine {
+    padding: 12px 20px 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  &__refine-actions {
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+}
+
+@keyframes footerUnlock {
+  from { transform: scale(0.97); opacity: 0.6; }
+  to   { transform: scale(1);    opacity: 1;   }
 }
 
 .workspace-doc {
@@ -511,6 +559,8 @@ input, select, textarea {
     padding: 28px;
     font-size: 14px;
     line-height: 1.7;
+
+    unicode-bidi: plaintext;
 
     h1, h2, h3, h4 { color: var(--text); margin-top: 24px; margin-bottom: 8px; }
     h1 { font-size: 20px; }
@@ -664,8 +714,9 @@ input, select, textarea {
   }
   &__avatar { font-size: 14px; }
   &__name   { font-weight: 600; font-size: 12px; }
+  &__role   { font-size: 11px; color: var(--text-muted); }
   &__type   { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-inline-start: auto; }
-  &__body   { margin: 0; color: var(--text); line-height: 1.5; }
+  &__body   { margin: 0; color: var(--text); line-height: 1.5; direction: rtl; text-align: right; }
 }
 
 // â”€â”€ Approval Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -711,22 +762,22 @@ input, select, textarea {
 }
 
 .tech-log {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 6px 8px; border-radius: $radius-sm; margin-bottom: 4px;
-  font-size: 11px; background: var(--surface-2);
-  border: 1px solid var(--border);
+  padding: 5px 10px; margin-bottom: 2px;
+  font-size: 12px; border-left: 2px solid transparent;
 
-  &--completed { border-color: rgba(52,211,153,0.25); }
-  &--error     { border-color: rgba(248,113,113,0.3); background: rgba(220,38,38,0.06); }
-  &--started   { border-color: rgba(124,58,237,0.25); }
+  &--completed   { border-left-color: #34d399; }
+  &--error       { border-left-color: #f87171; background: rgba(220,38,38,0.04); }
+  &--started     { border-left-color: rgba(124,58,237,0.4); }
+  &--file_written { border-left-color: rgba(59,130,246,0.4); }
 
-  &__icon  { flex-shrink: 0; font-size: 12px; margin-top: 1px; }
-  &__body  { flex: 1; min-width: 0; }
-  &__agent { font-weight: 600; color: var(--brand-primary-light); display: block; }
-  &__event { color: var(--text-muted); margin-inline-start: 0; display: block; font-size: 10px; text-transform: uppercase; }
-  &__tokens { color: var(--text-subtle); font-size: 10px; }
-  &__msg   { margin: 2px 0 0; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  &__time  { flex-shrink: 0; color: var(--text-subtle); font-size: 10px; white-space: nowrap; margin-top: 2px; }
+  &__line   { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+  &__icon   { flex-shrink: 0; }
+  &__agent  { font-weight: 600; color: var(--text-primary); }
+  &__sep    { color: var(--text-subtle); }
+  &__event  { color: var(--text-muted); }
+  &__tokens { color: var(--text-subtle); font-size: 11px; }
+  &__time   { margin-inline-start: auto; color: var(--text-subtle); font-size: 11px; white-space: nowrap; }
+  &__msg    { margin: 2px 0 0 18px; color: var(--text-muted); font-size: 11px; font-style: italic; }
 }
 
 // â”€â”€ Meeting type badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -755,6 +806,8 @@ input, select, textarea {
 @media (max-width: 1279px) and (min-width: 768px) {
   .workspace-body { grid-template-columns: 220px 1fr; }
   .live-feed { display: none; }
+  .workspace-main { padding: 16px; }
+  .workspace-doc__content { padding: 20px; }
 }
 
 // Mobile (tabs â€” sidebar collapses, main full width)
@@ -767,15 +820,93 @@ input, select, textarea {
   .phase-item { white-space: nowrap; min-width: auto; }
   .phase-item__name { display: none; }
   .live-feed { display: none; }
-  .dashboard-main { padding: 20px 16px; }
+
+  // Workspace content padding
+  .workspace-topbar { padding: 0 12px; gap: 8px; height: 46px; }
+  .workspace-topbar__title { font-size: 13px; }
+  .workspace-main { padding: 12px; }
+  .workspace-doc__content { padding: 16px; font-size: 13px; }
+
+  // Approval footer — stack on mobile
+  .workspace-approval-footer__bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+  .workspace-approval-footer__info { flex-direction: column; gap: 4px; }
+  .workspace-approval-footer__actions { flex-direction: row; justify-content: flex-end; }
+  .workspace-approval-footer__refine { padding: 10px 12px 0; }
+
+  // Dashboard
+  .dashboard-main { padding: 16px 12px; }
   .dashboard-header { flex-direction: column; align-items: stretch; }
   .btn-new-project { text-align: center; }
   .projects-grid { grid-template-columns: 1fr; }
-  .new-project-card { padding: 24px 16px; }
+
+  // New project / discovery
+  .new-project-card { padding: 20px 16px; }
+  .discovery-msg__bubble { max-width: 88%; }
+  .discovery-chat__messages { max-height: 280px; }
+
+  // Auth
+  .login-card { padding: 20px 16px; }
+
+  // Celebration modal
+  .celebration-card { padding: 24px 16px 20px; }
+  .celebration-title { font-size: 20px; }
+  .celebration-actions { flex-direction: column; }
+
+  // Credentials modal
+  .creds-modal { max-height: 95vh; border-radius: $radius; }
+  .creds-modal__header { padding: 16px 16px 12px; }
+  .creds-modal__body { padding: 12px 16px; }
+  .creds-card { padding: 12px; }
+  .creds-card__actions { flex-wrap: wrap; }
+
+  // Project settings panel (slide-in)
+  .proj-settings-modal { width: 100vw; }
+
+  // Admin
+  .admin-main { padding: 16px 12px; }
+  .admin-topbar { padding: 10px 16px; }
+
+  // Settings
+  .settings-page__body { padding: 16px 12px 32px; }
+  .settings-page__heading { padding: 16px 12px 0; }
+
+  // Task management
+  .task-management__header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px; }
+  .task-management__stats { flex-wrap: wrap; gap: 8px; }
+  .task-management__tabs { padding: 0 12px; }
+  .task-management__body { padding: 12px; }
+
+  // Notification panel — clamp to screen width
+  .notif-panel { width: calc(100vw - 16px); min-width: 0; right: 0; left: auto; }
 }
 
 @media (min-width: 1280px) {
   .workspace-body { grid-template-columns: 240px 1fr 280px; }
+}
+
+// Small phones (≤ 480px)
+@media (max-width: 480px) {
+  .workspace-doc__content { padding: 12px; }
+  .new-project-card { padding: 16px 12px; }
+  .celebration-card { padding: 20px 12px 16px; }
+  .celebration-icon { font-size: 40px; }
+  .creds-modal__header { padding: 12px 12px 10px; }
+  .creds-modal__body { padding: 10px 12px; }
+  .dashboard-topbar { padding: 0 12px; gap: 8px; }
+
+  // Hide secondary topbar labels on very small screens
+  .workspace-topbar .workspace-progress { display: none; }
+  .workspace-topbar > span { display: none; } // hide % and step counter
+
+  // Ensure approval footer buttons are full-touch-target height
+  .workspace-approval-footer .btn { min-height: 44px; }
+}
+
+// Touch target minimums for all interactive elements on mobile
+@media (max-width: 767px) {
+  .btn, button { min-height: 40px; }
+  .phase-item { min-height: 40px; }
+  .live-feed__tab { min-height: 44px; padding: 0 12px; }
 }
 
 // â”€â”€ Task Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1598,19 +1729,118 @@ input, select, textarea {
   padding: 16px;
   display: flex; flex-direction: column; gap: 10px;
 
-  &--done {
-    opacity: 0.6;
-    border-color: #34d399;
-  }
+  &--done    { opacity: 0.6; border-color: #34d399; }
+  &--skipped { opacity: 0.5; border-style: dashed; }
 
-  &__header  { display: flex; align-items: center; justify-content: space-between; }
-  &__name    { font-size: 14px; font-weight: 600; }
+  &__header  { display: flex; align-items: center; gap: 8px; }
+  &__name    { font-size: 14px; font-weight: 600; flex: 1; }
   &__check   { font-size: 12px; color: #34d399; font-weight: 600; }
+  &__skipped-label { font-size: 12px; color: var(--text-subtle); }
+  &__badge   {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600;
+    &--required { background: rgba(239,68,68,0.15); color: #f87171; }
+    &--optional { background: var(--surface-3); color: var(--text-muted); }
+  }
   &__howto   { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
   &__howto-label { font-weight: 600; }
   &__fields  { display: flex; flex-direction: column; gap: 8px; }
   &__field   { display: flex; flex-direction: column; gap: 4px; }
   &__label   { font-size: 12px; color: var(--text-muted); }
+  &__actions { display: flex; justify-content: flex-end; gap: 8px; }
+}
+
+.creds-modal__section-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  color: var(--text-subtle); letter-spacing: 0.05em; margin: 8px 0 4px;
+}
+
+// ── Meeting Room Overlay ────────────────────────────────────────────────────
+
+.meeting-room-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(5, 5, 15, 0.95);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+
+.meeting-room__close {
+  position: absolute; top: 16px; right: 20px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 50%; width: 36px; height: 36px;
+  font-size: 16px; cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  &:hover { background: var(--surface-3); color: var(--text); }
+}
+
+.meeting-room__ended-badge {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--text-muted); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px;
+}
+
+.meeting-room__scene {
+  position: relative;
+  width: 500px; height: 340px;
+}
+
+.meeting-room__table {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px; height: 160px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.1);
+}
+
+.meeting-room__avatar {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: transform 0.2s;
+
+  &-emoji {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--surface-2); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; transition: box-shadow 0.2s;
+  }
+  &-name {
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  &--speaking {
+    .meeting-room__avatar-emoji {
+      animation: speakPulse 1s ease-out infinite;
+      border-color: #fbbf24;
+      background: rgba(251,191,36,0.1);
+    }
+  }
+}
+
+@keyframes speakPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(251,191,36,0.7); }
+  70%  { box-shadow: 0 0 0 14px rgba(251,191,36,0); }
+  100% { box-shadow: 0 0 0 0   rgba(251,191,36,0); }
+}
+
+.meeting-room__subtitles {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 16px 40px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+  min-height: 80px; display: flex; flex-direction: column; gap: 4px;
+  align-items: center; text-align: center;
+}
+
+.meeting-room__subtitle-name {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+}
+
+.meeting-room__subtitle-text {
+  font-size: 15px; color: #fff; line-height: 1.5; margin: 0;
+  max-width: 700px; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
 // ── Live Company Experience ─────────────────────────────────────────────────
@@ -1705,4 +1935,32 @@ input, select, textarea {
     font-size: 14px; padding: 0 2px; line-height: 1;
     &:hover { color: var(--text); }
   }
+}
+
+// ── Responsive: Meeting Room Overlay ────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .meeting-room__scene { width: min(340px, 90vw); height: 230px; }
+  .meeting-room__table { width: 185px; height: 105px; }
+  .meeting-room__avatar-emoji { width: 36px; height: 36px; font-size: 16px; }
+  .meeting-room__avatar-name { font-size: 9px; }
+  .meeting-room__subtitles { padding: 10px 16px 20px; }
+  .meeting-room__subtitle-text { font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .meeting-room__scene { width: min(280px, 88vw); height: 190px; }
+  .meeting-room__table { width: 145px; height: 82px; }
+  .meeting-room__avatar-emoji { width: 28px; height: 28px; font-size: 13px; }
+  .meeting-room__avatar-name { font-size: 8px; }
+  .meeting-room__subtitle-text { font-size: 12px; }
+  .meeting-room__subtitles { padding: 8px 12px 16px; }
+}
+
+// ── Responsive: Team Status Strip ───────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .team-status-strip { grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px 6px 4px; }
+  .team-avatar__emoji { width: 26px; height: 26px; font-size: 12px; }
+  .team-avatar__name { font-size: 8px; }
 }

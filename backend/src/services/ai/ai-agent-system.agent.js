@@ -36,4 +36,4 @@ Hallucination risk, latency impact on UX, data privacy with AI providers.
 
 NOTE: If the product doesn't need AI agents, say so clearly and explain what simpler approaches suffice.`;
 
-module.exports = new BaseAgent('AIAgentSystemAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('AIAgentSystemAgent', SYSTEM_PROMPT, { docMode: true });

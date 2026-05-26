@@ -1,6 +1,7 @@
 module.exports = {
   stripe: {
     name: 'Stripe (תשלומים)',
+    optional: false,
     keywords: ['stripe', 'payment', 'checkout', 'billing', 'subscription', 'credit card'],
     fields: [
       { key: 'STRIPE_SECRET_KEY',      label: 'Secret Key',       placeholder: 'sk_live_...' },
@@ -10,6 +11,7 @@ module.exports = {
   },
   twilio: {
     name: 'Twilio (SMS / WhatsApp)',
+    optional: true,
     keywords: ['twilio', 'sms', 'whatsapp', 'otp', 'phone verification', 'text message'],
     fields: [
       { key: 'TWILIO_ACCOUNT_SID', label: 'Account SID',  placeholder: 'AC...' },
@@ -20,6 +22,7 @@ module.exports = {
   },
   googlemaps: {
     name: 'Google Maps',
+    optional: true,
     keywords: ['google maps', 'google map', 'mapbox', 'geolocation', 'geocoding', 'maps api'],
     fields: [
       { key: 'GOOGLE_MAPS_KEY', label: 'API Key', placeholder: 'AIza...' },
@@ -28,6 +31,7 @@ module.exports = {
   },
   openai: {
     name: 'OpenAI',
+    optional: true,
     keywords: ['openai', 'gpt-4', 'gpt-3', 'chatgpt', 'dall-e', 'openai api'],
     fields: [
       { key: 'OPENAI_API_KEY', label: 'API Key', placeholder: 'sk-...' },
@@ -36,6 +40,7 @@ module.exports = {
   },
   pusher: {
     name: 'Pusher (Realtime)',
+    optional: true,
     keywords: ['pusher', 'ably', 'soketi', 'pusher channels'],
     fields: [
       { key: 'PUSHER_APP_ID',  label: 'App ID',  placeholder: '' },
@@ -47,6 +52,7 @@ module.exports = {
   },
   algolia: {
     name: 'Algolia (חיפוש)',
+    optional: true,
     keywords: ['algolia', 'full-text search', 'search engine', 'meilisearch'],
     fields: [
       { key: 'ALGOLIA_APP_ID',   label: 'App ID',   placeholder: '' },
@@ -56,6 +62,7 @@ module.exports = {
   },
   firebase: {
     name: 'Firebase',
+    optional: false,
     keywords: ['firebase', 'firestore', 'firebase auth', 'firebase storage'],
     fields: [
       { key: 'FIREBASE_PROJECT_ID',     label: 'Project ID',     placeholder: '' },

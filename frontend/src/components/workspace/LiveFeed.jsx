@@ -26,25 +26,17 @@ const EVENT_ICON = {
 };
 
 export default function LiveFeed({
-  narrative, meetingMsgs, consultantMsgs = [], consultantsRunning = false,
-  techLogs, isRunning, activeAgent,
+  meetingMsgs, consultantMsgs = [], consultantsRunning = false,
+  techLogs, isRunning,
   // Controlled tab
   activeTab, onTabChange,
   // Live Company Experience
   scheduledMeeting, isMeetingLive, missedMeeting, onClearMissed, onJoinMeeting,
   activePhaseIndex,
 }) {
-  const narrativeRef = useRef(null);
   const meetingRef   = useRef(null);
   const consultRef   = useRef(null);
   const techRef      = useRef(null);
-
-  // Auto-scroll narrative
-  useEffect(() => {
-    if (activeTab === 'narrative' && narrativeRef.current) {
-      narrativeRef.current.scrollTop = narrativeRef.current.scrollHeight;
-    }
-  }, [narrative, activeTab]);
 
   // Auto-switch to meeting when messages arrive (only if not already there)
   useEffect(() => {
@@ -87,16 +79,18 @@ export default function LiveFeed({
   return (
     <aside className="live-feed">
       {/* Team status strip — always visible */}
-      <div className="team-status-strip">
-        {Object.entries(TEAM_MEMBERS).map(([key, member]) => (
-          <TeamMemberAvatar
-            key={key}
-            memberKey={key}
-            member={member}
-            status={getMemberStatus(key)}
-          />
-        ))}
-      </div>
+      {isMeetingLive && (
+        <div className="team-status-strip">
+          {Object.entries(TEAM_MEMBERS).map(([key, member]) => (
+            <TeamMemberAvatar
+              key={key}
+              memberKey={key}
+              member={member}
+              status={getMemberStatus(key)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Meeting countdown / live banner */}
       {(scheduledMeeting || isMeetingLive) && (
@@ -111,12 +105,6 @@ export default function LiveFeed({
 
       {/* Tabs */}
       <div className="live-feed__tabs">
-        <button
-          className={`live-feed__tab${activeTab === 'narrative' ? ' live-feed__tab--active' : ''}`}
-          onClick={() => onTabChange('narrative')}
-        >
-          🤔 Claude
-        </button>
         <button
           className={`live-feed__tab${activeTab === 'meeting' ? ' live-feed__tab--active' : ''}`}
           onClick={() => onTabChange('meeting')}
@@ -145,32 +133,6 @@ export default function LiveFeed({
         </button>
       </div>
 
-      {/* Narrative tab */}
-      {activeTab === 'narrative' && (
-        <div className="live-feed__content" ref={narrativeRef}>
-          {activeAgent && (
-            <div className="live-feed__agent-badge">
-              <span className="live-feed__agent-dot" />
-              {activeAgent}
-            </div>
-          )}
-          {narrative ? (
-            <pre className="live-feed__text">{narrative}</pre>
-          ) : (
-            <div className="live-feed__empty">
-              {isRunning ? (
-                <>
-                  <div className="pwa-spinner" style={{ width: 28, height: 28 }} />
-                  <p>ממתין לתגובה מ-Claude...</p>
-                </>
-              ) : (
-                <p>הנרטיב יופיע כאן בזמן שClaude עובד</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Meeting tab */}
       {activeTab === 'meeting' && (
         <div className="live-feed__content" ref={meetingRef}>
@@ -182,43 +144,44 @@ export default function LiveFeed({
             </div>
           )}
 
-          {meetingMsgs.length === 0 ? (
-            <div className="live-feed__empty">
-              <p>הישיבה הפנימית תתחיל לאחר השלמת כל שלב</p>
-            </div>
-          ) : (
-            <div className="live-feed__meeting">
-              {meetingMsgs.map((msg, i) => {
-                if (msg._isSeparator) {
-                  return (
-                    <div key={`sep-${i}`} className="meeting-phase-sep">
-                      <span className="meeting-phase-sep__label">{msg.label}</span>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={i} className={`meeting-msg meeting-msg--${msg.type}`}>
+          {(() => {
+            // Show only the current meeting — messages after the last separator
+            const lastSepIdx = [...meetingMsgs].map((m, i) => m._isSeparator ? i : -1).filter(i => i >= 0);
+            const startIdx   = lastSepIdx.length ? lastSepIdx[lastSepIdx.length - 1] + 1 : 0;
+            const currentMsgs = meetingMsgs.slice(startIdx).filter(m => !m._isSeparator);
+
+            if (currentMsgs.length === 0 && !isMeetingLive) {
+              return (
+                <div className="live-feed__empty">
+                  <p>הישיבה הפנימית תתחיל לאחר השלמת כל שלב</p>
+                </div>
+              );
+            }
+            return (
+              <div className="live-feed__meeting">
+                {currentMsgs.map((msg, i) => (
+                  <div key={i} className="meeting-msg">
                     <div className="meeting-msg__header">
                       <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
                       <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>
                         {msg.displayName}
                       </span>
-                      <span className={`meeting-msg__type-badge meeting-msg__type-badge--${msg.type}`}>
-                        {msg.type}
+                      <span className="meeting-msg__role">
+                        {TEAM_MEMBERS[msg.role]?.role || msg.role}
                       </span>
                     </div>
-                    <p className="meeting-msg__body">{msg.message}</p>
+                    <p className="meeting-msg__body" dir="rtl">{msg.message}</p>
                   </div>
-                );
-              })}
-              {isMeetingLive && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
-                  <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
-                  הצוות דן...
-                </div>
-              )}
-            </div>
-          )}
+                ))}
+                {isMeetingLive && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                    <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
+                    הצוות דן...
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -288,18 +251,19 @@ export default function LiveFeed({
             <div className="live-feed__tech">
               {techLogs.map((log, i) => (
                 <div key={i} className={`tech-log tech-log--${log.event}`}>
-                  <span className="tech-log__icon">{EVENT_ICON[log.event] || '•'}</span>
-                  <div className="tech-log__body">
+                  <div className="tech-log__line">
+                    <span className="tech-log__icon">{EVENT_ICON[log.event] || '•'}</span>
                     <span className="tech-log__agent">{log.agentName}</span>
+                    {log.event !== 'file_written' && <span className="tech-log__sep">—</span>}
                     <span className="tech-log__event">{log.event}</span>
                     {log.metadata?.tokensUsed && (
-                      <span className="tech-log__tokens">{log.metadata.tokensUsed} tokens</span>
+                      <span className="tech-log__tokens">· {log.metadata.tokensUsed.toLocaleString()} tokens</span>
                     )}
-                    {log.message && <p className="tech-log__msg">{log.message}</p>}
+                    <span className="tech-log__time">
+                      {new Date(log.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
                   </div>
-                  <span className="tech-log__time">
-                    {new Date(log.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
+                  {log.message && <p className="tech-log__msg">{log.message}</p>}
                 </div>
               ))}
             </div>

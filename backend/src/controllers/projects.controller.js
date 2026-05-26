@@ -262,10 +262,12 @@ exports.getRequiredServices = asyncHandler(async (req, res) => {
   const registry = require('../config/serviceRegistry');
   const services = (project.requiredServices || []).map((s) => ({
     id:                   s.serviceId,
-    name:                 registry[s.serviceId]?.name  || s.serviceId,
-    fields:               registry[s.serviceId]?.fields || [],
-    howto:                registry[s.serviceId]?.howto  || '',
+    name:                 registry[s.serviceId]?.name     || s.serviceId,
+    fields:               registry[s.serviceId]?.fields   || [],
+    howto:                registry[s.serviceId]?.howto    || '',
+    optional:             registry[s.serviceId]?.optional ?? true,
     credentialsProvided:  s.credentialsProvided,
+    skipped:              s.skipped || false,
   }));
 
   res.json({ services });
@@ -302,8 +304,8 @@ exports.saveServiceCredentials = asyncHandler(async (req, res) => {
   svc.credentialsProvided = true;
   await project.save();
 
-  // If all required services now have credentials → resume codegen
-  const allDone = project.requiredServices.every((s) => s.credentialsProvided);
+  // If all required services now have credentials or are skipped → resume codegen
+  const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
   if (allDone && project.status === 'awaiting_credentials') {
     await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
     const { startCodegen } = require('../services/codegen-runner.service');
@@ -313,6 +315,31 @@ exports.saveServiceCredentials = asyncHandler(async (req, res) => {
   }
 
   res.json({ ok: true, credentialsProvided: true, allDone });
+});
+
+exports.skipService = asyncHandler(async (req, res) => {
+  const { serviceId } = req.params;
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
+  if (!project) throw ApiError.notFound('Project not found');
+
+  let svc = project.requiredServices.find((s) => s.serviceId === serviceId);
+  if (!svc) {
+    project.requiredServices.push({ serviceId, credentialsProvided: false, skipped: true });
+  } else {
+    svc.skipped = true;
+  }
+  await project.save();
+
+  const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
+  if (allDone && project.status === 'awaiting_credentials') {
+    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
+    const { startCodegen } = require('../services/codegen-runner.service');
+    startCodegen(req.params.id).catch((err) =>
+      require('../utils/logger').error('projects.ctrl: codegen resume after skip failed', { error: err.message }),
+    );
+  }
+
+  res.json({ ok: true, skipped: true, allDone });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

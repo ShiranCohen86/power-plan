@@ -39,4 +39,4 @@ What team size and skills does this plan assume?
 
 QUALITY: Tasks must be specific enough for a developer to start immediately. No vague tasks like "implement feature". Every task must have a size estimate.`;
 
-module.exports = new BaseAgent('DevPlannerAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('DevPlannerAgent', SYSTEM_PROMPT, { docMode: true });

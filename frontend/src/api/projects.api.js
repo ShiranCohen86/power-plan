@@ -50,6 +50,9 @@ export const getRequiredServices = (id) =>
 export const saveServiceCredentials = (id, serviceId, credentials) =>
   safeRequest({ method: 'post', url: `/projects/${id}/required-services/${serviceId}/credentials`, data: { credentials } });
 
+export const skipServiceCredentials = (id, serviceId) =>
+  safeRequest({ method: 'patch', url: `/projects/${id}/required-services/${serviceId}/skip` });
+
 /**
  * Opens an SSE connection to stream the next discovery question.
  * Returns an AbortController so the caller can cancel the stream.

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { saveServiceCredentials } from '../../api/projects.api';
+import { saveServiceCredentials, skipServiceCredentials } from '../../api/projects.api';
 
-function ServiceCard({ projectId, service, onSaved }) {
+function ServiceCard({ projectId, service, onSaved, onSkipped }) {
   const [values, setValues]   = useState(() => Object.fromEntries(service.fields.map((f) => [f.key, ''])));
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState('');
   const [saved, setSaved]     = useState(false);
+  const [skipped, setSkipped] = useState(false);
 
   const allFilled = service.fields.every((f) => values[f.key]?.trim());
 
@@ -20,6 +21,17 @@ function ServiceCard({ projectId, service, onSaved }) {
     } finally { setBusy(false); }
   }
 
+  async function handleSkip() {
+    setBusy(true); setErr('');
+    try {
+      await skipServiceCredentials(projectId, service.id);
+      setSkipped(true);
+      onSkipped();
+    } catch (e) {
+      setErr(e.message || 'שגיאה בדילוג');
+    } finally { setBusy(false); }
+  }
+
   if (saved) {
     return (
       <div className="creds-card creds-card--done">
@@ -31,10 +43,25 @@ function ServiceCard({ projectId, service, onSaved }) {
     );
   }
 
+  if (skipped) {
+    return (
+      <div className="creds-card creds-card--skipped">
+        <div className="creds-card__header">
+          <span className="creds-card__name">{service.name}</span>
+          <span className="creds-card__skipped-label">⏭ דולג</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="creds-card" data-id={service.id}>
       <div className="creds-card__header">
         <span className="creds-card__name">{service.name}</span>
+        {service.optional
+          ? <span className="creds-card__badge creds-card__badge--optional">אופציונלי</span>
+          : <span className="creds-card__badge creds-card__badge--required">חובה</span>
+        }
       </div>
 
       {service.howto && (
@@ -64,30 +91,63 @@ function ServiceCard({ projectId, service, onSaved }) {
 
       {err && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
 
-      <button
-        className="btn btn--primary"
-        style={{ fontSize: 13, marginTop: 8 }}
-        onClick={handleSave}
-        disabled={busy || !allFilled}
-      >
-        {busy ? 'שומר...' : 'שמור'}
-      </button>
+      <div className="creds-card__actions">
+        {service.optional && (
+          <button
+            className="btn btn--ghost"
+            style={{ fontSize: 13 }}
+            onClick={handleSkip}
+            disabled={busy}
+          >
+            דלג ←
+          </button>
+        )}
+        <button
+          className="btn btn--primary"
+          style={{ fontSize: 13 }}
+          onClick={handleSave}
+          disabled={busy || !allFilled}
+        >
+          {busy ? 'שומר...' : 'שמור'}
+        </button>
+      </div>
     </div>
   );
 }
 
 export default function CredentialsGateModal({ projectId, services, onDone }) {
-  const [savedCount, setSavedCount] = useState(0);
+  const [savedCount, setSavedCount]   = useState(0);
+  const [skippedCount, setSkippedCount] = useState(0);
+
+  const requiredServices  = services.filter((s) => !s.optional);
+  const optionalServices  = services.filter((s) => s.optional);
 
   function handleOneSaved() {
     setSavedCount((n) => {
       const next = n + 1;
-      if (next >= services.length) {
-        setTimeout(onDone, 800); // brief delay so user sees all "✓ נשמר"
-      }
+      checkDone(next, skippedCount);
       return next;
     });
   }
+
+  function handleOneSkipped() {
+    setSkippedCount((n) => {
+      const next = n + 1;
+      checkDone(savedCount, next);
+      return next;
+    });
+  }
+
+  function checkDone(saved, skipped) {
+    // Done when all required are saved + all optional are saved or skipped
+    const requiredSaved = saved >= requiredServices.length;
+    const allOptionalHandled = saved + skipped >= services.length;
+    if (requiredSaved && (optionalServices.length === 0 || allOptionalHandled)) {
+      setTimeout(onDone, 800);
+    }
+  }
+
+  const totalHandled = savedCount + skippedCount;
 
   return (
     <div className="creds-overlay">
@@ -103,19 +163,40 @@ export default function CredentialsGateModal({ projectId, services, onDone }) {
         </div>
 
         <div className="creds-modal__body">
-          {savedCount < services.length ? (
+          {totalHandled < services.length ? (
             <>
               <p className="creds-modal__progress">
-                {savedCount} / {services.length} שירותים הוגדרו
+                {totalHandled} / {services.length} שירותים טופלו
               </p>
-              {services.map((svc) => (
-                <ServiceCard key={svc.id} projectId={projectId} service={svc} onSaved={handleOneSaved} />
+              {requiredServices.length > 0 && (
+                <p className="creds-modal__section-label">חובה</p>
+              )}
+              {requiredServices.map((svc) => (
+                <ServiceCard
+                  key={svc.id}
+                  projectId={projectId}
+                  service={svc}
+                  onSaved={handleOneSaved}
+                  onSkipped={handleOneSkipped}
+                />
+              ))}
+              {optionalServices.length > 0 && (
+                <p className="creds-modal__section-label">אופציונלי — ניתן לדלג ולהגדיר מאוחר יותר</p>
+              )}
+              {optionalServices.map((svc) => (
+                <ServiceCard
+                  key={svc.id}
+                  projectId={projectId}
+                  service={svc}
+                  onSaved={handleOneSaved}
+                  onSkipped={handleOneSkipped}
+                />
               ))}
             </>
           ) : (
             <div className="creds-modal__all-done">
               <span>✅</span>
-              <span>כל השירותים הוגדרו — הבנייה ממשיכה!</span>
+              <span>כל השירותים טופלו — הבנייה ממשיכה!</span>
             </div>
           )}
         </div>

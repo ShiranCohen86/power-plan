@@ -33,4 +33,4 @@ Key accessibility requirements: keyboard navigation, screen reader support, colo
 
 QUALITY: Every screen must have an empty state defined. Flows must be step-by-step, not abstract.`;
 
-module.exports = new BaseAgent('UXArchitectAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('UXArchitectAgent', SYSTEM_PROMPT, { docMode: true });

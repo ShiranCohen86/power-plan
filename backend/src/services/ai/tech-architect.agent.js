@@ -36,4 +36,4 @@ What services are needed? (CDN, Redis, queues, storage)
 
 QUALITY: Every decision must have a reason tied to the project's specific constraints. No generic advice.`;
 
-module.exports = new BaseAgent('TechArchitectAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('TechArchitectAgent', SYSTEM_PROMPT, { docMode: true });

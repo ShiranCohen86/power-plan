@@ -35,4 +35,4 @@ What metrics to track for background jobs. What conditions trigger alerts.
 
 QUALITY: Every job must have an error handling strategy. Address the specific async needs implied by this product's features.`;
 
-module.exports = new BaseAgent('OrchestrationAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('OrchestrationAgent', SYSTEM_PROMPT, { docMode: true });

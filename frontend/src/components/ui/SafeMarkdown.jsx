@@ -8,7 +8,7 @@ import rehypeSanitize from 'rehype-sanitize';
  */
 export default function SafeMarkdown({ content, className }) {
   return (
-    <div className={className}>
+    <div className={className} dir="auto">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}

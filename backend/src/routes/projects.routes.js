@@ -19,8 +19,9 @@ router.post('/:id/discovery/complete', validate({ params: projectValidator.objec
 router.get('/:id/meetings', validate(projectValidator.objectId), projectsController.getMeetings);
 
 // Dynamic service credentials
-router.get ('/:id/required-services',                                    projectsController.getRequiredServices);
-router.post('/:id/required-services/:serviceId/credentials',             projectsController.saveServiceCredentials);
+router.get  ('/:id/required-services',                                    projectsController.getRequiredServices);
+router.post ('/:id/required-services/:serviceId/credentials',             projectsController.saveServiceCredentials);
+router.patch('/:id/required-services/:serviceId/skip',                    projectsController.skipService);
 
 // Per-project settings
 router.get   ('/:id/settings',              projectsController.getProjectSettings);

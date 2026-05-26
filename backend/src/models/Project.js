@@ -45,6 +45,7 @@ const ProjectSchema = new mongoose.Schema(
     requiredServices: [{
       serviceId:           { type: String, required: true },
       credentialsProvided: { type: Boolean, default: false },
+      skipped:             { type: Boolean, default: false },
       credentials:         { type: Map, of: String, select: false }, // encrypted AES-256
     }],
 

@@ -12,18 +12,20 @@ import {
   startPipeline, pausePipeline, approvePhase, refinePhase,
   getPipelineStatus, getPhaseDocument,
 } from '../api/pipeline.api';
-import { getProject, getProjectSettings, getMeetings } from '../api/projects.api';
+import { getProject, getProjectSettings, getMeetings, getRequiredServices } from '../api/projects.api';
+import { getAgentLogs } from '../api/agents.api';
 import { getRateLimit } from '../api/settings.api';
 
-import PhaseList               from '../components/workspace/PhaseList';
-import LiveFeed                from '../components/workspace/LiveFeed';
-import ApprovalBar             from '../components/workspace/ApprovalBar';
-import ProjectSettingsModal    from '../components/workspace/ProjectSettingsModal';
-import CredentialsGateModal   from '../components/workspace/CredentialsGateModal';
-import QuotaBanner            from '../components/workspace/QuotaBanner';
-import DeploymentStatus   from '../components/workspace/DeploymentStatus';
-import CelebrationOverlay from '../components/workspace/CelebrationOverlay';
-import SettingsGate       from '../components/SettingsGate';
+import PhaseList                    from '../components/workspace/PhaseList';
+import LiveFeed                     from '../components/workspace/LiveFeed';
+import WorkspaceApprovalFooter      from '../components/workspace/WorkspaceApprovalFooter';
+import MeetingRoomOverlay           from '../components/workspace/MeetingRoomOverlay';
+import ProjectSettingsModal         from '../components/workspace/ProjectSettingsModal';
+import CredentialsGateModal         from '../components/workspace/CredentialsGateModal';
+import QuotaBanner                  from '../components/workspace/QuotaBanner';
+import DeploymentStatus             from '../components/workspace/DeploymentStatus';
+import CelebrationOverlay           from '../components/workspace/CelebrationOverlay';
+import SettingsGate                 from '../components/SettingsGate';
 
 const STATUS_LABEL = {
   pending:            '⏳',
@@ -44,13 +46,9 @@ export default function ProjectWorkspace() {
   const [phases, setPhases]             = useState([]);
   const [activePhaseIndex, setActive]   = useState(null);
   const [activeDoc, setActiveDoc]       = useState(null);
-  const [narrativeBuffer, setNarrative] = useState('');
   const [meetingMsgs, setMeetingMsgs]   = useState([]);
   const [techLogs, setTechLogs]         = useState([]);
-  const [activeAgent, setActiveAgent]   = useState(null);
   const [awaitingPhase, setAwaiting]    = useState(null);
-  const [refineOpen, setRefineOpen]     = useState(false);
-  const [refineFeedback, setRefineFeedback] = useState('');
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');       // fatal load error → full page
   const [actionError, setActionError]   = useState('');       // kept for legacy inline banner; new errors use toast
@@ -69,23 +67,29 @@ export default function ProjectWorkspace() {
   const [awaitingServices, setAwaitingServices]       = useState(null); // null | [{ id, name, fields, howto }]
 
   // Live Company Experience state
-  const [activeFeedTab, setActiveFeedTab]       = useState('narrative');
+  const [activeFeedTab, setActiveFeedTab]       = useState('meeting');
   const [scheduledMeeting, setScheduledMeeting] = useState(null); // { phaseIndex, scheduledAt }
   const [isMeetingLive, setIsMeetingLive]       = useState(false);
   const [missedMeeting, setMissedMeeting]       = useState(false);
+  const [showMeetingRoom, setShowMeetingRoom]   = useState(false);
   const wasWatchingRef                           = useRef(false);
   const pageLoadTimeRef                          = useRef(Date.now());
+
+  // Approval footer scroll-gate
+  const mainRef                                  = useRef(null);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
   // Load project + pipeline status + historical meetings
   useEffect(() => {
     (async () => {
       try {
-        const [projRes, statusRes, settingsRes, meetingsRes, rateLimitRes] = await Promise.all([
+        const [projRes, statusRes, settingsRes, meetingsRes, rateLimitRes, logsRes] = await Promise.all([
           getProject(id),
           getPipelineStatus(id),
           getProjectSettings(id).catch(() => null),
           getMeetings(id).catch(() => []),
           getRateLimit().catch(() => null),
+          getAgentLogs(id).catch(() => null),
         ]);
 
         // Onboarding projects have no workspace yet — redirect to discovery flow
@@ -99,6 +103,7 @@ export default function ProjectWorkspace() {
         setHasApiKey(settingsRes?.hasApiKey ?? false);
         setUsingFallback(settingsRes?.usingFallback || false);
         if (rateLimitRes) setRateLimit(rateLimitRes);
+        if (logsRes?.items?.length) setTechLogs(logsRes.items);
 
         // Pre-populate meeting tab with historical messages, injecting phase separators
         if (meetingsRes?.length) {
@@ -118,6 +123,13 @@ export default function ProjectWorkspace() {
           setActive(waiting.index);
           loadDocument(waiting.index);
         }
+
+        // Rehydrate credentials modal after page refresh
+        if (projRes.status === 'awaiting_credentials') {
+          const svcRes = await getRequiredServices(id).catch(() => null);
+          const pending = (svcRes?.services || []).filter((s) => !s.credentialsProvided && !s.skipped);
+          if (pending.length > 0) setAwaitingServices(pending);
+        }
       } catch {
         setError('שגיאה בטעינת הפרויקט');
       } finally {
@@ -125,6 +137,22 @@ export default function ProjectWorkspace() {
       }
     })();
   }, [id]);
+
+  // Reset scroll-gate when a new phase awaits approval
+  useEffect(() => {
+    setHasScrolledToBottom(false);
+  }, [awaitingPhase]);
+
+  // Scroll detection on workspace-main
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el || awaitingPhase === null) return;
+    const check = () =>
+      setHasScrolledToBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 50);
+    check(); // handles short documents that don't require scrolling
+    el.addEventListener('scroll', check);
+    return () => el.removeEventListener('scroll', check);
+  }, [awaitingPhase]);
 
   async function loadDocument(phaseIndex) {
     try {
@@ -141,28 +169,14 @@ export default function ProjectWorkspace() {
     onPhaseRefining: ({ phaseIndex }) => {
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'running' }));
       setAwaiting(null);
-      setRefineOpen(false);
-      setNarrative('');
     },
     onPhaseStarted: ({ phaseIndex, agentName }) => {
       setActive(phaseIndex);
-      setNarrative('');
-      setActiveAgent(agentName);
-      setTechLogs((prev) => [...prev, { agentName, event: 'started', timestamp: new Date() }]);
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'running', agentName }));
     },
-    onPhaseNarrative: ({ phaseIndex, chunk }) => {
-      if (phaseIndex === activePhaseIndex || activePhaseIndex === null) {
-        setNarrative((prev) => prev + chunk);
-      }
-    },
-    onPhaseCompleted: ({ phaseIndex, tokensUsed }) => {
+    onPhaseNarrative: () => {},
+    onPhaseCompleted: ({ phaseIndex }) => {
       setPhases((prev) => upsertPhase(prev, phaseIndex, { status: 'awaiting_approval' }));
-      setActiveAgent(null);
-      setTechLogs((prev) => [...prev, {
-        agentName: phases.find((p) => p.index === phaseIndex)?.agentName || '',
-        event: 'completed', metadata: { tokensUsed }, timestamp: new Date(),
-      }]);
       loadDocument(phaseIndex);
     },
     onPhaseAwaiting: ({ phaseIndex }) => {
@@ -308,23 +322,20 @@ export default function ProjectWorkspace() {
     try {
       await approvePhase(id, awaitingPhase);
       setAwaiting(null);
-      setRefineOpen(false);
       toast.success('השלב אושר — ממשיך לשלב הבא');
     } catch (err) {
       handleActionError(err);
     }
   }
 
-  async function handleRefine() {
-    if (!refineFeedback.trim() || awaitingPhase == null) return;
+  async function handleRefine(feedback) {
+    if (!feedback?.trim() || awaitingPhase == null) return;
     try {
-      await refinePhase(id, awaitingPhase, refineFeedback);
-      setRefineOpen(false);
-      setRefineFeedback('');  // only clear on success
-      setNarrative('');
+      await refinePhase(id, awaitingPhase, feedback);
       toast.success('בקשת התיקון נשלחה — Claude מעדכן...');
     } catch (err) {
-      handleActionError(err);  // feedback text preserved for retry
+      handleActionError(err);
+      throw err; // let footer component keep the textarea open on error
     }
   }
 
@@ -443,6 +454,16 @@ export default function ProjectWorkspace() {
           {awaitingPhase != null && !isRunning && (
             <span className="badge" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>ממתין לאישור</span>
           )}
+          {/* Mobile-only join button — shown when LiveFeed panel is hidden */}
+          {isMeetingLive && (
+            <button
+              className="btn btn--primary workspace-topbar__join-meeting"
+              onClick={() => setShowMeetingRoom(true)}
+              style={{ fontSize: 12, padding: '4px 10px', minHeight: 32 }}
+            >
+              🏢 הצטרף
+            </button>
+          )}
         </div>
       </header>
 
@@ -507,6 +528,15 @@ export default function ProjectWorkspace() {
         />
       )}
 
+      {/* Meeting room overlay */}
+      {showMeetingRoom && (
+        <MeetingRoomOverlay
+          meetingMsgs={meetingMsgs}
+          isMeetingLive={isMeetingLive}
+          onClose={() => setShowMeetingRoom(false)}
+        />
+      )}
+
       {/* 3-panel layout */}
       <div className="workspace-body">
         {/* Left: Phase list */}
@@ -554,75 +584,70 @@ export default function ProjectWorkspace() {
           )}
         </aside>
 
-        {/* Center: Document output */}
-        <main className="workspace-main">
-          {activeDoc ? (
-            <div className="workspace-doc">
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0' }}>
-                <button
-                  className="btn-ghost"
-                  onClick={handleExportDoc}
-                  style={{ fontSize: 12, padding: '4px 10px' }}
-                  title="הורד כקובץ Markdown"
-                >
-                  ⬇️ ייצוא
-                </button>
+        {/* Center: Document output + approval footer */}
+        <div className="workspace-center">
+          <main className="workspace-main" ref={mainRef}>
+            {activeDoc ? (
+              <div className="workspace-doc">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0' }}>
+                  <button
+                    className="btn-ghost"
+                    onClick={handleExportDoc}
+                    style={{ fontSize: 12, padding: '4px 10px' }}
+                    title="הורד כקובץ Markdown"
+                  >
+                    ⬇️ ייצוא
+                  </button>
+                </div>
+                <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
               </div>
-              <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
-            </div>
-          ) : (
-            <div className="workspace-empty">
-              {isRunning ? (
-                <div className="workspace-empty__running">
-                  <div className="pwa-spinner" style={{ width: 48, height: 48 }} />
-                  <p>Claude עובד על השלב הזה...</p>
-                </div>
-              ) : notStarted ? (
-                <div className="workspace-empty">
-                  <div style={{ fontSize: 48 }}>🚀</div>
-                  <p>לחץ "התחל" בסרגל הצד כדי להתחיל את פייפליין התכנון</p>
-                </div>
-              ) : (
-                <div className="workspace-empty">
-                  <div style={{ fontSize: 48 }}>👈</div>
-                  <p>בחר שלב מהרשימה כדי לצפות במסמך</p>
-                </div>
-              )}
-            </div>
-          )}
+            ) : (
+              <div className="workspace-empty">
+                {isRunning ? (
+                  <div className="workspace-empty__running">
+                    <div className="pwa-spinner" style={{ width: 48, height: 48 }} />
+                    <p>Claude עובד על השלב הזה...</p>
+                  </div>
+                ) : notStarted ? (
+                  <div className="workspace-empty">
+                    <div style={{ fontSize: 48 }}>🚀</div>
+                    <p>לחץ "התחל" בסרגל הצד כדי להתחיל את פייפליין התכנון</p>
+                  </div>
+                ) : (
+                  <div className="workspace-empty">
+                    <div style={{ fontSize: 48 }}>👈</div>
+                    <p>בחר שלב מהרשימה כדי לצפות במסמך</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </main>
 
-          {/* ApprovalBar: always rendered when phase awaits approval — independent of doc load success */}
-          {awaitingPhase === activePhaseIndex && (
-            <ApprovalBar
+          {awaitingPhase !== null && awaitingPhase === activePhaseIndex && (
+            <WorkspaceApprovalFooter
               phaseIndex={awaitingPhase}
+              canApprove={hasScrolledToBottom}
               refineCount={awaitPhase?.refineCount || 0}
-              refineOpen={refineOpen}
-              refineFeedback={refineFeedback}
-              onRefineOpen={() => setRefineOpen(true)}
-              onRefineClose={() => setRefineOpen(false)}
-              onRefineFeedbackChange={setRefineFeedback}
               onApprove={handleApprove}
               onRefineSubmit={handleRefine}
             />
           )}
-        </main>
+        </div>
 
         {/* Right: Live feed */}
         <LiveFeed
-          narrative={narrativeBuffer}
           meetingMsgs={meetingMsgs}
           consultantMsgs={consultantMsgs}
           consultantsRunning={consultantsRunning}
           techLogs={techLogs}
           isRunning={isRunning}
-          activeAgent={activeAgent}
           activeTab={activeFeedTab}
           onTabChange={setActiveFeedTab}
           scheduledMeeting={scheduledMeeting}
           isMeetingLive={isMeetingLive}
           missedMeeting={missedMeeting}
           onClearMissed={() => setMissedMeeting(false)}
-          onJoinMeeting={() => setActiveFeedTab('meeting')}
+          onJoinMeeting={() => setShowMeetingRoom(true)}
           activePhaseIndex={activePhaseIndex}
         />
       </div>

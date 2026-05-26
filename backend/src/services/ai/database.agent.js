@@ -39,4 +39,4 @@ How will schema changes be handled safely in production?
 
 QUALITY: Every index must have a reason. Every model must be complete based on the PRD and API design. No orphan fields.`;
 
-module.exports = new BaseAgent('DatabaseAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('DatabaseAgent', SYSTEM_PROMPT, { docMode: true });

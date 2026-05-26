@@ -30,4 +30,4 @@ Recommended initial channels and tactics for reaching the target audience.
 
 QUALITY: Name real or realistic competitors. Be specific about gaps. Base positioning on the discovery answers.`;
 
-module.exports = new BaseAgent('MarketAnalystAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('MarketAnalystAgent', SYSTEM_PROMPT, { docMode: true });

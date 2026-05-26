@@ -43,4 +43,4 @@ At what metrics does the system scale? Horizontal or vertical? Triggers.
 
 QUALITY: Every monitoring metric must have a threshold. CI/CD must be step-by-step, not abstract.`;
 
-module.exports = new BaseAgent('DevOpsAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('DevOpsAgent', SYSTEM_PROMPT, { docMode: true });

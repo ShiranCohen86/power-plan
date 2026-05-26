@@ -39,4 +39,4 @@ When do tests run? What blocks a merge? Minimum coverage threshold.
 
 QUALITY: Test cases must be product-specific. Edge cases must relate to the actual user flows and data models.`;
 
-module.exports = new BaseAgent('QAAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('QAAgent', SYSTEM_PROMPT, { docMode: true });

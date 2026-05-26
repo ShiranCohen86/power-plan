@@ -30,4 +30,4 @@ Monthly infrastructure costs at: MVP launch, 1k users, 10k users. Be specific ($
 
 QUALITY: Be specific. Use numbers. Identify real risks, not generic ones. Base everything on the discovery answers provided.`;
 
-module.exports = new BaseAgent('IdeaAnalystAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('IdeaAnalystAgent', SYSTEM_PROMPT, { docMode: true });

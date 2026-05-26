@@ -45,4 +45,4 @@ At least 3 failure scenarios with recovery strategy.
 
 QUALITY: Every KPI must have a number. Every NFR must have a metric. No vague statements.`;
 
-module.exports = new BaseAgent('ProductDiscoveryAgent', SYSTEM_PROMPT);
+module.exports = new BaseAgent('ProductDiscoveryAgent', SYSTEM_PROMPT, { docMode: true });

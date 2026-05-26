@@ -15,9 +15,10 @@ function _isQuotaError(err) {
 
 class BaseAgent {
   // phaseType matches Lesson.agentType enum (e.g. 'product_discovery')
-  constructor(agentName, systemPrompt, { maxTokens, phaseType } = {}) {
+  constructor(agentName, systemPrompt, { maxTokens, phaseType, docMode } = {}) {
     this.agentName    = agentName;
     this.phaseType    = phaseType || null;
+    this.docMode      = docMode || false;
     this.systemPrompt = systemPrompt;
     this.maxTokens    = maxTokens || MAX_TOKENS;
   }
@@ -68,25 +69,41 @@ class BaseAgent {
     return { content, inputTokens, outputTokens, totalTokens: inputTokens + outputTokens };
   }
 
+  static DOC_MODE_APPENDIX = `
+
+## PLAIN LANGUAGE RULE
+You are writing for a non-technical entrepreneur, not a developer.
+For every technical term, tool, or concept, add a brief plain-language explanation in parentheses in the project's language.
+Example: "Redis (מסד נתונים מהיר בזיכרון — כמו פתק דביק שהשרת זוכר בין בקשות)"
+Example: "CI/CD (מערכת שמעלה קוד לאוויר אוטומטית — ללא צורך בפריסה ידנית)"
+Every decision must explain WHY it matters for this specific business, not just what it is.`;
+
   async _buildSystemPrompt() {
-    if (!this.phaseType) return this.systemPrompt;
-    try {
-      const lessons = await Lesson.find({ agentType: this.phaseType, isActive: true })
-        .sort({ occurrenceCount: -1 })
-        .limit(10)
-        .lean();
+    let prompt = this.systemPrompt;
 
-      if (lessons.length === 0) return this.systemPrompt;
+    if (this.phaseType) {
+      try {
+        const lessons = await Lesson.find({ agentType: this.phaseType, isActive: true })
+          .sort({ occurrenceCount: -1 })
+          .limit(10)
+          .lean();
 
-      const lessonsText = lessons
-        .map((l) => `- ${l.lesson} (נלמד מ-${l.occurrenceCount} פרויקטים)`)
-        .join('\n');
-
-      return this.systemPrompt + `\n\n## לקחים מפרויקטים קודמים:\n${lessonsText}`;
-    } catch {
-      // DB unavailable — fall back to base prompt
-      return this.systemPrompt;
+        if (lessons.length > 0) {
+          const lessonsText = lessons
+            .map((l) => `- ${l.lesson} (נלמד מ-${l.occurrenceCount} פרויקטים)`)
+            .join('\n');
+          prompt += `\n\n## לקחים מפרויקטים קודמים:\n${lessonsText}`;
+        }
+      } catch {
+        // DB unavailable — fall back to base prompt
+      }
     }
+
+    if (this.docMode) {
+      prompt += BaseAgent.DOC_MODE_APPENDIX;
+    }
+
+    return prompt;
   }
 
   buildProjectContext(project, previousDocs = []) {
