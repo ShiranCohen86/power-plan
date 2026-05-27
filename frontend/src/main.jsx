@@ -8,6 +8,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import { SocketProvider } from './context/SocketContext.jsx';
 import { AppThemeProvider } from './context/ThemeContext.jsx';
+import { AppMenuProvider } from './context/AppMenuContext.jsx';
 import './i18n';
 import './styles/main.scss';
 
@@ -40,7 +41,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <AuthProvider>
             <SocketProvider>
               <AppThemeProvider>
-                <App />
+                <AppMenuProvider>
+                  <App />
+                </AppMenuProvider>
               </AppThemeProvider>
             </SocketProvider>
           </AuthProvider>

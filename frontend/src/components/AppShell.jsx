@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +6,7 @@ import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice';
 import NotificationBell from './ui/NotificationBell';
 import BottomSheet from './ui/BottomSheet.jsx';
 import { useAppTheme } from '../context/ThemeContext.jsx';
+import { useAppMenu } from '../context/AppMenuContext.jsx';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
 import BuildOutlined from '@mui/icons-material/BuildOutlined';
@@ -22,15 +22,14 @@ export default function AppShell({ children }) {
   const user = useSelector(selectCurrentUser);
   const lang = useSelector(selectLanguage);
   const { mode, toggleTheme } = useAppTheme();
-
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { menuOpen, openMenu, closeMenu } = useAppMenu();
 
   const isHome = location.pathname === '/dashboard';
   const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
   const showBack = !isHome && !isInProject;
 
   function handleLogout() {
-    setMenuOpen(false);
+    closeMenu();
     dispatch(logoutUser());
   }
 
@@ -80,26 +79,26 @@ export default function AppShell({ children }) {
           </button>
 
           {/* Hamburger — mobile only */}
-          <button className="btn-ghost app-topbar__hamburger" onClick={() => setMenuOpen(true)} aria-label="תפריט">
+          <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
             <MenuOutlined />
           </button>
         </div>
       </header>
 
       {menuOpen && (
-        <BottomSheet onClose={() => setMenuOpen(false)}>
+        <BottomSheet onClose={closeMenu}>
           <div className="app-menu">
-            <button className="app-menu__item" onClick={() => { dispatch(toggleLanguage()); setMenuOpen(false); }}>
+            <button className="app-menu__item" onClick={() => { dispatch(toggleLanguage()); closeMenu(); }}>
               🌐 {lang === 'he' ? 'English' : 'עברית'}
             </button>
-            <button className="app-menu__item" onClick={() => { toggleTheme(); setMenuOpen(false); }}>
+            <button className="app-menu__item" onClick={() => { toggleTheme(); closeMenu(); }}>
               {mode === 'dark' ? '☀️ מצב בהיר' : '🌙 מצב כהה'}
             </button>
-            <button className="app-menu__item" onClick={() => { navigate('/settings'); setMenuOpen(false); }}>
+            <button className="app-menu__item" onClick={() => { navigate('/settings'); closeMenu(); }}>
               ⚙️ {t('settings.title')}
             </button>
             {user?.role === 'admin' && (
-              <button className="app-menu__item" onClick={() => { navigate('/admin'); setMenuOpen(false); }}>
+              <button className="app-menu__item" onClick={() => { navigate('/admin'); closeMenu(); }}>
                 🔧 Admin
               </button>
             )}
