@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginRequest, logoutRequest, fetchCurrentUser, signupRequest } from '../../api/auth.api.js';
+import { loginRequest, logoutRequest, fetchCurrentUser, signupRequest, silentRefresh } from '../../api/auth.api.js';
 import { logError, logInfo } from '../../api/logger.js';
 
 const initialState = {
@@ -9,15 +9,46 @@ const initialState = {
   isBootstrapped: false,
 };
 
+// Decode a JWT payload without verifying the signature (client-side expiry check only).
+function _jwtExpMs(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? payload.exp * 1000 : 0;
+  } catch { return 0; }
+}
+
+function _isExpired(token) {
+  const exp = _jwtExpMs(token);
+  return !exp || Date.now() > exp - 30_000; // 30s safety margin
+}
+
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async (_arg, { rejectWithValue }) => {
   const storedToken = localStorage.getItem('token');
-  if (!storedToken) return null;
+
+  // If token exists and still valid — call /auth/me directly
+  if (storedToken && !_isExpired(storedToken)) {
+    try {
+      return await fetchCurrentUser();
+    } catch (err) {
+      if (err.status !== 401 && err.status !== 403) {
+        // Network / server error — don't wipe the token; let user retry
+        return rejectWithValue(err.message);
+      }
+      localStorage.removeItem('token');
+      // fall through to silent refresh
+    }
+  } else {
+    if (storedToken) localStorage.removeItem('token'); // expired — clean up
+  }
+
+  // No valid local token → try silent refresh via httpOnly cookie
   try {
+    const refreshData = await silentRefresh();
+    localStorage.setItem('token', refreshData.accessToken);
     return await fetchCurrentUser();
-  } catch (err) {
-    logError('auth', 'bootstrap failed', err.message);
-    localStorage.removeItem('token');
-    return rejectWithValue(err.message);
+  } catch {
+    logError('auth', 'silent refresh failed — user must log in');
+    return null; // fulfilled(null) → user stays null, redirect to login
   }
 });
 

@@ -24,6 +24,11 @@ export function refreshTokens(refreshToken) {
   return safeRequest(httpClient.post('/auth/refresh', { refreshToken }));
 }
 
+// Silent refresh using the httpOnly cookie — no body needed
+export function silentRefresh() {
+  return safeRequest({ method: 'post', url: '/auth/refresh', withCredentials: true });
+}
+
 export function requestPasswordReset(email) {
   return safeRequest(httpClient.post('/auth/password/forgot', { email }));
 }
