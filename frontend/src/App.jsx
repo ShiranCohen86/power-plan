@@ -99,16 +99,29 @@ function isMobileUA() {
 
 // ── Install sheet content ────────────────────────────────────────────────────
 function InstallSheetContent({ deferredPrompt, onClose }) {
-  async function handleAndroidInstall() {
+  async function handleNativeInstall() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
-    }
+    if (outcome === 'accepted') localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
     onClose();
   }
 
+  // Native install supported (Chrome/Edge desktop + Android)
+  if (deferredPrompt) {
+    return (
+      <>
+        <div className="bsheet__title">התקן את Power Plan 📲</div>
+        <div className="bsheet__body">פתח את האפליקציה ישירות — ללא דפדפן, כמו אפליקציה אמיתית.</div>
+        <div className="bsheet__actions">
+          <button className="btn btn--primary" onClick={handleNativeInstall}>התקן עכשיו</button>
+          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>לא עכשיו</button>
+        </div>
+      </>
+    );
+  }
+
+  // iOS Safari — manual Add to Home Screen
   if (isIOS()) {
     return (
       <>
@@ -116,7 +129,7 @@ function InstallSheetContent({ deferredPrompt, onClose }) {
         <div className="bsheet__body">
           <p>לחץ על <strong>כפתור השיתוף</strong> <span style={{ fontSize: 18 }}>⎙</span> בתחתית הדפדפן</p>
           <p style={{ marginTop: 8 }}>ואז בחר <strong>"הוסף למסך הבית"</strong></p>
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>כך Power Plan ייפתח כאפליקציה מלאה ללא כרום</p>
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>Power Plan ייפתח כאפליקציה מלאה ללא כרום</p>
         </div>
         <div className="bsheet__actions">
           <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>הבנתי</button>
@@ -125,13 +138,16 @@ function InstallSheetContent({ deferredPrompt, onClose }) {
     );
   }
 
+  // Other browsers (Firefox, Safari desktop) — generic hint
   return (
     <>
-      <div className="bsheet__title">התקן את Power Plan 📲</div>
-      <div className="bsheet__body">פתח את האפליקציה ישירות מהמסך הראשי — ללא דפדפן, גישה מהירה יותר.</div>
+      <div className="bsheet__title">Power Plan זמין כאפליקציה 📲</div>
+      <div className="bsheet__body">
+        <p>פתח את Power Plan בכרום או Edge כדי להתקין אותו כאפליקציה מהירה ונוחה.</p>
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>חפש את כפתור ההתקנה בשורת הכתובת.</p>
+      </div>
       <div className="bsheet__actions">
-        <button className="btn btn--primary" onClick={handleAndroidInstall}>התקן עכשיו</button>
-        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>לא עכשיו</button>
+        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>הבנתי</button>
       </div>
     </>
   );
@@ -216,16 +232,17 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
 
-    // iOS Safari: show install hint after 5 s on first visit (mobile, not installed)
-    let iosTimer;
-    if (isIOS() && isMobileUA() && !isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
-      iosTimer = setTimeout(() => setSheet((s) => s || 'install'), 5000);
+    // Show install sheet in any browser (mobile or desktop) if not already installed
+    // and not previously dismissed. beforeinstallprompt may fire and override this.
+    let installTimer;
+    if (!isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
+      installTimer = setTimeout(() => setSheet((s) => s || 'install'), 4000);
     }
 
     return () => {
       window.removeEventListener('sw-updated', onSwUpdated);
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-      clearTimeout(iosTimer);
+      clearTimeout(installTimer);
     };
   }, []);
 
