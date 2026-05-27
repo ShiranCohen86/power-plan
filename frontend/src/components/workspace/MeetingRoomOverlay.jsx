@@ -8,8 +8,8 @@ const AVATAR_POSITIONS = {
   ux:       { top: '42%', left: '82%' },
   backend:  { top: '72%', left: '55%' },
   frontend: { top: '72%', left: '30%' },
-  qa:       { top: '42%', left: '4%'  },
-  devops:   { top: '20%', left: '8%'  },
+  qa:       { top: '42%', left: '10%' },
+  devops:   { top: '20%', left: '14%' },
   security: { top: '20%', left: '76%' },
 };
 

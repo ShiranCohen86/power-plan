@@ -1,6 +1,6 @@
 @use 'variables' as *;
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body, #root { height: 100%; margin: 0; overflow-x: hidden; }
 #root { width: 100%; }
 
@@ -23,6 +23,7 @@ button, .btn {
   font-weight: 600; font-size: 13.5px;
   transition: background .18s ease, transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease;
   display: inline-flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
 
   &:hover { background: var(--brand-primary-dark); box-shadow: var(--shadow-brand); transform: translateY(-1px); }
   &:active { transform: scale(.96) translateY(0); box-shadow: none; }
@@ -183,6 +184,7 @@ input, select, textarea {
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
+  padding-top: env(safe-area-inset-top, 0);
 
   &__brand {
     display: flex; align-items: center; gap: 8px;
@@ -459,7 +461,9 @@ input, select, textarea {
   align-items: center;
   gap: 16px;
   padding: 0 20px;
+  padding-top: env(safe-area-inset-top, 0);
   height: 52px;
+  overflow: hidden;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -512,6 +516,7 @@ input, select, textarea {
 
 .workspace-main {
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 24px;
   flex: 1;
   min-height: 0;
@@ -525,6 +530,7 @@ input, select, textarea {
   &__bar {
     display: flex; align-items: center; gap: 12px;
     padding: 12px 20px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
     flex-wrap: wrap;
   }
   &__info   { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
@@ -641,7 +647,7 @@ input, select, textarea {
   &--running { color: var(--text); animation: pulse-glow 2s infinite; }
   &--awaiting_approval { color: #fbbf24; }
   &--failed { color: var(--danger); }
-  &:disabled { cursor: default; opacity: 0.5; }
+  &:disabled { cursor: default; opacity: 0.65; }
 
   &__status { font-size: 14px; flex-shrink: 0; }
   &__icon   { font-size: 14px; flex-shrink: 0; }
@@ -671,7 +677,7 @@ input, select, textarea {
     width: 16px; height: 16px; border-radius: 50%; background: var(--brand-primary);
     color: #fff; font-size: 10px; margin-inline-start: 4px;
   }
-  &__content { flex: 1; overflow-y: auto; padding: 12px; }
+  &__content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
   &__text { font-size: 12px; line-height: 1.6; color: var(--text-muted); white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 0; }
   &__empty { padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 }
@@ -844,6 +850,16 @@ input, select, textarea {
   .discovery-msg__bubble { max-width: 88%; }
   .discovery-chat__messages { max-height: 280px; }
 
+  // iOS momentum scrolling + overscroll containment
+  .workspace-main,
+  .live-feed__content,
+  .discovery-chat__messages,
+  .proj-settings-modal,
+  .creds-modal__body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
   // Auth
   .login-card { padding: 20px 16px; }
 
@@ -878,6 +894,12 @@ input, select, textarea {
 
   // Notification panel — clamp to screen width
   .notif-panel { width: calc(100vw - 16px); min-width: 0; right: 0; left: auto; }
+
+  // iOS Safari auto-zoom prevention — inputs <16px trigger full-page zoom on focus
+  input, textarea, select { font-size: 16px; }
+
+  // Dashboard search input — full width on mobile (overrides inline maxWidth: 280)
+  .form-input { max-width: 100% !important; }
 }
 
 @media (min-width: 1280px) {
@@ -1066,6 +1088,7 @@ input, select, textarea {
   background: var(--surface-1); border-bottom: 1px solid var(--border);
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 
+  padding-top: env(safe-area-inset-top, 0);
   &__start { display: flex; align-items: center; gap: 4px; }
   &__end   { display: flex; align-items: center; gap: 4px; }
 
@@ -1730,7 +1753,7 @@ input, select, textarea {
   display: flex; flex-direction: column; gap: 10px;
 
   &--done    { opacity: 0.6; border-color: #34d399; }
-  &--skipped { opacity: 0.5; border-style: dashed; }
+  &--skipped { opacity: 0.7; border-style: dashed; }
 
   &__header  { display: flex; align-items: center; gap: 8px; }
   &__name    { font-size: 14px; font-weight: 600; flex: 1; }
@@ -1963,4 +1986,29 @@ input, select, textarea {
   .team-status-strip { grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px 6px 4px; }
   .team-avatar__emoji { width: 26px; height: 26px; font-size: 12px; }
   .team-avatar__name { font-size: 8px; }
+}
+
+// ── Touch device hover neutralization ───────────────────────────────────────
+// Prevents hover styles (translateY, box-shadow) from getting stuck after tap
+
+@media (hover: none) {
+  .btn:hover, button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .project-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// ── Landscape phones (e.g. iPhone SE/12 rotated) ─────────────────────────────
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .workspace-topbar { height: 40px; }
+  .workspace-sidebar { max-height: 100px; }
+  .workspace-main { padding: 8px 12px; }
+  .meeting-room__scene { height: 140px; width: min(220px, 70vw); }
+  .meeting-room__table { width: 110px; height: 60px; }
+  .meeting-room__subtitles { padding: 6px 12px 10px; }
 }
