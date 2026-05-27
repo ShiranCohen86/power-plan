@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
@@ -99,6 +100,8 @@ function isMobileUA() {
 
 // ── Install sheet content ────────────────────────────────────────────────────
 function InstallSheetContent({ deferredPrompt, onClose }) {
+  const { t } = useTranslation();
+
   async function handleNativeInstall() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -107,47 +110,44 @@ function InstallSheetContent({ deferredPrompt, onClose }) {
     onClose();
   }
 
-  // Native install supported (Chrome/Edge desktop + Android)
   if (deferredPrompt) {
     return (
       <>
-        <div className="bsheet__title">התקן את Power Plan 📲</div>
-        <div className="bsheet__body">פתח את האפליקציה ישירות — ללא דפדפן, כמו אפליקציה אמיתית.</div>
+        <div className="bsheet__title">{t('pwa.installTitle')}</div>
+        <div className="bsheet__body">{t('pwa.installBody')}</div>
         <div className="bsheet__actions">
-          <button className="btn btn--primary" onClick={handleNativeInstall}>התקן עכשיו</button>
-          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>לא עכשיו</button>
+          <button className="btn btn--primary" onClick={handleNativeInstall}>{t('pwa.installNow')}</button>
+          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.notNow')}</button>
         </div>
       </>
     );
   }
 
-  // iOS Safari — manual Add to Home Screen
   if (isIOS()) {
     return (
       <>
-        <div className="bsheet__title">הוסף לסרגל הבית 📲</div>
+        <div className="bsheet__title">{t('pwa.iosTitle')}</div>
         <div className="bsheet__body">
-          <p>לחץ על <strong>כפתור השיתוף</strong> <span style={{ fontSize: 18 }}>⎙</span> בתחתית הדפדפן</p>
-          <p style={{ marginTop: 8 }}>ואז בחר <strong>"הוסף למסך הבית"</strong></p>
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>Power Plan ייפתח כאפליקציה מלאה ללא כרום</p>
+          <p dangerouslySetInnerHTML={{ __html: t('pwa.iosStep1') }} />
+          <p style={{ marginTop: 8 }} dangerouslySetInnerHTML={{ __html: t('pwa.iosStep2') }} />
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>{t('pwa.iosHint')}</p>
         </div>
         <div className="bsheet__actions">
-          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>הבנתי</button>
+          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.iosGot')}</button>
         </div>
       </>
     );
   }
 
-  // Other browsers (Firefox, Safari desktop) — generic hint
   return (
     <>
-      <div className="bsheet__title">Power Plan זמין כאפליקציה 📲</div>
+      <div className="bsheet__title">{t('pwa.genericTitle')}</div>
       <div className="bsheet__body">
-        <p>פתח את Power Plan בכרום או Edge כדי להתקין אותו כאפליקציה מהירה ונוחה.</p>
-        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>חפש את כפתור ההתקנה בשורת הכתובת.</p>
+        <p>{t('pwa.genericBody')}</p>
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>{t('pwa.genericHint')}</p>
       </div>
       <div className="bsheet__actions">
-        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>הבנתי</button>
+        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.genericGot')}</button>
       </div>
     </>
   );
@@ -155,13 +155,14 @@ function InstallSheetContent({ deferredPrompt, onClose }) {
 
 // ── SW update sheet content ──────────────────────────────────────────────────
 function UpdateSheetContent({ onClose }) {
+  const { t } = useTranslation();
   return (
     <>
-      <div className="bsheet__title">עדכון זמין ✨</div>
-      <div className="bsheet__body">גרסה חדשה של Power Plan מוכנה. טען מחדש כדי לקבל אותה.</div>
+      <div className="bsheet__title">{t('pwa.updateTitle')}</div>
+      <div className="bsheet__body">{t('pwa.updateBody')}</div>
       <div className="bsheet__actions">
-        <button className="btn btn--primary" onClick={() => window.location.reload()}>טען מחדש</button>
-        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>אחר כך</button>
+        <button className="btn btn--primary" onClick={() => window.location.reload()}>{t('pwa.reload')}</button>
+        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.later')}</button>
       </div>
     </>
   );
@@ -169,19 +170,20 @@ function UpdateSheetContent({ onClose }) {
 
 // ── Version changelog sheet content ─────────────────────────────────────────
 function VersionSheetContent({ prevVersion, currentVersion, onClose }) {
+  const { t } = useTranslation();
   return (
     <>
-      <div className="bsheet__title">Power Plan עודכנה! 🎉</div>
+      <div className="bsheet__title">{t('pwa.versionTitle')}</div>
       <div className="bsheet__body">
         {prevVersion
-          ? <span>גרסה <strong>{prevVersion}</strong> → <strong>{currentVersion}</strong></span>
-          : <span>גרסה <strong>{currentVersion}</strong></span>}
+          ? <span>{t('pwa.versionBody', { prev: prevVersion, next: currentVersion })}</span>
+          : <span>{t('pwa.versionBodyNew', { next: currentVersion })}</span>}
         <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-subtle)' }}>
-          שיפורים בממשק, תיקוני באגים ויציבות משופרת.
+          {t('pwa.versionNote')}
         </p>
       </div>
       <div className="bsheet__actions">
-        <button className="btn btn--primary" onClick={onClose}>מעולה!</button>
+        <button className="btn btn--primary" onClick={onClose}>{t('pwa.great')}</button>
       </div>
     </>
   );

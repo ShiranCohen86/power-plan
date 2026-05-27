@@ -707,8 +707,11 @@ input, select, textarea {
   &__status { font-size: 14px; flex-shrink: 0; }
   &__icon   { font-size: 14px; flex-shrink: 0; }
   &__name   { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__num    { display: none; font-size: 13px; font-weight: 700; line-height: 1; flex-shrink: 0; }
   &__pulse  { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-primary); animation: pulse-glow 1s infinite; flex-shrink: 0; }
 }
+
+.workspace-mobile-phase-title { display: none; }
 
 // â”€â”€ Live Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -882,8 +885,15 @@ input, select, textarea {
   .phase-list__group { display: flex; flex-direction: row; gap: 4px; margin-bottom: 0; }
   .phase-list__group-label { display: none; }
   .phase-item { white-space: nowrap; min-width: auto; }
-  .phase-item__name { display: none; }
+  .phase-item__name, .phase-item__status, .phase-item__icon { display: none; }
+  .phase-item__num { display: block; }
   .live-feed { display: none; }
+  .workspace-mobile-phase-title {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--surface-1);
+  }
 
   // Workspace content padding
   .workspace-topbar { padding: 0 12px; gap: 8px; height: 46px; }
@@ -2081,6 +2091,11 @@ input, select, textarea {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+@keyframes slide-down-banner {
+  from { transform: translateY(-110%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
 .bsheet-overlay {
   position: fixed; inset: 0; z-index: 8500;
   background: rgba(0,0,0,.55);
@@ -2098,6 +2113,7 @@ input, select, textarea {
   box-shadow: var(--shadow-lg);
   animation: slide-up-sheet .32s cubic-bezier(.34,1.2,.64,1);
   display: flex; flex-direction: column; gap: 0;
+  position: relative;
 
   &__handle {
     width: 36px; height: 4px;
@@ -2105,6 +2121,16 @@ input, select, textarea {
     border-radius: 2px;
     margin: 0 auto 16px;
     flex-shrink: 0;
+  }
+
+  &__close {
+    display: none;
+    position: absolute; top: 12px; inset-inline-end: 14px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 15px;
+    min-height: auto; padding: 4px 7px;
+    border-radius: $radius-sm; line-height: 1;
+    &:hover { background: var(--surface-3); color: var(--text); transform: none; box-shadow: none; }
   }
 
   &__title {
@@ -2132,6 +2158,19 @@ input, select, textarea {
     background: transparent; border: none; box-shadow: none; min-height: auto;
     padding: 6px;
     &:hover { background: var(--surface-3); color: var(--text-muted); transform: none; box-shadow: none; }
+  }
+}
+
+@media (min-width: 1024px) {
+  .bsheet-overlay {
+    align-items: flex-start; justify-content: flex-end;
+    padding: 12px 24px 0; background: transparent;
+  }
+  .bsheet {
+    max-width: 360px; padding: 14px 20px 18px;
+    animation: slide-down-banner .3s cubic-bezier(.34,1.2,.64,1);
+    &__handle { display: none; }
+    &__close  { display: flex; }
   }
 }
 

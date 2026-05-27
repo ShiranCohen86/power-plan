@@ -1,4 +1,5 @@
 import { PLANNING_PHASES, CODEGEN_PHASES } from '../../utils/phaseConfig';
+import { useLanguage } from '../../context/LanguageContext.jsx';
 
 const STATUS_ICON = {
   pending:           '⏳',
@@ -9,10 +10,9 @@ const STATUS_ICON = {
   interrupted:       '⏸️',
 };
 
-function PhaseItem({ config, phaseData, isActive, onClick }) {
+function PhaseItem({ config, phaseData, isActive, onClick, lang }) {
   const status = phaseData?.status || 'pending';
   const icon   = STATUS_ICON[status] || '⏳';
-
   const tokens = phaseData?.tokensUsed;
 
   return (
@@ -23,7 +23,8 @@ function PhaseItem({ config, phaseData, isActive, onClick }) {
     >
       <span className="phase-item__status">{icon}</span>
       <span className="phase-item__icon">{config.icon}</span>
-      <span className="phase-item__name">{config.nameHe}</span>
+      <span className="phase-item__num">{config.index + 1}</span>
+      <span className="phase-item__name">{lang === 'he' ? config.nameHe : config.name}</span>
       {status === 'running' && <span className="phase-item__pulse" />}
       {tokens > 0 && status !== 'running' && status !== 'failed' && (
         <span style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
@@ -44,12 +45,16 @@ function PhaseItem({ config, phaseData, isActive, onClick }) {
 }
 
 export default function PhaseList({ phases, activeIndex, onSelect }) {
+  const { lang } = useLanguage();
   const phaseMap = Object.fromEntries(phases.map((p) => [p.index, p]));
+
+  const planningLabel = lang === 'he' ? '📋 תכנון'  : '📋 Planning';
+  const buildingLabel = lang === 'he' ? '⚙️ בנייה' : '⚙️ Building';
 
   return (
     <div className="phase-list">
       <div className="phase-list__group">
-        <div className="phase-list__group-label">📋 תכנון</div>
+        <div className="phase-list__group-label">{planningLabel}</div>
         {PLANNING_PHASES.map((cfg) => (
           <PhaseItem
             key={cfg.index}
@@ -57,12 +62,13 @@ export default function PhaseList({ phases, activeIndex, onSelect }) {
             phaseData={phaseMap[cfg.index]}
             isActive={activeIndex === cfg.index}
             onClick={() => onSelect(cfg.index)}
+            lang={lang}
           />
         ))}
       </div>
 
       <div className="phase-list__group">
-        <div className="phase-list__group-label">⚙️ בנייה</div>
+        <div className="phase-list__group-label">{buildingLabel}</div>
         {CODEGEN_PHASES.map((cfg) => (
           <PhaseItem
             key={cfg.index}
@@ -70,6 +76,7 @@ export default function PhaseList({ phases, activeIndex, onSelect }) {
             phaseData={phaseMap[cfg.index]}
             isActive={activeIndex === cfg.index}
             onClick={() => onSelect(cfg.index)}
+            lang={lang}
           />
         ))}
       </div>

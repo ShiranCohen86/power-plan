@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TEAM_MEMBERS, PHASE_LEAD } from '../../utils/phaseConfig';
 import MeetingCountdownBanner from './MeetingCountdownBanner';
 import TeamMemberAvatar from './TeamMemberAvatar';
@@ -28,17 +29,15 @@ const EVENT_ICON = {
 export default function LiveFeed({
   meetingMsgs, consultantMsgs = [], consultantsRunning = false,
   techLogs, isRunning,
-  // Controlled tab
   activeTab, onTabChange,
-  // Live Company Experience
   scheduledMeeting, isMeetingLive, missedMeeting, onClearMissed, onJoinMeeting,
   activePhaseIndex,
 }) {
+  const { t } = useTranslation();
   const meetingRef   = useRef(null);
   const consultRef   = useRef(null);
   const techRef      = useRef(null);
 
-  // Auto-switch to meeting when messages arrive (only if not already there)
   useEffect(() => {
     if (meetingMsgs.length > 0 && activeTab !== 'meeting') {
       onTabChange('meeting');
@@ -51,7 +50,6 @@ export default function LiveFeed({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingMsgs.length]);
 
-  // Auto-switch to consultants when consultant messages arrive
   useEffect(() => {
     if (consultantMsgs.length > 0) {
       onTabChange('consultants');
@@ -62,14 +60,12 @@ export default function LiveFeed({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultantMsgs.length]);
 
-  // Auto-scroll tech log
   useEffect(() => {
     if (activeTab === 'tech' && techRef.current) {
       techRef.current.scrollTop = techRef.current.scrollHeight;
     }
   }, [techLogs, activeTab]);
 
-  // Compute team member statuses
   function getMemberStatus(key) {
     if (isMeetingLive) return 'in-meeting';
     if (isRunning && PHASE_LEAD[activePhaseIndex] === key) return 'working';
@@ -78,7 +74,6 @@ export default function LiveFeed({
 
   return (
     <aside className="live-feed">
-      {/* Team status strip — always visible */}
       {isMeetingLive && (
         <div className="team-status-strip">
           {Object.entries(TEAM_MEMBERS).map(([key, member]) => (
@@ -92,7 +87,6 @@ export default function LiveFeed({
         </div>
       )}
 
-      {/* Meeting countdown / live banner */}
       {(scheduledMeeting || isMeetingLive) && (
         <div style={{ padding: '0 8px 0' }}>
           <MeetingCountdownBanner
@@ -103,13 +97,12 @@ export default function LiveFeed({
         </div>
       )}
 
-      {/* Tabs */}
       <div className="live-feed__tabs">
         <button
           className={`live-feed__tab${activeTab === 'meeting' ? ' live-feed__tab--active' : ''}`}
           onClick={() => onTabChange('meeting')}
         >
-          🏢 ישיבה
+          {t('workspace.feed.tabMeeting')}
           {meetingMsgs.length > 0 && (
             <span className="live-feed__badge">{meetingMsgs.length}</span>
           )}
@@ -119,7 +112,7 @@ export default function LiveFeed({
           className={`live-feed__tab${activeTab === 'consultants' ? ' live-feed__tab--active' : ''}`}
           onClick={() => onTabChange('consultants')}
         >
-          🌐 יועצים
+          {t('workspace.feed.tabAdvisors')}
           {consultantsRunning && <span className="live-feed__dot-pulse" />}
           {!consultantsRunning && consultantMsgs.length > 0 && (
             <span className="live-feed__badge">{consultantMsgs.length}</span>
@@ -129,23 +122,20 @@ export default function LiveFeed({
           className={`live-feed__tab${activeTab === 'tech' ? ' live-feed__tab--active' : ''}`}
           onClick={() => onTabChange('tech')}
         >
-          📊 טכני
+          {t('workspace.feed.tabTech')}
         </button>
       </div>
 
-      {/* Meeting tab */}
       {activeTab === 'meeting' && (
         <div className="live-feed__content" ref={meetingRef}>
-          {/* Missed meeting banner */}
           {missedMeeting && (
             <div className="missed-meeting-banner">
-              <span>📋 פספסת את הפגישה — הנה הסיכום</span>
+              <span>{t('workspace.feed.missedMeeting')}</span>
               <button onClick={onClearMissed}>✕</button>
             </div>
           )}
 
           {(() => {
-            // Show only the current meeting — messages after the last separator
             const lastSepIdx = [...meetingMsgs].map((m, i) => m._isSeparator ? i : -1).filter(i => i >= 0);
             const startIdx   = lastSepIdx.length ? lastSepIdx[lastSepIdx.length - 1] + 1 : 0;
             const currentMsgs = meetingMsgs.slice(startIdx).filter(m => !m._isSeparator);
@@ -153,7 +143,7 @@ export default function LiveFeed({
             if (currentMsgs.length === 0 && !isMeetingLive) {
               return (
                 <div className="live-feed__empty">
-                  <p>הישיבה הפנימית תתחיל לאחר השלמת כל שלב</p>
+                  <p>{t('workspace.feed.meetingAfterPhase')}</p>
                 </div>
               );
             }
@@ -176,7 +166,7 @@ export default function LiveFeed({
                 {isMeetingLive && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
                     <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
-                    הצוות דן...
+                    {t('workspace.feed.teamDiscussing')}
                   </div>
                 )}
               </div>
@@ -185,7 +175,6 @@ export default function LiveFeed({
         </div>
       )}
 
-      {/* External consultants tab */}
       {activeTab === 'consultants' && (
         <div className="live-feed__content" ref={consultRef}>
           {consultantMsgs.length === 0 ? (
@@ -193,12 +182,12 @@ export default function LiveFeed({
               {consultantsRunning ? (
                 <>
                   <div className="pwa-spinner" style={{ width: 28, height: 28 }} />
-                  <p>היועצים החיצוניים בודקים את האפיון...</p>
+                  <p>{t('workspace.feed.advisorsReviewing')}</p>
                 </>
               ) : (
                 <>
                   <p style={{ fontSize: 28 }}>🌐</p>
-                  <p>היועצים החיצוניים יבדקו את האפיון לאחר השלמת 12 שלבי התכנון</p>
+                  <p>{t('workspace.feed.advisorsAfter')}</p>
                 </>
               )}
             </div>
@@ -206,7 +195,7 @@ export default function LiveFeed({
             <div className="live-feed__meeting">
               <div className="consultants-header">
                 <span className="consultants-header__badge">External Review</span>
-                <span className="consultants-header__title">סקירת אפיון — Round 1</span>
+                <span className="consultants-header__title">{t('workspace.feed.specReview')}</span>
               </div>
 
               {consultantMsgs.map((msg, i) => (
@@ -232,7 +221,7 @@ export default function LiveFeed({
               {consultantsRunning && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
                   <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
-                  בודקים...
+                  {t('workspace.feed.advisorsReviewing')}
                 </div>
               )}
             </div>
@@ -240,12 +229,11 @@ export default function LiveFeed({
         </div>
       )}
 
-      {/* Tech log tab */}
       {activeTab === 'tech' && (
         <div className="live-feed__content" ref={techRef}>
           {techLogs.length === 0 ? (
             <div className="live-feed__empty">
-              <p>אירועי agent יופיעו כאן</p>
+              <p>{t('workspace.feed.noEvents')}</p>
             </div>
           ) : (
             <div className="live-feed__tech">

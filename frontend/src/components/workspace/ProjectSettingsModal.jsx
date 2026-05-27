@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getProjectSettings,
   setProjectGithubToken, deleteProjectGithubToken,
@@ -6,6 +7,7 @@ import {
 } from '../../api/projects.api';
 
 function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placeholder }) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState('idle');
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
@@ -18,7 +20,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
       await onSave(value.trim());
       setMode('idle'); setValue('');
     } catch (e) {
-      setErr(e.message || 'שגיאה בשמירה');
+      setErr(e.message || t('workspace.projSettings.errorSave'));
     } finally { setBusy(false); }
   }
 
@@ -28,7 +30,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
       await onDelete();
       setMode('idle');
     } catch (e) {
-      setErr(e.message || 'שגיאה במחיקה');
+      setErr(e.message || t('workspace.projSettings.errorDelete'));
     } finally { setBusy(false); }
   }
 
@@ -40,7 +42,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
           <div className="proj-settings-row__subtitle">{subtitle}</div>
         </div>
         <span className={`proj-settings-row__status${hasToken ? ' proj-settings-row__status--ok' : ''}`}>
-          {hasToken ? '✓ מוגדר' : 'לא מוגדר'}
+          {hasToken ? t('settings.statusSet') : t('settings.statusUnset')}
         </span>
       </div>
 
@@ -51,11 +53,11 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
       {mode === 'idle' && (
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={() => setMode('editing')}>
-            {hasToken ? 'עדכן' : '+ הזן'}
+            {hasToken ? t('workspace.projSettings.update') : t('workspace.projSettings.enter')}
           </button>
           {hasToken && (
             <button className="btn" style={{ fontSize: 12, color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => setMode('deleting')}>
-              מחק
+              {t('common.delete')}
             </button>
           )}
         </div>
@@ -76,10 +78,10 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
           {err && <p style={{ margin: 0, fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn--primary" style={{ fontSize: 12 }} onClick={handleSave} disabled={busy || !value.trim()}>
-              {busy ? 'שומר...' : 'שמור'}
+              {busy ? t('workspace.projSettings.saving') : t('workspace.projSettings.save')}
             </button>
             <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={() => { setMode('idle'); setValue(''); setErr(''); }}>
-              ביטול
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -87,13 +89,13 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
 
       {mode === 'deleting' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>למחוק את קוד הגישה?</p>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>{t('workspace.projSettings.confirmDeleteMsg')}</p>
           {err && <p style={{ margin: 0, fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" style={{ fontSize: 12, color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={handleDelete} disabled={busy}>
-              {busy ? 'מוחק...' : 'כן, מחק'}
+              {busy ? t('workspace.projSettings.deleting') : t('workspace.projSettings.confirmDelete')}
             </button>
-            <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={() => setMode('idle')}>ביטול</button>
+            <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={() => setMode('idle')}>{t('common.cancel')}</button>
           </div>
         </div>
       )}
@@ -102,6 +104,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
 }
 
 export default function ProjectSettingsModal({ projectId, projectTitle, onClose }) {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading]   = useState(true);
   const [loadErr, setLoadErr]   = useState('');
@@ -109,7 +112,7 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
   useEffect(() => {
     getProjectSettings(projectId)
       .then(setSettings)
-      .catch(() => setLoadErr('לא ניתן לטעון הגדרות פרויקט'))
+      .catch(() => setLoadErr(t('workspace.projSettings.loadError')))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -122,7 +125,7 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
       <div className="proj-settings-modal">
         <div className="proj-settings-modal__header">
           <div>
-            <div className="proj-settings-modal__title">⚙️ הגדרות פרויקט</div>
+            <div className="proj-settings-modal__title">{t('workspace.projSettings.title')}</div>
             {projectTitle && (
               <div className="proj-settings-modal__subtitle">{projectTitle}</div>
             )}
@@ -143,18 +146,16 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
 
           {settings && (
             <>
-              <p className="proj-settings-modal__desc">
-                קודי גישה ייעודיים לפרויקט זה — כל פרויקט יכול להיות מחובר לrepo ולשירות פריסה נפרדים.
-              </p>
+              <p className="proj-settings-modal__desc">{t('workspace.projSettings.desc')}</p>
 
               <div className="proj-settings-modal__global-note">
-                🔑 מפתח ה-AI (Anthropic) הוא גלובלי לכל הפרויקטים —
-                {' '}<a href="/settings" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>ניהול בהגדרות חשבון</a>
+                {t('workspace.projSettings.apiKeyNote')}
+                {' '}<a href="/settings" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{t('settingsGate.manageSettings')}</a>
               </div>
 
               <TokenRow
-                title="קוד גישה ל-GitHub"
-                subtitle="שמירת הקוד של הפרויקט ב-repo פרטי בחשבון שלך"
+                title={t('workspace.projSettings.githubTitle')}
+                subtitle={t('workspace.projSettings.githubSubtitle')}
                 hint={settings.githubTokenHint}
                 hasToken={settings.hasGithubToken}
                 onSave={async (v) => {
@@ -169,8 +170,8 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
               />
 
               <TokenRow
-                title="קוד גישה ל-Render"
-                subtitle="פריסת הפרויקט לכתובת ייעודית באינטרנט"
+                title={t('workspace.projSettings.renderTitle')}
+                subtitle={t('workspace.projSettings.renderSubtitle')}
                 hint={settings.renderTokenHint}
                 hasToken={settings.hasRenderToken}
                 onSave={async (v) => {

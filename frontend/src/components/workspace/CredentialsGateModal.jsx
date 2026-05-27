@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { saveServiceCredentials, skipServiceCredentials, consultService } from '../../api/projects.api';
 
 function ServiceCard({ projectId, service, onSaved, onSkipped }) {
+  const { t } = useTranslation();
   const [values, setValues]     = useState(() => Object.fromEntries(service.fields.map((f) => [f.key, ''])));
   const [busy, setBusy]         = useState(false);
   const [err, setErr]           = useState('');
@@ -19,7 +21,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       setSaved(true);
       onSaved();
     } catch (e) {
-      setErr(e.message || 'שגיאה בשמירה');
+      setErr(e.message || t('workspace.creds.errorSave'));
     } finally { setBusy(false); }
   }
 
@@ -30,7 +32,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       setSkipped(true);
       onSkipped();
     } catch (e) {
-      setErr(e.message || 'שגיאה בדילוג');
+      setErr(e.message || t('workspace.creds.errorSkip'));
     } finally { setBusy(false); }
   }
 
@@ -40,7 +42,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       const res = await consultService(projectId, service.id);
       setAdvice(res.explanation);
     } catch {
-      setAdvice('לא ניתן לייצר הסבר כרגע — נסה שוב.');
+      setAdvice(t('workspace.creds.errorConsult'));
     } finally { setConsulting(false); }
   }
 
@@ -49,7 +51,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       <div className="creds-card creds-card--done">
         <div className="creds-card__header">
           <span className="creds-card__name">{service.name}</span>
-          <span className="creds-card__check">✓ נשמר</span>
+          <span className="creds-card__check">{t('workspace.creds.saved')}</span>
         </div>
       </div>
     );
@@ -60,7 +62,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       <div className="creds-card creds-card--skipped">
         <div className="creds-card__header">
           <span className="creds-card__name">{service.name}</span>
-          <span className="creds-card__skipped-label">⏭ דולג</span>
+          <span className="creds-card__skipped-label">{t('workspace.creds.skipped')}</span>
         </div>
       </div>
     );
@@ -71,14 +73,14 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
       <div className="creds-card__header">
         <span className="creds-card__name">{service.name}</span>
         {service.optional
-          ? <span className="creds-card__badge creds-card__badge--optional">אופציונלי</span>
-          : <span className="creds-card__badge creds-card__badge--required">חובה</span>
+          ? <span className="creds-card__badge creds-card__badge--optional">{t('workspace.creds.optional')}</span>
+          : <span className="creds-card__badge creds-card__badge--required">{t('workspace.creds.required')}</span>
         }
       </div>
 
       {service.howto && (
         <div className="creds-card__howto">
-          <span className="creds-card__howto-label">איך מקבלים: </span>
+          <span className="creds-card__howto-label">{t('workspace.creds.howto')} </span>
           {service.howto}
         </div>
       )}
@@ -108,14 +110,14 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
         onClick={handleConsult}
         disabled={consulting || busy}
       >
-        {consulting ? 'שואל את Claude...' : '❓ האם אני צריך את זה?'}
+        {consulting ? t('workspace.creds.consulting') : t('workspace.creds.consult')}
       </button>
 
       {advice && (
         <div className="creds-card__advice">
           <p style={{ margin: 0 }}>{advice}</p>
           <button className="creds-card__skip-anyway" onClick={handleSkip} disabled={busy}>
-            דלג בכל זאת ←
+            {t('workspace.creds.skipAnyway')}
           </button>
         </div>
       )}
@@ -128,7 +130,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
             onClick={handleSkip}
             disabled={busy}
           >
-            דלג ←
+            {t('workspace.creds.skip')}
           </button>
         )}
         <button
@@ -137,7 +139,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
           onClick={handleSave}
           disabled={busy || !allFilled}
         >
-          {busy ? 'שומר...' : 'שמור'}
+          {busy ? t('workspace.creds.saving') : t('workspace.creds.save')}
         </button>
       </div>
     </div>
@@ -145,6 +147,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
 }
 
 export default function CredentialsGateModal({ projectId, services, onDone, onClose }) {
+  const { t } = useTranslation();
   const [savedCount, setSavedCount]   = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
 
@@ -168,7 +171,6 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
   }
 
   function checkDone(saved, skipped) {
-    // Done when all required are saved + all optional are saved or skipped
     const requiredSaved = saved >= requiredServices.length;
     const allOptionalHandled = saved + skipped >= services.length;
     if (requiredSaved && (optionalServices.length === 0 || allOptionalHandled)) {
@@ -183,14 +185,11 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
       <div className="creds-modal">
         <div className="creds-modal__header">
           <div>
-            <div className="creds-modal__title">🔧 שירותים נדרשים לפרויקט</div>
-            <div className="creds-modal__subtitle">
-              ה-AI זיהה שהאפליקציה שלך משתמשת בשירותים הבאים.
-              הזן את קודי הגישה כדי שהקוד יכלול אותם מוכן לפריסה.
-            </div>
+            <div className="creds-modal__title">{t('workspace.creds.title')}</div>
+            <div className="creds-modal__subtitle">{t('workspace.creds.subtitle')}</div>
           </div>
           {onClose && (
-            <button className="creds-modal__close" onClick={onClose} title="סגור">✕</button>
+            <button className="creds-modal__close" onClick={onClose} title={t('workspace.creds.close')}>✕</button>
           )}
         </div>
 
@@ -198,10 +197,10 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
           {totalHandled < services.length ? (
             <>
               <p className="creds-modal__progress">
-                {totalHandled} / {services.length} שירותים טופלו
+                {t('workspace.creds.servicesHandled', { handled: totalHandled, total: services.length })}
               </p>
               {requiredServices.length > 0 && (
-                <p className="creds-modal__section-label">חובה</p>
+                <p className="creds-modal__section-label">{t('workspace.creds.required')}</p>
               )}
               {requiredServices.map((svc) => (
                 <ServiceCard
@@ -213,7 +212,7 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
                 />
               ))}
               {optionalServices.length > 0 && (
-                <p className="creds-modal__section-label">אופציונלי — ניתן לדלג ולהגדיר מאוחר יותר</p>
+                <p className="creds-modal__section-label">{t('workspace.creds.optionalNote')}</p>
               )}
               {optionalServices.map((svc) => (
                 <ServiceCard
@@ -228,7 +227,7 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
           ) : (
             <div className="creds-modal__all-done">
               <span>✅</span>
-              <span>כל השירותים טופלו — הבנייה ממשיכה!</span>
+              <span>{t('workspace.creds.allHandled')}</span>
             </div>
           )}
         </div>

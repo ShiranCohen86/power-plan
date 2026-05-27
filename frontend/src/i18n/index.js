@@ -4,7 +4,7 @@ import en from './en.json';
 import he from './he.json';
 
 const stored = typeof window !== 'undefined' ? localStorage.getItem('lang') : null;
-const initial = stored || 'he';
+const initial = stored || 'en';
 
 i18n.use(initReactI18next).init({
   resources: { en: { translation: en }, he: { translation: he } },

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TEAM_MEMBERS } from '../../utils/phaseConfig';
 
-// Positions around an oval table (top, right, bottom, left quadrants)
 const AVATAR_POSITIONS = {
   cto:      { top: '8%',  left: '30%' },
   pm:       { top: '8%',  left: '55%' },
@@ -66,10 +66,10 @@ function useAudio() {
 }
 
 export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose }) {
+  const { t } = useTranslation();
   const { startAmbient, stopAmbient, ding } = useAudio();
   const prevLenRef = useRef(0);
 
-  // Filter to current meeting (after last separator)
   const currentMsgs = (() => {
     const lastSepIdx = meetingMsgs.reduce((acc, m, i) => (m._isSeparator ? i : acc), -1);
     return meetingMsgs.slice(lastSepIdx + 1).filter((m) => !m._isSeparator);
@@ -78,14 +78,12 @@ export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose
   const lastMsg      = currentMsgs.at(-1) || null;
   const speakingRole = lastMsg?.role || null;
 
-  // Start ambient sound on mount (requires user gesture — already triggered by button click)
   useEffect(() => {
     startAmbient();
     return () => stopAmbient();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Ding on each new message
   useEffect(() => {
     if (currentMsgs.length > prevLenRef.current) {
       ding();
@@ -94,7 +92,6 @@ export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMsgs.length]);
 
-  // Auto-close when meeting ends
   useEffect(() => {
     if (!isMeetingLive && currentMsgs.length > 0) {
       const t = setTimeout(onClose, 2000);
@@ -105,13 +102,12 @@ export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose
 
   return (
     <div className="meeting-room-overlay">
-      <button className="meeting-room__close" onClick={onClose} title="סגור">✕</button>
+      <button className="meeting-room__close" onClick={onClose} title={t('workspace.meeting.close')}>✕</button>
 
       {!isMeetingLive && currentMsgs.length > 0 && (
-        <div className="meeting-room__ended-badge">הישיבה הסתיימה</div>
+        <div className="meeting-room__ended-badge">{t('workspace.meeting.ended')}</div>
       )}
 
-      {/* Conference table */}
       <div className="meeting-room__scene">
         <div className="meeting-room__table" />
 
@@ -134,7 +130,6 @@ export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose
         })}
       </div>
 
-      {/* Subtitles */}
       <div className="meeting-room__subtitles">
         {lastMsg ? (
           <>
@@ -149,7 +144,7 @@ export default function MeetingRoomOverlay({ meetingMsgs, isMeetingLive, onClose
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
-            <p className="meeting-room__subtitle-text">הצוות מתחיל את הישיבה...</p>
+            <p className="meeting-room__subtitle-text">{t('workspace.meeting.starting')}</p>
           </div>
         )}
       </div>

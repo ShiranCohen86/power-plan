@@ -1,18 +1,20 @@
-const STEPS = [
-  { key: 'mongo',      icon: '🗄️',  label: 'מסד נתונים' },
-  { key: 'cloudinary', icon: '🖼️',  label: 'אחסון מדיה' },
-  { key: 'github',     icon: '📦',  label: 'GitHub Repo' },
-  { key: 'push',       icon: '⬆️',  label: 'העלאת קוד' },
-  { key: 'render',     icon: '🚀',  label: 'פרסום באינטרנט' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function DeploymentStatus({ steps, liveUrl, failed }) {
-  // steps: { [key]: { status: 'running'|'done', label: string } }
+  const { t } = useTranslation();
+
+  const STEPS = [
+    { key: 'mongo',      icon: '🗄️',  label: t('workspace.deploy.steps.database') },
+    { key: 'cloudinary', icon: '🖼️',  label: t('workspace.deploy.steps.media') },
+    { key: 'github',     icon: '📦',  label: t('workspace.deploy.steps.github') },
+    { key: 'push',       icon: '⬆️',  label: t('workspace.deploy.steps.upload') },
+    { key: 'render',     icon: '🚀',  label: t('workspace.deploy.steps.publish') },
+  ];
 
   return (
     <div className="deploy-status">
       <h3 className="deploy-status__title">
-        {liveUrl ? '🎉 האפליקציה חיה!' : failed ? '❌ הפרסום נכשל' : '🚀 מפרסם את האפליקציה...'}
+        {liveUrl ? t('workspace.deploy.live') : failed ? t('workspace.deploy.failed') : t('workspace.deploy.running')}
       </h3>
 
       <div className="deploy-status__steps">
@@ -44,13 +46,13 @@ export default function DeploymentStatus({ steps, liveUrl, failed }) {
           </a>
           <div className="deploy-status__live-actions">
             <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="btn btn--primary">
-              פתח אפליקציה ↗
+              {t('workspace.deploy.openApp')}
             </a>
             <button
               className="btn btn--secondary"
               onClick={() => navigator.clipboard.writeText(liveUrl)}
             >
-              העתק לינק
+              {t('workspace.deploy.copyLink')}
             </button>
           </div>
         </div>
@@ -58,7 +60,7 @@ export default function DeploymentStatus({ steps, liveUrl, failed }) {
 
       {failed && (
         <p className="deploy-status__error">
-          הפרסום נכשל. ניתן לנסות שוב מהגדרות הפרויקט.
+          {t('workspace.deploy.failedMsg')}
         </p>
       )}
     </div>

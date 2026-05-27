@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Apply persisted language + direction before first paint to avoid flash
-const savedLang = localStorage.getItem('lang') || 'he';
+const savedLang = localStorage.getItem('lang') || 'en';
 document.documentElement.setAttribute('dir',  savedLang === 'he' ? 'rtl' : 'ltr');
 document.documentElement.setAttribute('lang', savedLang);
 

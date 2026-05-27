@@ -4,7 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import SafeMarkdown from '../components/ui/SafeMarkdown';
-import { PLANNING_PHASES, PHASE_LEAD } from '../utils/phaseConfig';
+import { PLANNING_PHASES, PHASE_LEAD, ALL_PHASES } from '../utils/phaseConfig';
+import { useLanguage } from '../context/LanguageContext.jsx';
 
 import { selectProjectById, updateProject } from '../store/slices/projectsSlice';
 import { useProjectSocket } from '../hooks/useProjectSocket';
@@ -39,6 +40,7 @@ const STATUS_LABEL = {
 export default function ProjectWorkspace() {
   const { id }     = useParams();
   const { t }      = useTranslation();
+  const { lang }   = useLanguage();
   const dispatch   = useDispatch();
   const navigate   = useNavigate();
 
@@ -643,6 +645,16 @@ export default function ProjectWorkspace() {
 
         {/* Center: Document output + approval footer */}
         <div className="workspace-center">
+          {/* Mobile-only phase name label */}
+          {activePhaseIndex !== null && (() => {
+            const cfg = ALL_PHASES.find((p) => p.index === activePhaseIndex);
+            return cfg ? (
+              <div className="workspace-mobile-phase-title">
+                {cfg.icon} {lang === 'he' ? cfg.nameHe : cfg.name}
+              </div>
+            ) : null;
+          })()}
+
           {/* Sticky doc bar — export + approve always visible */}
           {activeDoc && (
             <div className="workspace-doc-bar">

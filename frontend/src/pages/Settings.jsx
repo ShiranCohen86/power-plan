@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
 } from '../api/settings.api';
 
-function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, saving, saveError, inputProps, onValidate }) {
+function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, inputProps, onValidate }) {
+  const { t } = useTranslation();
   const [mode, setMode]         = useState('idle');
   const [value, setValue]       = useState('');
   const [err, setErr]           = useState('');
   const [busy, setBusy]         = useState(false);
   const [validating, setValidating] = useState(false);
-  const [validResult, setValidResult] = useState(null); // null | { valid, error }
+  const [validResult, setValidResult] = useState(null);
 
   async function handleSave() {
     if (!value.trim()) return;
@@ -18,7 +20,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
       await onSave(value.trim());
       setMode('idle'); setValue(''); setValidResult(null);
     } catch (e) {
-      setErr(e.message || 'שגיאה בשמירה');
+      setErr(e.message || t('settings.errorSave'));
     } finally { setBusy(false); }
   }
 
@@ -29,7 +31,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
       const res = await onValidate(value.trim());
       setValidResult(res);
     } catch {
-      setValidResult({ valid: false, error: 'שגיאת רשת — נסה שוב' });
+      setValidResult({ valid: false, error: t('settings.errorNetwork') });
     } finally { setValidating(false); }
   }
 
@@ -39,7 +41,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
       await onDelete();
       setMode('idle');
     } catch (e) {
-      setErr(e.message || 'שגיאה במחיקה');
+      setErr(e.message || t('settings.errorDelete'));
     } finally { setBusy(false); }
   }
 
@@ -51,7 +53,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
           <p className="settings-apikey__subtitle">{subtitle}</p>
         </div>
         <div className={`settings-apikey__status${hasToken ? ' settings-apikey__status--ok' : ''}`}>
-          {hasToken ? '✓ מוגדר' : 'לא מוגדר'}
+          {hasToken ? t('settings.statusSet') : t('settings.statusUnset')}
         </div>
       </div>
 
@@ -59,14 +61,14 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
         <div className="settings-apikey__current">
           <span className="settings-apikey__hint">{hint}</span>
           <div className="settings-apikey__actions">
-            <button className="btn btn--secondary" onClick={() => setMode('editing')}>עדכן</button>
-            <button className="btn settings-apikey__delete-btn" onClick={() => setMode('deleting')}>מחק</button>
+            <button className="btn btn--secondary" onClick={() => setMode('editing')}>{t('settings.update')}</button>
+            <button className="btn settings-apikey__delete-btn" onClick={() => setMode('deleting')}>{t('common.delete')}</button>
           </div>
         </div>
       )}
 
       {!hasToken && mode === 'idle' && (
-        <button className="btn btn--primary" onClick={() => setMode('editing')}>+ הזן קוד גישה</button>
+        <button className="btn btn--primary" onClick={() => setMode('editing')}>{t('settings.enterKey')}</button>
       )}
 
       {mode === 'editing' && (
@@ -96,7 +98,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
           {err && <p className="settings-apikey__error">{err}</p>}
           {validResult && (
             <p style={{ fontSize: 13, marginTop: 6, color: validResult.valid ? 'var(--success, #16a34a)' : 'var(--danger)' }}>
-              {validResult.valid ? '✓ המפתח תקין ועובד' : `✗ ${validResult.error}`}
+              {validResult.valid ? t('settings.keyValid') : `✗ ${validResult.error}`}
             </p>
           )}
           <div className="settings-apikey__form-actions">
@@ -107,14 +109,14 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
                 disabled={validating || !value.trim()}
                 style={{ fontSize: 13 }}
               >
-                {validating ? 'בודק...' : '🔍 בדוק מפתח'}
+                {validating ? t('settings.checking') : t('settings.checkKey')}
               </button>
             )}
             <button className="btn btn--primary" onClick={handleSave} disabled={busy || !value.trim()}>
-              {busy ? 'שומר...' : 'שמור'}
+              {busy ? t('settings.saving') : t('common.save')}
             </button>
             <button className="btn btn--secondary" onClick={() => { setMode('idle'); setValue(''); setErr(''); setValidResult(null); }}>
-              ביטול
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -122,13 +124,13 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
 
       {mode === 'deleting' && (
         <div className="settings-apikey__confirm-delete">
-          <p>למחוק את קוד הגישה?</p>
+          <p>{t('settings.confirmDeleteMsg')}</p>
           {err && <p className="settings-apikey__error">{err}</p>}
           <div className="settings-apikey__form-actions">
             <button className="btn settings-apikey__delete-btn" onClick={handleDelete} disabled={busy}>
-              {busy ? 'מוחק...' : 'כן, מחק'}
+              {busy ? t('settings.deleting') : t('workspace.projSettings.confirmDelete')}
             </button>
-            <button className="btn btn--secondary" onClick={() => setMode('idle')}>ביטול</button>
+            <button className="btn btn--secondary" onClick={() => setMode('idle')}>{t('common.cancel')}</button>
           </div>
         </div>
       )}
@@ -137,19 +139,20 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
 }
 
 export default function Settings() {
+  const { t } = useTranslation();
   const [settings,  setSettings]  = useState(null);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     getSettings()
       .then((res) => setSettings(res))
-      .catch(() => setLoadError('לא ניתן לטעון הגדרות. נסה לרענן.'));
+      .catch(() => setLoadError(t('settings.loadError')));
   }, []);
 
   return (
     <div className="settings-page">
       <div className="settings-page__heading">
-        <h1 className="settings-page__title">⚙ הגדרות חשבון</h1>
+        <h1 className="settings-page__title">{t('settings.title')}</h1>
       </div>
 
       {loadError && <div className="settings-page__load-error">{loadError}</div>}
@@ -160,8 +163,7 @@ export default function Settings() {
 
       {settings && !settings.hasApiKey && (
         <div className="settings-onboarding-hint">
-          <span>👋</span>
-          <span>ברוך הבא! לפני שמתחילים לבנות, הזן את מפתח ה-AI שלך למטה. זה הדבר היחידי שנדרש כדי להתחיל.</span>
+          <span>{t('settings.onboarding')}</span>
         </div>
       )}
 
@@ -169,25 +171,22 @@ export default function Settings() {
         <div className="settings-ready-cta">
           <span className="settings-ready-cta__icon">✅</span>
           <div>
-            <strong>הכל מוכן!</strong>
-            <span> מפתח ה-AI מוגדר — אפשר להתחיל לבנות.</span>
+            <strong>{t('settings.allSet')}</strong>
+            <span> {t('settings.allSetDesc')}</span>
           </div>
-          <a href="/new-project" className="btn btn--primary">התחל לבנות אפליקציה →</a>
+          <a href="/new-project" className="btn btn--primary">{t('settings.startBuilding')}</a>
         </div>
       )}
 
       {settings && (
         <div className="settings-page__body">
           <section className="settings-section">
-            <h2 className="settings-section__title">מפתח AI (Anthropic)</h2>
-            <p className="settings-section__desc">
-              מפתח אחד משמש את <strong>כל הפרויקטים</strong> שלך.
-              קודי גישה ל-GitHub ו-Render מוגדרים בנפרד לכל פרויקט — דרך כפתור ⚙️ הגדרות בסביבת הפרויקט.
-            </p>
+            <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
+            <p className="settings-section__desc">{t('settings.apiDesc')}</p>
 
             <TokenSection
-              title="מפתח AI אישי (Anthropic)"
-              subtitle="מאפשר ל-Power Plan לדבר עם Claude בשמך — משמש לכל הפרויקטים."
+              title={t('settings.tokenTitle')}
+              subtitle={t('settings.tokenSubtitle')}
               hint={settings.apiKeyHint}
               hasToken={settings.hasApiKey}
               onValidate={(key) => validateApiKey(key)}
@@ -196,20 +195,20 @@ export default function Settings() {
                 setSettings((s) => ({ ...s, hasApiKey: res.hasApiKey, apiKeyHint: res.apiKeyHint }));
               }}
               onDelete={async () => {
-                const res = await deleteApiKey();
+                await deleteApiKey();
                 setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null }));
               }}
               inputProps={{
                 placeholder: 'sk-ant-api03-...',
                 howto: {
-                  title: 'איך מקבלים מפתח Anthropic?',
+                  title: t('settings.howtoTitle'),
                   steps: [
-                    'היכנס לאתר <strong>console.anthropic.com</strong>',
-                    'לחץ על "API Keys" בתפריט הצד',
-                    'לחץ "Create Key" ותן לו שם (למשל: "Power Plan")',
-                    'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן',
+                    t('settings.howtoStep1'),
+                    t('settings.howtoStep2'),
+                    t('settings.howtoStep3'),
+                    t('settings.howtoStep4'),
                   ],
-                  note: '💡 כל פרויקט שלם עולה בערך ₪1-5 — חיוב לפי שימוש בלבד.',
+                  note: t('settings.howtoNote'),
                 },
               }}
             />

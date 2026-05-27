@@ -97,7 +97,7 @@ export const PLANNING_PHASES = [
     index: 8,
     type: 'orchestration',
     name: 'Orchestration',
-    nameHe: 'תזמור',
+    nameHe: 'תהליכי רקע',
     icon: '🎼',
     agentName: 'OrchestrationAgent',
     narrativeTemplate: 'אני מתכנן את ארכיטקטורת התזמור ומניעת קונפליקטים...',

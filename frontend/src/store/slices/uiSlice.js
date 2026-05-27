@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import i18n from '../../i18n/index.js';
 
-const storedLanguage = (typeof window !== 'undefined' && localStorage.getItem('lang')) || 'he';
+const storedLanguage = (typeof window !== 'undefined' && localStorage.getItem('lang')) || 'en';
 
 const initialState = {
   language:  storedLanguage,

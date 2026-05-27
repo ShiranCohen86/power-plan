@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { selectCurrentUser } from '../store/slices/authSlice';
 import * as adminApi from '../api/admin.api';
 import PlatformSetup from '../components/admin/PlatformSetup';
@@ -48,6 +49,7 @@ function StatCard({ label, value, icon }) {
 }
 
 export default function Admin() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user     = useSelector(selectCurrentUser);
 
@@ -119,17 +121,17 @@ export default function Admin() {
       const updated = await adminApi.updateLesson(lesson._id, { isActive: !lesson.isActive });
       setLessons((prev) => prev.map((l) => l._id === lesson._id ? updated : l));
     } catch {
-      setError('שגיאה בעדכון הלקח — נסה שוב');
+      setError(t('admin.errorUpdate'));
     }
   }
 
   async function deleteLesson(id) {
-    if (!window.confirm('למחוק את הלקח?')) return;
+    if (!window.confirm(t('admin.confirmDelete'))) return;
     try {
       await adminApi.deleteLesson(id);
       setLessons((prev) => prev.filter((l) => l._id !== id));
     } catch {
-      setError('שגיאה במחיקת הלקח — נסה שוב');
+      setError(t('admin.errorDelete'));
     }
   }
 
@@ -138,8 +140,8 @@ export default function Admin() {
   return (
     <div className="admin-shell">
       <header className="admin-topbar">
-        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36 }}>← דשבורד</button>
-        <h1 className="admin-topbar__title">⚙ ניהול מערכת</h1>
+        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36 }}>{t('admin.back')}</button>
+        <h1 className="admin-topbar__title">{t('admin.title')}</h1>
       </header>
 
       {error && (
@@ -156,11 +158,11 @@ export default function Admin() {
         <section className="admin-section">
           <h2 className="admin-section__title">📊 Platform Stats</h2>
           <div className="admin-stats-grid">
-            <StatCard icon="👤" label="משתמשים"         value={stats?.users} />
-            <StatCard icon="📁" label="פרויקטים"        value={stats?.projects} />
-            <StatCard icon="🌐" label="אפליקציות חיות"  value={stats?.liveProjects} />
-            <StatCard icon="📄" label="קבצים שנוצרו"   value={stats?.generatedFiles} />
-            <StatCard icon="🧠" label="לקחים פעילים"   value={stats?.activeLessons} />
+            <StatCard icon="👤" label={t('admin.users')}         value={stats?.users} />
+            <StatCard icon="📁" label={t('admin.projects')}     value={stats?.projects} />
+            <StatCard icon="🌐" label={t('admin.liveApps')}     value={stats?.liveProjects} />
+            <StatCard icon="📄" label={t('admin.files')}        value={stats?.generatedFiles} />
+            <StatCard icon="🧠" label={t('admin.lessons')}      value={stats?.activeLessons} />
           </div>
         </section>
 
@@ -169,16 +171,16 @@ export default function Admin() {
           <section className="admin-section">
             <h2 className="admin-section__title">📈 Pipeline Analytics</h2>
             <div className="admin-stats-grid" style={{ marginBottom: 20 }}>
-              <StatCard icon="✅" label="שיעור השלמה" value={`${analytics.completionRate}%`} />
-              <StatCard icon="🌐" label="אפליקציות חיות" value={analytics.liveProjects} />
-              <StatCard icon="❌" label="פרויקטים שנכשלו" value={analytics.failedProjects} />
-              <StatCard icon="📁" label="סה״כ פרויקטים" value={analytics.totalProjects} />
+              <StatCard icon="✅" label={t('admin.completionRate')} value={`${analytics.completionRate}%`} />
+              <StatCard icon="🌐" label={t('admin.liveAppsRate')} value={analytics.liveProjects} />
+              <StatCard icon="❌" label={t('admin.failedProjects')} value={analytics.failedProjects} />
+              <StatCard icon="📁" label={t('admin.totalProjects')} value={analytics.totalProjects} />
             </div>
 
             {analytics.avgTokensByPhase?.length > 0 && (
               <div>
                 <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: 'var(--text-muted)' }}>
-                  ממוצע Tokens לשלב
+                  {t('admin.avgTokens')}
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {analytics.avgTokensByPhase.map((p) => {
@@ -211,7 +213,7 @@ export default function Admin() {
             <h2 className="admin-section__title">🧠 System Knowledge Base</h2>
             <button className="btn btn--primary" style={{ minHeight: 32, padding: '4px 16px', fontSize: 13 }}
               onClick={() => { setShowForm(!showForm); setEditId(null); setFormData({ agentType: '', category: '', mistake: '', lesson: '' }); }}>
-              + הוסף לקח
+              {t('admin.addLesson')}
             </button>
           </div>
 
@@ -221,38 +223,38 @@ export default function Admin() {
               <div className="admin-form-row">
                 <label>Agent Type</label>
                 <select value={formData.agentType} onChange={(e) => setFormData((f) => ({ ...f, agentType: e.target.value }))} required>
-                  <option value="">-- בחר --</option>
+                  <option value="">{t('admin.selectPhase')}</option>
                   {AGENT_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
               <div className="admin-form-row">
                 <label>Category</label>
                 <select value={formData.category} onChange={(e) => setFormData((f) => ({ ...f, category: e.target.value }))} required>
-                  <option value="">-- בחר --</option>
+                  <option value="">{t('admin.selectPhase')}</option>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="admin-form-row">
-                <label>הטעות (מה לא עבד)</label>
+                <label>{t('admin.mistakeLabel')}</label>
                 <textarea rows={2} value={formData.mistake} onChange={(e) => setFormData((f) => ({ ...f, mistake: e.target.value }))} required placeholder="לא הגדרתי SLA עם מספרים ספציפיים..." />
               </div>
               <div className="admin-form-row">
-                <label>הלקח (מה לעשות)</label>
+                <label>{t('admin.lessonLabel')}</label>
                 <textarea rows={2} value={formData.lesson} onChange={(e) => setFormData((f) => ({ ...f, lesson: e.target.value }))} required placeholder="תמיד כלול מספרים ב-Non-Functional Requirements..." />
               </div>
               <div className="admin-form-actions">
                 <button type="submit" className="btn btn--primary" disabled={submitting}>
-                  {submitting ? 'שומר...' : editId ? 'עדכן' : 'הוסף לקח'}
+                  {submitting ? t('workspace.projSettings.saving') : editId ? t('workspace.projSettings.update') : t('admin.addLesson')}
                 </button>
                 <button type="button" className="btn btn--secondary"
-                  onClick={() => { setShowForm(false); setEditId(null); }}>ביטול</button>
+                  onClick={() => { setShowForm(false); setEditId(null); }}>{t('common.cancel')}</button>
               </div>
             </form>
           )}
 
           {/* List */}
           {lessons.length === 0 ? (
-            <div className="admin-empty">אין לקחים עדיין. הוסף לקח ראשון.</div>
+            <div className="admin-empty">{t('admin.noLessons')}</div>
           ) : (
             <div className="admin-lessons-list">
               {lessons.map((l) => (
@@ -267,11 +269,11 @@ export default function Admin() {
                   <div className="admin-lesson-mistake">❌ {l.mistake}</div>
                   <div className="admin-lesson-text">✅ {l.lesson}</div>
                   <div className="admin-lesson-actions">
-                    <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px' }} onClick={() => startEdit(l)}>עריכה</button>
+                    <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px' }} onClick={() => startEdit(l)}>{t('workspace.projSettings.update')}</button>
                     <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px' }} onClick={() => toggleActive(l)}>
-                      {l.isActive ? 'השהה' : 'הפעל'}
+                      {l.isActive ? t('dashboard.status.paused') : t('dashboard.status.live')}
                     </button>
-                    <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px', color: '#ef4444' }} onClick={() => deleteLesson(l._id)}>מחק</button>
+                    <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px', color: '#ef4444' }} onClick={() => deleteLesson(l._id)}>{t('common.delete')}</button>
                   </div>
                 </div>
               ))}
@@ -282,7 +284,7 @@ export default function Admin() {
         {/* Recent activity */}
         {stats?.recentActivity?.length > 0 && (
           <section className="admin-section">
-            <h2 className="admin-section__title">📋 פעילות אחרונה</h2>
+            <h2 className="admin-section__title">{t('admin.recentActivity')}</h2>
             <div className="admin-activity">
               {stats.recentActivity.map((log, i) => (
                 <div key={i} className="admin-activity-row">

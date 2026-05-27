@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
 import { fetchEpicTree, selectEpicTree, selectTasksStatus } from '../store/slices/tasksSlice';
@@ -6,12 +7,8 @@ import { selectProjectById } from '../store/slices/projectsSlice';
 import EpicGroup from '../components/tasks/EpicGroup';
 import SprintBoard from '../components/tasks/SprintBoard';
 
-const VIEWS = [
-  { key: 'epics',   label: 'אפיקים ופיצ\'רים' },
-  { key: 'sprints', label: 'לוח ספרינטים' },
-];
-
 export default function TaskManagement() {
+  const { t } = useTranslation();
   const { id: projectId } = useParams();
   const dispatch           = useDispatch();
   const project            = useSelector(selectProjectById(projectId));
@@ -32,11 +29,16 @@ export default function TaskManagement() {
     ), 0,
   );
 
+  const VIEWS = [
+    { key: 'epics',   label: t('tasks.tabEpics') },
+    { key: 'sprints', label: t('tasks.tabSprints') },
+  ];
+
   return (
     <div className="task-management">
       <div className="task-management__header">
         <div className="task-management__breadcrumb">
-          <Link to="/dashboard" className="task-management__back">← דשבורד</Link>
+          <Link to="/dashboard" className="task-management__back">{t('tasks.back')}</Link>
           {project && (
             <>
               <span className="task-management__sep">/</span>
@@ -46,18 +48,18 @@ export default function TaskManagement() {
             </>
           )}
           <span className="task-management__sep">/</span>
-          <span>משימות</span>
+          <span>{t('tasks.title')}</span>
         </div>
 
         <div className="task-management__stats">
           <span className="task-management__stat">
-            <strong>{totalTasks}</strong> משימות
+            <strong>{totalTasks}</strong> {t('tasks.title')}
           </span>
           <span className="task-management__stat">
-            <strong>{doneTasks}</strong> הושלמו
+            <strong>{doneTasks}</strong> {t('tasks.completed')}
           </span>
           <span className="task-management__stat">
-            <strong>{epics.length}</strong> אפיקים
+            <strong>{epics.length}</strong> {t('tasks.epics')}
           </span>
         </div>
       </div>
@@ -78,7 +80,7 @@ export default function TaskManagement() {
         {status === 'loading' && (
           <div className="task-management__loading">
             <div className="spinner" />
-            <p>טוען משימות...</p>
+            <p>{t('tasks.loading')}</p>
           </div>
         )}
 
@@ -86,7 +88,7 @@ export default function TaskManagement() {
           <div className="task-management__epics">
             {epics.length === 0 ? (
               <div className="task-management__empty">
-                <p>המשימות יוצרו אוטומטית אחרי שלב ה-Dev Planning (שלב 10).</p>
+                <p>{t('tasks.empty')}</p>
               </div>
             ) : (
               epics.map((epic, i) => (

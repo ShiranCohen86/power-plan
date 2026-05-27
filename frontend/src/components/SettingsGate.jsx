@@ -1,60 +1,22 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { setProjectApiKey, setProjectGithubToken, setProjectRenderToken } from '../api/projects.api';
 
-const GATE_CONFIG = {
-  anthropic: {
-    icon: '🤖',
-    title: 'נדרש מפתח AI (Anthropic)',
-    reason: 'כדי ש-Claude יוכל לנתח את הרעיון שלך ולשאול שאלות, צריך מפתח API מאנתרופיק.',
-    cost: '💡 כל פרויקט שלם עולה בערך ₪1-5 — חיוב לפי שימוש בלבד.',
-    placeholder: 'sk-ant-api03-...',
-    howto: {
-      title: 'איך מקבלים מפתח?',
-      steps: [
-        { html: 'היכנס לאתר <strong>console.anthropic.com</strong>' },
-        { html: 'לחץ "API Keys" → "Create Key"' },
-        { html: 'העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן' },
-      ],
-    },
-    saveFn: (projectId, v) => setProjectApiKey(projectId, v),
-  },
-  github: {
-    icon: '🐙',
-    title: 'נדרש קוד גישה ל-GitHub',
-    reason: 'לפני שנתחיל לכתוב קוד, צריך מקום לשמור אותו. הקוד יישמר ב-GitHub שלך.',
-    cost: '💡 GitHub חינמי לחלוטין.',
-    placeholder: 'ghp_...',
-    howto: {
-      title: 'איך מקבלים קוד גישה?',
-      steps: [
-        { html: 'היכנס ל-<strong>github.com</strong> (צור חשבון חינמי אם אין לך)' },
-        { html: 'תמונה שלך → Settings → Developer settings → Personal access tokens → Tokens (classic)' },
-        { html: 'לחץ "Generate new token" → בחר scope: <code>repo</code> בלבד → העתק' },
-      ],
-    },
-    saveFn: (projectId, v) => setProjectGithubToken(projectId, v),
-  },
-  render: {
-    icon: '🚀',
-    title: 'נדרש קוד גישה ל-Render',
-    reason: 'כדי לפרוס את האפליקציה שלך לאינטרנט, צריך גישה לחשבון Render שלך.',
-    cost: '💡 Render מציע tier חינמי — האפליקציה שלך תרוץ בחינם.',
-    placeholder: 'rnd_...',
-    howto: {
-      title: 'איך מקבלים קוד גישה?',
-      steps: [
-        { html: 'היכנס ל-<strong>render.com</strong> (צור חשבון חינמי אם אין לך)' },
-        { html: 'Account Settings → API Keys → Create API Key' },
-        { html: 'העתק את ה-API key (מתחיל ב-<code>rnd_</code>)' },
-      ],
-    },
-    saveFn: (projectId, v) => setProjectRenderToken(projectId, v),
-  },
+const SAVE_FNS = {
+  anthropic: (projectId, v) => setProjectApiKey(projectId, v),
+  github:    (projectId, v) => setProjectGithubToken(projectId, v),
+  render:    (projectId, v) => setProjectRenderToken(projectId, v),
+};
+
+const ICONS = {
+  anthropic: '🤖',
+  github:    '🐙',
+  render:    '🚀',
 };
 
 export default function SettingsGate({ service, projectId, onConfigured }) {
-  const cfg = GATE_CONFIG[service];
+  const { t } = useTranslation();
   const [value, setValue]   = useState('');
   const [open, setOpen]     = useState(false);
   const [saving, setSaving] = useState(false);
@@ -64,28 +26,39 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
     if (!value.trim()) return;
     setSaving(true); setError('');
     try {
-      await cfg.saveFn(projectId, value.trim());
+      await SAVE_FNS[service](projectId, value.trim());
       onConfigured();
     } catch (e) {
-      setError(e.message || 'שגיאה בשמירה — נסה שוב');
+      setError(e.message || t('settingsGate.errorSave'));
     } finally {
       setSaving(false);
     }
   }
 
+  const title       = t(`settingsGate.${service}.title`);
+  const reason      = t(`settingsGate.${service}.reason`);
+  const cost        = t(`settingsGate.${service}.cost`);
+  const placeholder = t(`settingsGate.${service}.placeholder`);
+  const howtoTitle  = t(`settingsGate.${service}.howtoTitle`);
+  const steps       = [
+    t(`settingsGate.${service}.step1`),
+    t(`settingsGate.${service}.step2`),
+    t(`settingsGate.${service}.step3`),
+  ];
+
   return (
     <div className="settings-gate">
-      <div className="settings-gate__icon">{cfg.icon}</div>
-      <h3 className="settings-gate__title">{cfg.title}</h3>
-      <p className="settings-gate__reason">{cfg.reason}</p>
+      <div className="settings-gate__icon">{ICONS[service]}</div>
+      <h3 className="settings-gate__title">{title}</h3>
+      <p className="settings-gate__reason">{reason}</p>
 
       {!open && (
         <div className="settings-gate__entry">
           <button className="btn btn--primary" onClick={() => setOpen(true)}>
-            + הזן קוד גישה
+            {t('settingsGate.enterKey')}
           </button>
           <Link to="/settings" className="settings-gate__settings-link">
-            ניהול הגדרות כלליות →
+            {t('settingsGate.manageSettings')}
           </Link>
         </div>
       )}
@@ -93,19 +66,19 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
       {open && (
         <div className="settings-gate__form">
           <div className="settings-gate__howto">
-            <p className="settings-gate__howto-title">{cfg.howto.title}</p>
+            <p className="settings-gate__howto-title">{howtoTitle}</p>
             <ol className="settings-gate__howto-steps">
-              {cfg.howto.steps.map((step, i) => (
-                <li key={i} dangerouslySetInnerHTML={{ __html: step.html }} />
+              {steps.map((step, i) => (
+                <li key={i} dangerouslySetInnerHTML={{ __html: step }} />
               ))}
             </ol>
-            <p className="settings-gate__cost">{cfg.cost}</p>
+            <p className="settings-gate__cost">{cost}</p>
           </div>
 
           <input
             type="password"
             className="form-input settings-gate__input"
-            placeholder={cfg.placeholder}
+            placeholder={placeholder}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             disabled={saving}
@@ -117,10 +90,10 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
 
           <div className="settings-gate__actions">
             <button className="btn btn--primary" onClick={handleSave} disabled={saving || !value.trim()}>
-              {saving ? 'שומר...' : 'שמור והמשך'}
+              {saving ? t('settingsGate.saving') : t('settingsGate.saveContinue')}
             </button>
             <button className="btn btn--secondary" onClick={() => { setOpen(false); setValue(''); setError(''); }}>
-              ביטול
+              {t('settingsGate.cancel')}
             </button>
           </div>
         </div>
