@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import React, { useEffect, useState, Suspense, lazy } from 'react';
+import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
+import BottomSheet from './components/ui/BottomSheet.jsx';
 
 const Login             = lazy(() => import('./pages/Login.jsx'));
 const Dashboard         = lazy(() => import('./pages/Dashboard.jsx'));
@@ -75,9 +76,151 @@ function WakeUpOverlay() {
   );
 }
 
+// ── Bottom sheet types ───────────────────────────────────────────────────────
+// 'install'  — show PWA install instructions (mobile browser, not installed)
+// 'update'   — new service worker took control mid-session
+// 'version'  — opened installed PWA after a version bump
+
+const INSTALL_DISMISSED_KEY = 'pwa-install-dismissed';
+const VERSION_KEY            = 'pwa-version';
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+function isIOS() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function isMobileUA() {
+  return /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+}
+
+// ── Install sheet content ────────────────────────────────────────────────────
+function InstallSheetContent({ deferredPrompt, onClose }) {
+  async function handleAndroidInstall() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
+    }
+    onClose();
+  }
+
+  if (isIOS()) {
+    return (
+      <>
+        <div className="bsheet__title">הוסף לסרגל הבית 📲</div>
+        <div className="bsheet__body">
+          <p>לחץ על <strong>כפתור השיתוף</strong> <span style={{ fontSize: 18 }}>⎙</span> בתחתית הדפדפן</p>
+          <p style={{ marginTop: 8 }}>ואז בחר <strong>"הוסף למסך הבית"</strong></p>
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>כך Power Plan ייפתח כאפליקציה מלאה ללא כרום</p>
+        </div>
+        <div className="bsheet__actions">
+          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>הבנתי</button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="bsheet__title">התקן את Power Plan 📲</div>
+      <div className="bsheet__body">פתח את האפליקציה ישירות מהמסך הראשי — ללא דפדפן, גישה מהירה יותר.</div>
+      <div className="bsheet__actions">
+        <button className="btn btn--primary" onClick={handleAndroidInstall}>התקן עכשיו</button>
+        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>לא עכשיו</button>
+      </div>
+    </>
+  );
+}
+
+// ── SW update sheet content ──────────────────────────────────────────────────
+function UpdateSheetContent({ onClose }) {
+  return (
+    <>
+      <div className="bsheet__title">עדכון זמין ✨</div>
+      <div className="bsheet__body">גרסה חדשה של Power Plan מוכנה. טען מחדש כדי לקבל אותה.</div>
+      <div className="bsheet__actions">
+        <button className="btn btn--primary" onClick={() => window.location.reload()}>טען מחדש</button>
+        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>אחר כך</button>
+      </div>
+    </>
+  );
+}
+
+// ── Version changelog sheet content ─────────────────────────────────────────
+function VersionSheetContent({ prevVersion, currentVersion, onClose }) {
+  return (
+    <>
+      <div className="bsheet__title">Power Plan עודכנה! 🎉</div>
+      <div className="bsheet__body">
+        {prevVersion
+          ? <span>גרסה <strong>{prevVersion}</strong> → <strong>{currentVersion}</strong></span>
+          : <span>גרסה <strong>{currentVersion}</strong></span>}
+        <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-subtle)' }}>
+          שיפורים בממשק, תיקוני באגים ויציבות משופרת.
+        </p>
+      </div>
+      <div className="bsheet__actions">
+        <button className="btn btn--primary" onClick={onClose}>מעולה!</button>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const { loading } = useAuth();
-  const [showWakeUp, setShowWakeUp] = useState(false);
+  const [showWakeUp, setShowWakeUp]     = useState(false);
+  const [sheet, setSheet]               = useState(null); // null | 'install' | 'update' | 'version'
+  const [deferredPrompt, setDeferred]   = useState(null);
+  const [prevVersion, setPrevVersion]   = useState(null);
+
+  const closeSheet = useCallback(() => {
+    if (sheet === 'install') localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
+    setSheet(null);
+  }, [sheet]);
+
+  useEffect(() => {
+    // ── Version check (only when running as installed PWA) ───────────────
+    const current = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
+    if (isStandalone() && current) {
+      const stored = localStorage.getItem(VERSION_KEY);
+      if (stored && stored !== current) {
+        setPrevVersion(stored);
+        setSheet('version');
+      }
+      localStorage.setItem(VERSION_KEY, current);
+    }
+
+    // ── SW update notification ───────────────────────────────────────────
+    const onSwUpdated = () => setSheet((s) => s === 'version' ? s : 'update');
+    window.addEventListener('sw-updated', onSwUpdated);
+
+    // ── PWA install prompt ───────────────────────────────────────────────
+    const onBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferred(e);
+      if (!localStorage.getItem(INSTALL_DISMISSED_KEY) && !isStandalone()) {
+        setSheet((s) => s || 'install');
+      }
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
+
+    // iOS Safari: show install hint after 5 s on first visit (mobile, not installed)
+    let iosTimer;
+    if (isIOS() && isMobileUA() && !isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
+      iosTimer = setTimeout(() => setSheet((s) => s || 'install'), 5000);
+    }
+
+    return () => {
+      window.removeEventListener('sw-updated', onSwUpdated);
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      clearTimeout(iosTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading) { setShowWakeUp(false); return; }
@@ -89,6 +232,13 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {sheet && (
+        <BottomSheet onClose={closeSheet}>
+          {sheet === 'install' && <InstallSheetContent deferredPrompt={deferredPrompt} onClose={closeSheet} />}
+          {sheet === 'update'  && <UpdateSheetContent onClose={closeSheet} />}
+          {sheet === 'version' && <VersionSheetContent prevVersion={prevVersion} currentVersion={typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''} onClose={closeSheet} />}
+        </BottomSheet>
+      )}
       <Toaster
         position="bottom-left"
         toastOptions={{

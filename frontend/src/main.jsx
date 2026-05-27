@@ -12,12 +12,13 @@ import './styles/main.scss';
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-// Auto-reload when a new service worker takes control (i.e. new deploy detected).
-// hadController guards against reloading on the very first SW installation.
+// When a new service worker takes control, notify the app so it can show
+// an update prompt instead of silently reloading.
+// hadController guards against firing on the very first SW installation.
 if ('serviceWorker' in navigator) {
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (hadController) window.location.reload();
+    if (hadController) window.dispatchEvent(new CustomEvent('sw-updated'));
   });
 }
 
