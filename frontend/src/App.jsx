@@ -196,7 +196,14 @@ export default function App() {
     }
 
     // ── SW update notification ───────────────────────────────────────────
-    const onSwUpdated = () => setSheet((s) => s === 'version' ? s : 'update');
+    // In a regular browser: reload silently. In installed PWA: show sheet.
+    const onSwUpdated = () => {
+      if (isStandalone()) {
+        setSheet((s) => s === 'version' ? s : 'update');
+      } else {
+        window.location.reload();
+      }
+    };
     window.addEventListener('sw-updated', onSwUpdated);
 
     // ── PWA install prompt ───────────────────────────────────────────────
