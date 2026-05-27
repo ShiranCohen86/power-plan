@@ -35,7 +35,7 @@ export default function AppShell({ children }) {
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
+      <header className={`app-topbar${isInProject ? ' app-topbar--in-project' : ''}`}>
         <div className="app-topbar__start">
           <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
             <span className="app-topbar__brand-icon">⚡</span>

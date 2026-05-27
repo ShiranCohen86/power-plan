@@ -543,6 +543,7 @@ input, select, textarea {
   &__project-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   &__status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   &__btn-label { /* hidden on mobile via media query */ }
+  &__hamburger { display: none; }
   // Join meeting button only visible when LiveFeed panel is hidden (mobile/tablet)
   &__join-meeting { display: none; }
 }
@@ -1043,8 +1044,11 @@ input, select, textarea {
   .workspace-topbar__title { font-size: 13px; }
   .workspace-topbar__project-name { font-size: 13px; }
   .workspace-topbar__btn-label { display: none; }
+  .workspace-topbar__hamburger { display: flex; }
 
-  // AppShell — hamburger replaces topbar nav items
+  // AppShell — on mobile inside project pages, hide the whole topbar (workspace-topbar takes over)
+  .app-topbar--in-project { display: none; }
+  // On other pages, hamburger replaces the nav items
   .app-topbar__hamburger { display: flex; }
   .app-topbar__lang,
   .app-topbar__settings,
