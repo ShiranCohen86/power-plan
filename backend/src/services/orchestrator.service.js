@@ -85,7 +85,14 @@ async function _checkRateLimit(userId) {
   const user   = await User.findById(userId).select('+pipelineStarts').lean();
   const recent = (user?.pipelineStarts || []).filter((t) => t > cutoff);
   if (recent.length >= MAX_STARTS) {
-    throw ApiError.badRequest(`Rate limit: max ${MAX_STARTS} pipeline starts per hour`);
+    const resetAt = recent.length ? new Date(Math.min(...recent.map((t) => t.getTime())) + HOUR_MS) : null;
+    const resetStr = resetAt
+      ? resetAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+      : null;
+    throw ApiError.badRequest(
+      `הגעת למגבלת הניסיונות — מקסימום ${MAX_STARTS} הפעלות פייפליין בשעה.` +
+      (resetStr ? ` ניתן לנסות שוב מ-${resetStr}.` : ''),
+    );
   }
 }
 

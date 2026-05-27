@@ -64,7 +64,7 @@ export default function ProjectWorkspace() {
   const [awaitingPhase, setAwaiting]    = useState(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');       // fatal load error → full page
-  const [actionError, setActionError]   = useState('');       // kept for legacy inline banner; new errors use toast
+  const [actionError, setActionError]   = useState('');       // persistent error banner (rate limit, pipeline errors)
   const [quotaError, setQuotaError]     = useState(null);   // { message, plan }
   const [deploySteps, setDeploySteps]   = useState({});     // { [key]: { status, label } }
   const [liveUrl, setLiveUrl]           = useState(null);
@@ -370,7 +370,7 @@ export default function ProjectWorkspace() {
     if (isKeyErr) {
       setHasApiKey(false); // surface the inline SettingsGate
     } else {
-      toast.error(msg || 'שגיאה — נסה שוב');
+      setActionError(msg || 'שגיאה — נסה שוב'); // persistent banner instead of disappearing toast
     }
   }
 
@@ -378,6 +378,7 @@ export default function ProjectWorkspace() {
     if (hasApiKey === false) return;
     try {
       await startPipeline(id);
+      setActionError('');
       toast.success('הפייפליין התחיל!');
       // Refresh rate limit counter after a successful start
       getRateLimit().then(setRateLimit).catch(() => {});
@@ -422,6 +423,7 @@ export default function ProjectWorkspace() {
     try {
       await approvePhase(id, awaitingPhase);
       setAwaiting(null);
+      setActionError('');
       toast.success('השלב אושר — ממשיך לשלב הבא');
     } catch (err) {
       handleActionError(err);
@@ -432,6 +434,7 @@ export default function ProjectWorkspace() {
     if (!feedback?.trim() || awaitingPhase == null) return;
     try {
       await refinePhase(id, awaitingPhase, feedback);
+      setActionError('');
       toast.success('בקשת התיקון נשלחה — Claude מעדכן...');
     } catch (err) {
       handleActionError(err);
