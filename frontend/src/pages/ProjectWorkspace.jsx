@@ -37,6 +37,17 @@ const STATUS_LABEL = {
   interrupted:        '⏸️',
 };
 
+function PhaseIntroOverlay({ count, done }) {
+  const cfg = ALL_PHASES.find((p) => p.index === count - 1);
+  return (
+    <div className={`phase-intro-overlay${done ? ' phase-intro-overlay--done' : ''}`}>
+      <div className="phase-intro-overlay__icon">{cfg?.icon || '⚡'}</div>
+      <div className="phase-intro-overlay__num">{count}</div>
+      <div className="phase-intro-overlay__name">{cfg?.nameHe || cfg?.name || ''}</div>
+    </div>
+  );
+}
+
 export default function ProjectWorkspace() {
   const { id }     = useParams();
   const { t }      = useTranslation();
@@ -67,6 +78,8 @@ export default function ProjectWorkspace() {
   const [rateLimit, setRateLimit] = useState(null); // { used, remaining, maxPerHour, resetsAt }
   const [showProjectSettings, setShowProjectSettings] = useState(false);
   const [awaitingServices, setAwaitingServices]       = useState(null); // null | [{ id, name, fields, howto }]
+  const [introCount, setIntroCount]                   = useState(null); // phase entry animation counter
+  const introTargetRef                                = useRef(null);
 
   // Live Company Experience state
   const [activeFeedTab, setActiveFeedTab]       = useState('meeting');
@@ -156,6 +169,14 @@ export default function ProjectWorkspace() {
 
         setProject(projRes);
         setPhases(statusRes.phases || []);
+
+        // Phase entry animation
+        const reached = (statusRes.phases || []).filter((p) => p.status !== 'pending');
+        if (reached.length > 0) {
+          introTargetRef.current = Math.max(...reached.map((p) => p.index)) + 1; // 1-indexed
+          setIntroCount(1);
+        }
+
         setHasApiKey(settingsRes?.hasApiKey ?? false);
         setUsingFallback(settingsRes?.usingFallback || false);
         if (rateLimitRes) setRateLimit(rateLimitRes);
@@ -193,6 +214,19 @@ export default function ProjectWorkspace() {
       }
     })();
   }, [id]);
+
+  // Phase intro animation counter
+  useEffect(() => {
+    if (introCount === null) return;
+    const target = introTargetRef.current;
+    if (introCount >= target) {
+      const t = setTimeout(() => setIntroCount(null), 700);
+      return () => clearTimeout(t);
+    }
+    const delay = target - introCount <= 2 ? 130 : 55;
+    const t = setTimeout(() => setIntroCount((c) => c + 1), delay);
+    return () => clearTimeout(t);
+  }, [introCount]);
 
   // Reset scroll-gate when a new phase awaits approval
   useEffect(() => {
@@ -362,6 +396,16 @@ export default function ProjectWorkspace() {
     }
   }
 
+  async function handleShowCredentials() {
+    try {
+      const svcRes = await getRequiredServices(id);
+      const services = svcRes?.services || [];
+      if (services.length > 0) setAwaitingServices(services);
+    } catch {
+      toast.error('שגיאה בטעינת מפתחות');
+    }
+  }
+
   function handleExportDoc() {
     if (!activeDoc?.content) return;
     const blob = new Blob([activeDoc.content], { type: 'text/markdown;charset=utf-8' });
@@ -429,6 +473,7 @@ export default function ProjectWorkspace() {
   const isOnboarding   = projectStatus === 'onboarding';
   const isPaused       = projectStatus === 'paused';
   const isFailed       = projectStatus === 'failed';
+  const hasCodegenStarted = phases.some((p) => p.index >= 12 && p.status !== 'pending');
   const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
   const hasStalledPhase = phases.some((p) => p.status === 'failed' || p.status === 'interrupted');
   const canStart       = notStarted && !inProgress && !isQuotaPaused;
@@ -453,10 +498,20 @@ export default function ProjectWorkspace() {
         />
       )}
 
+      {/* Phase entry animation */}
+      {introCount !== null && (
+        <PhaseIntroOverlay count={introCount} done={introCount >= introTargetRef.current} />
+      )}
+
       {/* Top bar */}
       <header className="workspace-topbar">
         <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 <span className="workspace-topbar__btn-label">משימות</span></button>
         <button className="btn-ghost" onClick={() => setShowProjectSettings(true)} style={{ minHeight: 36, padding: '4px 12px' }} title="הגדרות פרויקט">⚙️ <span className="workspace-topbar__btn-label">הגדרות</span></button>
+        {hasCodegenStarted && (
+          <button className="btn-ghost" onClick={handleShowCredentials} style={{ minHeight: 36, padding: '4px 12px' }} title="מפתחות שירותים">
+            🔑 <span className="workspace-topbar__btn-label">מפתחות</span>
+          </button>
+        )}
         {isRunning && (
           <button
             className="btn-ghost"
