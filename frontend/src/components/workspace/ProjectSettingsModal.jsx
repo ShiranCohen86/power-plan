@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getProjectSettings,
   setProjectGithubToken, deleteProjectGithubToken,
-  setProjectRenderToken, deleteProjectRenderToken,
+  getRequiredServices, saveServiceCredentials, skipServiceCredentials,
 } from '../../api/projects.api';
 
 function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placeholder }) {
@@ -103,21 +103,148 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
   );
 }
 
+function ServiceRow({ projectId, service, onUpdated }) {
+  const [editing, setEditing] = useState(!service.credentialsProvided && !service.skipped);
+  const [values, setValues]   = useState(() =>
+    Object.fromEntries((service.fields || []).map((f) => [f.key, '']))
+  );
+  const [busy, setBusy] = useState(false);
+  const [err, setErr]   = useState('');
+
+  async function handleSave() {
+    setBusy(true); setErr('');
+    try {
+      await saveServiceCredentials(projectId, service.id, values);
+      setEditing(false);
+      onUpdated();
+    } catch (e) {
+      setErr(e.message || 'שגיאה בשמירה');
+    } finally { setBusy(false); }
+  }
+
+  async function handleSkip() {
+    setBusy(true); setErr('');
+    try {
+      await skipServiceCredentials(projectId, service.id);
+      onUpdated();
+    } catch (e) {
+      setErr(e.message || 'שגיאה');
+    } finally { setBusy(false); }
+  }
+
+  async function handleUnskip() {
+    setBusy(true); setErr('');
+    try {
+      await saveServiceCredentials(projectId, service.id, {});
+      onUpdated();
+    } catch (e) {
+      setErr(e.message || 'שגיאה');
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="creds-card">
+      <div className="creds-card__header">
+        <div className="creds-card__name">{service.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {service.credentialsProvided && !editing && (
+            <>
+              <span style={{ fontSize: 11, color: '#34d399' }}>✓ מוגדר</span>
+              <button className="btn btn--secondary" style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => setEditing(true)}>
+                עדכן
+              </button>
+            </>
+          )}
+          {service.skipped && (
+            <>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>דולג</span>
+              <button className="btn btn--secondary" style={{ fontSize: 11, padding: '2px 8px' }} onClick={handleUnskip} disabled={busy}>
+                בטל דילוג
+              </button>
+            </>
+          )}
+          {!service.credentialsProvided && !service.skipped && service.optional && !editing && (
+            <button className="btn btn--secondary" style={{ fontSize: 11, padding: '2px 8px' }} onClick={handleSkip} disabled={busy}>
+              דלג
+            </button>
+          )}
+        </div>
+      </div>
+
+      {editing && (
+        <div className="creds-card__fields">
+          {(service.fields || []).map((field) => (
+            <div key={field.key} className="creds-field">
+              <label className="creds-field__label">{field.label}</label>
+              <input
+                type="password"
+                className="form-input creds-field__input"
+                placeholder={field.placeholder || field.key}
+                value={values[field.key] || ''}
+                onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
+                autoComplete="off"
+                dir="ltr"
+              />
+            </div>
+          ))}
+          {service.howto && (
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>{service.howto}</p>
+          )}
+          {err && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button
+              className="btn btn--primary"
+              style={{ fontSize: 12 }}
+              onClick={handleSave}
+              disabled={busy || (service.fields || []).some((f) => !values[f.key]?.trim())}
+            >
+              {busy ? 'שומר...' : 'שמור'}
+            </button>
+            {service.credentialsProvided && (
+              <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={() => { setEditing(false); setErr(''); }}>
+                ביטול
+              </button>
+            )}
+            {service.optional && !service.skipped && !service.credentialsProvided && (
+              <button className="btn btn--secondary" style={{ fontSize: 12 }} onClick={handleSkip} disabled={busy}>
+                דלג
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProjectSettingsModal({ projectId, projectTitle, onClose }) {
   const { t } = useTranslation();
   const [settings, setSettings] = useState(null);
+  const [services, setServices] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [loadErr, setLoadErr]   = useState('');
 
   useEffect(() => {
-    getProjectSettings(projectId)
-      .then(setSettings)
+    Promise.all([
+      getProjectSettings(projectId),
+      getRequiredServices(projectId).catch(() => null),
+    ])
+      .then(([settingsRes, svcRes]) => {
+        setSettings(settingsRes);
+        setServices(svcRes?.services || []);
+      })
       .catch(() => setLoadErr(t('workspace.projSettings.loadError')))
       .finally(() => setLoading(false));
   }, [projectId]);
 
   function handleOverlayClick(e) {
     if (e.target === e.currentTarget) onClose();
+  }
+
+  function refreshServices() {
+    getRequiredServices(projectId)
+      .then((r) => setServices(r?.services || []))
+      .catch(() => {});
   }
 
   return (
@@ -169,21 +296,28 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
                 placeholder="ghp_..."
               />
 
-              <TokenRow
-                title={t('workspace.projSettings.renderTitle')}
-                subtitle={t('workspace.projSettings.renderSubtitle')}
-                hint={settings.renderTokenHint}
-                hasToken={settings.hasRenderToken}
-                onSave={async (v) => {
-                  const res = await setProjectRenderToken(projectId, v);
-                  setSettings((s) => ({ ...s, hasRenderToken: true, renderTokenHint: res.renderTokenHint }));
-                }}
-                onDelete={async () => {
-                  await deleteProjectRenderToken(projectId);
-                  setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
-                }}
-                placeholder="rnd_..."
-              />
+              <div className="proj-settings-divider" />
+
+              <div className="proj-settings-services">
+                <div className="proj-settings-services__title">שירותי האפליקציה</div>
+                <div className="proj-settings-services__desc">
+                  שירותים חיצוניים שהאפליקציה שנבנתה דורשת. מתעדכן אוטומטית לפי הקוד שנוצר.
+                </div>
+                {services.length === 0 ? (
+                  <p className="proj-settings-services__empty">
+                    אין שירותים חיצוניים נדרשים עדיין — יופיעו כאן לאחר שלב הקוד.
+                  </p>
+                ) : (
+                  services.map((svc) => (
+                    <ServiceRow
+                      key={svc.id}
+                      projectId={projectId}
+                      service={svc}
+                      onUpdated={refreshServices}
+                    />
+                  ))
+                )}
+              </div>
             </>
           )}
         </div>

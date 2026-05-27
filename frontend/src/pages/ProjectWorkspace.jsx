@@ -28,6 +28,7 @@ import DeploymentStatus             from '../components/workspace/DeploymentStat
 import CelebrationOverlay           from '../components/workspace/CelebrationOverlay';
 import SettingsGate                 from '../components/SettingsGate';
 import Skeleton                     from '@mui/material/Skeleton';
+import ArrowForwardOutlined         from '@mui/icons-material/ArrowForwardOutlined';
 
 const STATUS_LABEL = {
   pending:            '⏳',
@@ -398,16 +399,6 @@ export default function ProjectWorkspace() {
     }
   }
 
-  async function handleShowCredentials() {
-    try {
-      const svcRes = await getRequiredServices(id);
-      const services = svcRes?.services || [];
-      if (services.length > 0) setAwaitingServices(services);
-    } catch {
-      toast.error('שגיאה בטעינת מפתחות');
-    }
-  }
-
   function handleExportDoc() {
     if (!activeDoc?.content) return;
     const blob = new Blob([activeDoc.content], { type: 'text/markdown;charset=utf-8' });
@@ -510,13 +501,11 @@ export default function ProjectWorkspace() {
 
       {/* Top bar */}
       <header className="workspace-topbar">
+        <button className="btn-ghost" onClick={() => navigate('/dashboard')} style={{ minHeight: 36, padding: '4px 12px' }} title="חזור לדשבורד">
+          <ArrowForwardOutlined fontSize="small" /> <span className="workspace-topbar__btn-label">חזור</span>
+        </button>
         <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 <span className="workspace-topbar__btn-label">משימות</span></button>
         <button className="btn-ghost" onClick={() => setShowProjectSettings(true)} style={{ minHeight: 36, padding: '4px 12px' }} title="הגדרות פרויקט">⚙️ <span className="workspace-topbar__btn-label">הגדרות</span></button>
-        {hasCodegenStarted && (
-          <button className="btn-ghost" onClick={handleShowCredentials} style={{ minHeight: 36, padding: '4px 12px' }} title="מפתחות שירותים">
-            🔑 <span className="workspace-topbar__btn-label">מפתחות</span>
-          </button>
-        )}
         {isRunning && (
           <button
             className="btn-ghost"

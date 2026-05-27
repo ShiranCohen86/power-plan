@@ -8,7 +8,7 @@ import NotificationBell from './ui/NotificationBell';
 import BottomSheet from './ui/BottomSheet.jsx';
 import { useAppTheme } from '../context/ThemeContext.jsx';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import HomeOutlined from '@mui/icons-material/HomeOutlined';
+import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
 import BuildOutlined from '@mui/icons-material/BuildOutlined';
 import MenuOutlined from '@mui/icons-material/MenuOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
@@ -26,6 +26,8 @@ export default function AppShell({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isHome = location.pathname === '/dashboard';
+  const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
+  const showBack = !isHome && !isInProject;
 
   function handleLogout() {
     setMenuOpen(false);
@@ -40,9 +42,9 @@ export default function AppShell({ children }) {
             <span className="app-topbar__brand-icon">⚡</span>
             <span className="app-topbar__brand-name">Power Plan</span>
           </button>
-          {!isHome && (
-            <button className="btn-ghost app-topbar__home" onClick={() => navigate('/dashboard')}>
-              <HomeOutlined fontSize="small" /> בית
+          {showBack && (
+            <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
+              <ArrowForwardOutlined fontSize="small" /> חזור
             </button>
           )}
         </div>

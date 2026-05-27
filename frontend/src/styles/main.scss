@@ -1951,6 +1951,17 @@ input, select, textarea {
   &__hint    { font-size: 11px; color: var(--text-muted); font-family: monospace; }
 }
 
+.proj-settings-divider {
+  height: 1px; background: var(--border); margin: 20px 0;
+}
+
+.proj-settings-services {
+  display: flex; flex-direction: column; gap: 10px;
+  &__title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  &__desc  { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+  &__empty { font-size: 13px; color: var(--text-muted); font-style: italic; margin: 0; }
+}
+
 // ── Credentials Gate Modal ──────────────────────────────────────────────────
 
 .creds-overlay {

@@ -207,7 +207,10 @@ exports.setProjectApiKey = asyncHandler(async (req, res) => {
   const project = await _ownedProject(req);
   if (!project.settings) project.settings = {};
   project.settings.anthropicApiKey = encrypt(apiKey);
-  await project.save();
+  await Promise.all([
+    project.save(),
+    User.findByIdAndUpdate(req.user.id, { $set: { 'settings.anthropicApiKey': encrypt(apiKey) } }),
+  ]);
   res.json({ hasApiKey: true, apiKeyHint: _maskKey(apiKey) });
 });
 
