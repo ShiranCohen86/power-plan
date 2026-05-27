@@ -58,26 +58,16 @@ httpClient.interceptors.response.use(
       originalReq._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        isRefreshing = false;
-        processQueue(responseError);
-        localStorage.removeItem('token');
-        location.href = '/login';
-        return Promise.reject(responseError);
-      }
-
       try {
-        const { data } = await axios.post(`${apiBaseUrl}/api/auth/refresh`, { refreshToken });
+        // Refresh token is in httpOnly cookie — send credentials, no body needed
+        const { data } = await axios.post(`${apiBaseUrl}/api/auth/refresh`, {}, { withCredentials: true });
         localStorage.setItem('token', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
         processQueue(null, data.accessToken);
         originalReq.headers.Authorization = `Bearer ${data.accessToken}`;
         return httpClient(originalReq);
       } catch (refreshError) {
         processQueue(refreshError);
         localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
         location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

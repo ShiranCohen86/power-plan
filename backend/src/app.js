@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 const env = require('./config/env');
 const routes = require('./routes');
@@ -13,11 +14,17 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// In production Vite outputs content-hashed bundles with no inline scripts,
+// so we can remove 'unsafe-inline' from scriptSrc. Dev mode needs it for HMR.
+const scriptSrc = env.NODE_ENV === 'production'
+  ? ["'self'"]
+  : ["'self'", "'unsafe-inline'"];
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc,
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       connectSrc: ["'self'", 'wss:', 'ws:'],
@@ -39,6 +46,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(requestLogger);
 

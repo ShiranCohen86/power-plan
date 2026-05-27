@@ -164,43 +164,58 @@ RULES:
 }
 
 function parseMeetingOutput(text, participants) {
-  const messages  = [];
-  const nameToKey = {};
-  participants.forEach((p) => { nameToKey[p.name.toLowerCase()] = p; });
+  const messages = [];
 
-  const blocks = text.split(/\[([^\]]+)\]/g).filter(Boolean);
+  try {
+    const blocks = text.split(/\[([^\]]+)\]/g).filter(Boolean);
 
-  let i = 0;
-  while (i < blocks.length) {
-    const header = blocks[i].trim();
-    const body   = blocks[i + 1] || '';
+    let i = 0;
+    while (i < blocks.length) {
+      const header = blocks[i].trim();
+      const body   = blocks[i + 1] || '';
 
-    if (header.toLowerCase() === 'decision') {
-      return { messages, decision: body.trim() };
-    }
-
-    const participant = Object.values(TEAM).find(
-      (p) => p.name.toLowerCase() === header.toLowerCase(),
-    );
-
-    if (participant) {
-      const typeMatch = body.match(/^type:\s*(\w+)/i);
-      const msgType   = typeMatch ? typeMatch[1].toLowerCase() : 'observation';
-      const message   = body.replace(/^type:\s*\w+\n?/i, '').trim();
-
-      if (message) {
-        messages.push({
-          role:        Object.keys(TEAM).find((k) => TEAM[k].name === participant.name),
-          displayName: participant.name,
-          color:       participant.color,
-          message,
-          type:        ['observation', 'correction', 'approval', 'concern', 'decision'].includes(msgType)
-            ? msgType : 'observation',
-        });
+      if (header.toLowerCase() === 'decision') {
+        return { messages, decision: body.trim() || null };
       }
-    }
 
-    i += 2;
+      const participant = Object.values(TEAM).find(
+        (p) => p.name.toLowerCase() === header.toLowerCase(),
+      );
+
+      if (participant) {
+        const typeMatch = body.match(/^type:\s*(\w+)/i);
+        const msgType   = typeMatch ? typeMatch[1].toLowerCase() : 'observation';
+        const message   = body.replace(/^type:\s*\w+\n?/i, '').trim();
+
+        if (message) {
+          messages.push({
+            role:        Object.keys(TEAM).find((k) => TEAM[k].name === participant.name),
+            displayName: participant.name,
+            color:       participant.color,
+            message,
+            type:        ['observation', 'correction', 'approval', 'concern', 'decision'].includes(msgType)
+              ? msgType : 'observation',
+          });
+        }
+      }
+
+      i += 2;
+    }
+  } catch {
+    // Parsing error — fall through to fallback below
+  }
+
+  // Fallback: if we parsed nothing, surface the raw LLM text as a facilitator message
+  // so the meeting isn't silently empty due to an unexpected output format
+  if (messages.length === 0 && text.trim().length > 0) {
+    const firstParticipant = participants[0];
+    messages.push({
+      role:        Object.keys(TEAM).find((k) => TEAM[k].name === firstParticipant?.name) || 'pm',
+      displayName: firstParticipant?.name || 'Team',
+      color:       firstParticipant?.color || '#2563eb',
+      message:     text.trim().slice(0, 800),
+      type:        'observation',
+    });
   }
 
   return { messages, decision: null };

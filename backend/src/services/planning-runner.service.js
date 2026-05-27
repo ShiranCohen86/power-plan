@@ -179,11 +179,13 @@ async function startPlanning(projectId) {
 }
 
 async function _getUserCtx(project) {
-  const user = await User.findById(project.ownerId).select('+settings.anthropicApiKey').lean();
+  // Run both DB queries in parallel — they are independent
+  const [user, projectWithKey] = await Promise.all([
+    User.findById(project.ownerId).select('+settings.anthropicApiKey').lean(),
+    Project.findById(project._id).select('+settings.anthropicApiKey').lean(),
+  ]);
 
   // Project key takes priority; fall back to user's global key
-  const projectWithKey = await Project.findById(project._id)
-    .select('+settings.anthropicApiKey').lean();
   const projectKey = projectWithKey?.settings?.anthropicApiKey
     ? decrypt(projectWithKey.settings.anthropicApiKey)
     : null;

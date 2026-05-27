@@ -17,7 +17,6 @@ export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async (_arg, { r
   } catch (err) {
     logError('auth', 'bootstrap failed', err.message);
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
     return rejectWithValue(err.message);
   }
 });
@@ -26,7 +25,6 @@ export const loginUser = createAsyncThunk('auth/login', async (credentials, { re
   try {
     const result = await loginRequest(credentials);
     localStorage.setItem('token', result.accessToken);
-    localStorage.setItem('refreshToken', result.refreshToken);
     logInfo('auth', 'logged in as', result.user.email);
     return result.user;
   } catch (err) {
@@ -38,7 +36,6 @@ export const signupUser = createAsyncThunk('auth/signup', async (formData, { rej
   try {
     const result = await signupRequest(formData);
     localStorage.setItem('token', result.accessToken);
-    localStorage.setItem('refreshToken', result.refreshToken);
     logInfo('auth', 'signed up as', result.user.email);
     return result.user;
   } catch (err) {
@@ -49,7 +46,6 @@ export const signupUser = createAsyncThunk('auth/signup', async (formData, { rej
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
   try { await logoutRequest(); } catch { /* ignore network failure on logout */ }
   localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
 });
 
 const authSlice = createSlice({

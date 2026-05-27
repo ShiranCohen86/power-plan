@@ -28,17 +28,31 @@ class BaseAgent {
     const { client, model } = getClientForUser(userCtx.plan, userCtx.apiKey);
     const fullSystemPrompt  = await this._buildSystemPrompt();
 
-    try {
-      return await this._stream(client, model, fullSystemPrompt, userPrompt, onNarrativeChunk);
-    } catch (err) {
-      const quotaMsg = _isQuotaError(err);
-      if (quotaMsg) {
-        const e = new Error(quotaMsg);
-        e.code = 'QUOTA_EXHAUSTED';
-        throw e;
+    const MAX_RETRIES = 3;
+    let lastErr;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await this._stream(client, model, fullSystemPrompt, userPrompt, onNarrativeChunk);
+      } catch (err) {
+        lastErr = err;
+        const quotaMsg = _isQuotaError(err);
+        if (quotaMsg) {
+          const e = new Error(quotaMsg);
+          e.code = 'QUOTA_EXHAUSTED';
+          throw e;
+        }
+        // Retry on 429 (rate limit) or 529 (overloaded) — not on other errors
+        const status = err.status || err.statusCode;
+        const isRetryable = status === 429 || status === 529;
+        if (!isRetryable || attempt === MAX_RETRIES) throw err;
+
+        const delayMs = Math.min(1000 * Math.pow(2, attempt), 30_000); // 1s, 2s, 4s … cap 30s
+        await new Promise((r) => setTimeout(r, delayMs));
       }
-      throw err;
     }
+
+    throw lastErr;
   }
 
   async _stream(client, model, systemPrompt, userPrompt, onNarrativeChunk) {

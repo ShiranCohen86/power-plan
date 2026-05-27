@@ -16,18 +16,36 @@ const Admin             = lazy(() => import('./pages/Admin.jsx'));
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) {
+    // Log component stack to help diagnose production issues
+    if (typeof console !== 'undefined') console.error('[ErrorBoundary]', error, info.componentStack);
+  }
   render() {
-    if (this.state.hasError) return (
-      <div style={{ padding: 32, color: '#fff', background: '#0a0a0f', minHeight: '100vh', direction: 'rtl' }}>
-        <h2>שגיאה בלתי צפויה</h2>
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, opacity: 0.6 }}>{String(this.state.error)}</pre>
-        <button onClick={() => window.location.reload()} style={{ background: '#7c3aed', color: '#fff', border: 0, padding: '10px 20px', borderRadius: 8, marginTop: 16 }}>
-          טען מחדש
-        </button>
-      </div>
-    );
+    if (this.state.hasError) {
+      const isPage = this.props.page;
+      return (
+        <div style={{ padding: 32, color: '#fff', background: isPage ? '#0a0a0f' : 'transparent', minHeight: isPage ? '60vh' : 'auto', direction: 'rtl', display: 'flex', flexDirection: 'column', alignItems: isPage ? 'center' : 'flex-start', justifyContent: 'center' }}>
+          <h2 style={{ marginBottom: 8 }}>{isPage ? 'שגיאה בדף' : 'שגיאה בלתי צפויה'}</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, opacity: 0.6, maxWidth: 600 }}>{String(this.state.error)}</pre>
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+            {isPage && (
+              <button onClick={() => this.setState({ hasError: false, error: null })} style={{ background: '#1e1e2e', color: '#e2e8f0', border: '1px solid #2d2d44', padding: '10px 20px', borderRadius: 8 }}>
+                נסה שוב
+              </button>
+            )}
+            <button onClick={() => window.location.reload()} style={{ background: '#7c3aed', color: '#fff', border: 0, padding: '10px 20px', borderRadius: 8 }}>
+              טען מחדש
+            </button>
+          </div>
+        </div>
+      );
+    }
     return this.props.children;
   }
+}
+
+function PageBoundary({ children }) {
+  return <ErrorBoundary page>{children}</ErrorBoundary>;
 }
 
 function PageFallback() {
@@ -82,12 +100,12 @@ export default function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard"             element={<ProtectedRoute><AppShell><Dashboard /></AppShell></ProtectedRoute>} />
-          <Route path="/new-project"           element={<ProtectedRoute><AppShell><NewProject /></AppShell></ProtectedRoute>} />
-          <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><ProjectWorkspace /></AppShell></ProtectedRoute>} />
-          <Route path="/projects/:id/tasks"    element={<ProtectedRoute><AppShell><TaskManagement /></AppShell></ProtectedRoute>} />
-          <Route path="/settings"              element={<ProtectedRoute><AppShell><Settings /></AppShell></ProtectedRoute>} />
-          <Route path="/admin"                 element={<ProtectedRoute roles={['admin']}><AppShell><Admin /></AppShell></ProtectedRoute>} />
+          <Route path="/dashboard"             element={<ProtectedRoute><AppShell><PageBoundary><Dashboard /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/new-project"           element={<ProtectedRoute><AppShell><PageBoundary><NewProject /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><PageBoundary><ProjectWorkspace /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/projects/:id/tasks"    element={<ProtectedRoute><AppShell><PageBoundary><TaskManagement /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/settings"              element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/admin"                 element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

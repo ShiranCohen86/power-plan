@@ -1,8 +1,25 @@
 const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/auth.service');
+const env = require('../config/env');
 
 function clientIp(req) {
   return (req.ip || '').replace(/^::ffff:/, '');
+}
+
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
+  path: '/api/auth/refresh',
+};
+
+function setRefreshCookie(res, token) {
+  res.cookie('refresh_token', token, REFRESH_COOKIE_OPTIONS);
+}
+
+function clearRefreshCookie(res) {
+  res.clearCookie('refresh_token', { path: '/api/auth/refresh' });
 }
 
 exports.signup = asyncHandler(async (req, res) => {
@@ -13,7 +30,9 @@ exports.signup = asyncHandler(async (req, res) => {
     userAgent: req.headers['user-agent'] || '',
     ip: clientIp(req),
   });
-  res.status(201).json(result);
+  setRefreshCookie(res, result.refreshToken);
+  const { refreshToken: _rt, ...safeResult } = result;
+  res.status(201).json(safeResult);
 });
 
 exports.login = asyncHandler(async (req, res) => {
@@ -22,16 +41,22 @@ exports.login = asyncHandler(async (req, res) => {
     userAgent: req.headers['user-agent'] || '',
     ip: clientIp(req),
   });
-  res.json(result);
+  setRefreshCookie(res, result.refreshToken);
+  const { refreshToken: _rt, ...safeResult } = result;
+  res.json(safeResult);
 });
 
 exports.refresh = asyncHandler(async (req, res) => {
-  const tokens = await authService.refresh(req.body.refreshToken);
-  res.json(tokens);
+  // Accept from httpOnly cookie first, fall back to body for backward compat
+  const refreshToken = req.cookies?.refresh_token || req.body.refreshToken;
+  const tokens = await authService.refresh(refreshToken);
+  setRefreshCookie(res, tokens.refreshToken);
+  res.json({ accessToken: tokens.accessToken });
 });
 
 exports.logout = asyncHandler(async (req, res) => {
   await authService.logout(req.user.id);
+  clearRefreshCookie(res);
   res.json({ ok: true });
 });
 
