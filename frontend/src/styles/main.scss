@@ -172,7 +172,7 @@ input, select, textarea {
 // â”€â”€ Dashboard shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .dashboard-shell {
-  min-height: 100vh; display: flex; flex-direction: column;
+  flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;
   background: var(--bg);
 }
 
@@ -198,7 +198,7 @@ input, select, textarea {
 }
 
 .dashboard-main {
-  flex: 1; padding: 32px 24px;
+  flex: 1; overflow-y: auto; min-height: 0; padding: 32px 24px;
   max-width: 1200px; margin: 0 auto; width: 100%;
 }
 
@@ -277,7 +277,7 @@ input, select, textarea {
 // â”€â”€ New Project / Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .new-project-shell {
-  min-height: 100vh;
+  flex: 1; overflow-y: auto; min-height: 0;
   background: var(--bg);
   display: flex;
   align-items: flex-start;
@@ -1014,7 +1014,7 @@ input, select, textarea {
 // â”€â”€ Task Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .task-management {
-  min-height: 100vh; background: var(--bg); color: var(--text);
+  flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); color: var(--text);
 
   &__header {
     display: flex; align-items: center; justify-content: space-between;
@@ -1560,7 +1560,7 @@ input, select, textarea {
 
 // ── Admin page ───────────────────────────────────────────────────────────────
 
-.admin-shell { min-height: 100vh; background: var(--bg); }
+.admin-shell { flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); }
 
 .admin-topbar {
   display: flex; align-items: center; gap: 16px;
