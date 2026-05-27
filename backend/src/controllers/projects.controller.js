@@ -348,18 +348,32 @@ exports.consultService = asyncHandler(async (req, res) => {
   const serviceDef = registry[serviceId];
   if (!serviceDef) throw ApiError.badRequest(`Unknown service: ${serviceId}`);
 
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  // Resolve project + user in parallel (same pattern as planning-runner)
+  const { decrypt } = require('../services/encryption.service');
+  const [project, projectWithKey, user] = await Promise.all([
+    Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean(),
+    Project.findById(req.params.id).select('+settings.anthropicApiKey').lean(),
+    User.findById(req.user.id).select('+settings.anthropicApiKey plan').lean(),
+  ]);
   if (!project) throw ApiError.notFound('Project not found');
 
-  const Document = require('../models/Document');
-  const docs = await Document.find({ projectId: req.params.id, isApproved: true })
-    .sort({ createdAt: 1 }).limit(3).select('content type').lean();
+  const projectKey = projectWithKey?.settings?.anthropicApiKey
+    ? decrypt(projectWithKey.settings.anthropicApiKey) : null;
+  const userKey = user?.settings?.anthropicApiKey
+    ? decrypt(user.settings.anthropicApiKey) : null;
+  const resolvedKey = projectKey || userKey;
 
-  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, 600)}`).join('\n\n---\n\n');
-
-  const { getPlatformClient } = require('../services/ai/claude.client');
+  const { getClientForUser, getPlatformClient } = require('../services/ai/claude.client');
   const env = require('../config/env');
-  const client = getPlatformClient();
+  const { client, model } = resolvedKey
+    ? getClientForUser(user?.plan || 'starter', resolvedKey)
+    : { client: getPlatformClient(), model: env.ANTHROPIC_MODEL };
+
+  const Document = require('../models/Document');
+  const docs = await Document.find({ projectId: req.params.id })
+    .sort({ createdAt: 1 }).limit(4).select('content type').lean();
+
+  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, 500)}`).join('\n\n---\n\n');
 
   const prompt = `פרויקט: "${project.title}"
 רעיון: ${project.idea || '—'}
@@ -376,7 +390,7 @@ ${serviceDef.howto ? `(איך מקבלים: ${serviceDef.howto})` : ''}
 3. המלצה: לדלג / לא לדלג (ולמה)`;
 
   const response = await client.messages.create({
-    model:      env.ANTHROPIC_MODEL,
+    model,
     max_tokens: 400,
     messages:   [{ role: 'user', content: prompt }],
   });
