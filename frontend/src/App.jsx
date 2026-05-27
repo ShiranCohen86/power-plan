@@ -232,10 +232,10 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
 
-    // Show install sheet in any browser (mobile or desktop) if not already installed
-    // and not previously dismissed. beforeinstallprompt may fire and override this.
+    // iOS Safari cannot trigger beforeinstallprompt — show manual instructions after 4 s.
+    // Chrome/Edge/Android are handled by the beforeinstallprompt event above.
     let installTimer;
-    if (!isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
+    if (isIOS() && !isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
       installTimer = setTimeout(() => setSheet((s) => s || 'install'), 4000);
     }
 

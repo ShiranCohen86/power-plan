@@ -25,7 +25,9 @@ export default defineConfig({
         theme_color: '#7c3aed',
         background_color: '#0a0a0f',
         display: 'standalone',
-        icons: [],
+        icons: [
+          { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        ],
       },
     }),
   ],
