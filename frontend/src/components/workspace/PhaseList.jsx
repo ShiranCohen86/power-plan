@@ -27,12 +27,13 @@ function PhaseItem({ config, phaseData, isActive, onClick, lang }) {
       <span className="phase-item__name">{lang === 'he' ? config.nameHe : config.name}</span>
       {status === 'running' && <span className="phase-item__pulse" />}
       {tokens > 0 && status !== 'running' && status !== 'failed' && (
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
+        <span className="phase-item__tokens" style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
           {tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t
         </span>
       )}
       {status === 'failed' && phaseData?.errorMessage && (
         <span
+          className="phase-item__error"
           title={phaseData.errorMessage}
           style={{ fontSize: 10, color: 'var(--danger)', marginRight: 'auto', maxWidth: 80,
                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.8 }}

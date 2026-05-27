@@ -468,8 +468,10 @@ input, select, textarea {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 
-  &__title { display: flex; align-items: center; gap: 8px; font-weight: 700; flex: 1; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__title { display: flex; align-items: center; gap: 8px; font-weight: 700; flex: 1; font-size: 15px; min-width: 0; }
+  &__project-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   &__status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  &__btn-label { /* hidden on mobile via media query */ }
   // Join meeting button only visible when LiveFeed panel is hidden (mobile/tablet)
   &__join-meeting { display: none; }
 }
@@ -887,6 +889,7 @@ input, select, textarea {
   .phase-item { white-space: nowrap; min-width: auto; }
   .phase-item__name, .phase-item__status, .phase-item__icon { display: none; }
   .phase-item__num { display: block; }
+  .phase-item__tokens, .phase-item__error { display: none; }
   .live-feed { display: none; }
   .workspace-mobile-phase-title {
     display: flex; align-items: center; gap: 6px;
@@ -898,6 +901,15 @@ input, select, textarea {
   // Workspace content padding
   .workspace-topbar { padding: 0 12px; gap: 8px; height: 46px; }
   .workspace-topbar__title { font-size: 13px; }
+  .workspace-topbar__project-name { font-size: 13px; }
+  .workspace-topbar__btn-label { display: none; }
+
+  // AppShell — hamburger replaces topbar nav items
+  .app-topbar__hamburger { display: flex; }
+  .app-topbar__lang,
+  .app-topbar__settings,
+  .app-topbar__logout,
+  .app-topbar__admin { display: none; }
   .workspace-main { padding: 12px; }
   .workspace-doc__content { padding: 16px; font-size: 13px; }
 
@@ -1180,6 +1192,23 @@ input, select, textarea {
     &--active { color: var(--brand-primary-light); }
   }
   &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
+  &__admin { font-size: 16px; padding: 4px 8px; min-height: auto; }
+  &__hamburger { display: none; font-size: 18px; padding: 4px 8px; min-height: auto; }
+}
+
+// ── Hamburger menu (BottomSheet) ──────────────────────────────────────────────
+
+.app-menu {
+  display: flex; flex-direction: column; gap: 4px; padding: 8px 0;
+
+  &__item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: $radius;
+    font-size: 15px; color: var(--text); text-decoration: none;
+    background: none; border: none; cursor: pointer; width: 100%; text-align: start;
+    &:hover, &:active { background: var(--surface-3); }
+    &--danger { color: var(--danger); }
+  }
 }
 
 // ── Settings Page ──────────────────────────────────────────────────────────

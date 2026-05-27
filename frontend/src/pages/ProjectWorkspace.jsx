@@ -455,8 +455,8 @@ export default function ProjectWorkspace() {
 
       {/* Top bar */}
       <header className="workspace-topbar">
-        <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 משימות</button>
-        <button className="btn-ghost" onClick={() => setShowProjectSettings(true)} style={{ minHeight: 36, padding: '4px 12px' }} title="הגדרות פרויקט">⚙️ הגדרות</button>
+        <button className="btn-ghost" onClick={() => navigate(`/projects/${id}/tasks`)} style={{ minHeight: 36, padding: '4px 12px' }}>📋 <span className="workspace-topbar__btn-label">משימות</span></button>
+        <button className="btn-ghost" onClick={() => setShowProjectSettings(true)} style={{ minHeight: 36, padding: '4px 12px' }} title="הגדרות פרויקט">⚙️ <span className="workspace-topbar__btn-label">הגדרות</span></button>
         {isRunning && (
           <button
             className="btn-ghost"
@@ -469,7 +469,7 @@ export default function ProjectWorkspace() {
         )}
         <div className="workspace-topbar__title">
           <span>⚡</span>
-          <span>{project?.title}</span>
+          <span className="workspace-topbar__project-name">{project?.title}</span>
         </div>
         <div className="workspace-progress">
           <div className="workspace-progress__fill" style={{ width: `${project?.completionPercent || 0}%` }} />
