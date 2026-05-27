@@ -1,14 +1,12 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
+import { useLanguage } from '../../context/LanguageContext.jsx';
 
-/**
- * Markdown renderer with XSS protection via rehype-sanitize.
- * Use this everywhere raw markdown content is rendered.
- */
 export default function SafeMarkdown({ content, className }) {
+  const { dir } = useLanguage();
   return (
-    <div className={className} dir="auto">
+    <div className={className} dir={dir}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}

@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { saveServiceCredentials, skipServiceCredentials } from '../../api/projects.api';
+import { saveServiceCredentials, skipServiceCredentials, consultService } from '../../api/projects.api';
 
 function ServiceCard({ projectId, service, onSaved, onSkipped }) {
-  const [values, setValues]   = useState(() => Object.fromEntries(service.fields.map((f) => [f.key, ''])));
-  const [busy, setBusy]       = useState(false);
-  const [err, setErr]         = useState('');
-  const [saved, setSaved]     = useState(false);
-  const [skipped, setSkipped] = useState(false);
+  const [values, setValues]     = useState(() => Object.fromEntries(service.fields.map((f) => [f.key, ''])));
+  const [busy, setBusy]         = useState(false);
+  const [err, setErr]           = useState('');
+  const [saved, setSaved]       = useState(false);
+  const [skipped, setSkipped]   = useState(false);
+  const [consulting, setConsulting] = useState(false);
+  const [advice, setAdvice]     = useState(null);
 
   const allFilled = service.fields.every((f) => values[f.key]?.trim());
 
@@ -30,6 +32,16 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
     } catch (e) {
       setErr(e.message || 'שגיאה בדילוג');
     } finally { setBusy(false); }
+  }
+
+  async function handleConsult() {
+    setConsulting(true);
+    try {
+      const res = await consultService(projectId, service.id);
+      setAdvice(res.explanation);
+    } catch {
+      setAdvice('לא ניתן לייצר הסבר כרגע — נסה שוב.');
+    } finally { setConsulting(false); }
   }
 
   if (saved) {
@@ -91,8 +103,25 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
 
       {err && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
 
+      <button
+        className="btn btn--ghost creds-card__consult"
+        onClick={handleConsult}
+        disabled={consulting || busy}
+      >
+        {consulting ? 'שואל את Claude...' : '❓ האם אני צריך את זה?'}
+      </button>
+
+      {advice && (
+        <div className="creds-card__advice">
+          <p style={{ margin: 0 }}>{advice}</p>
+          <button className="creds-card__skip-anyway" onClick={handleSkip} disabled={busy}>
+            דלג בכל זאת ←
+          </button>
+        </div>
+      )}
+
       <div className="creds-card__actions">
-        {service.optional && (
+        {service.optional && !advice && (
           <button
             className="btn btn--ghost"
             style={{ fontSize: 13 }}
@@ -115,7 +144,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
   );
 }
 
-export default function CredentialsGateModal({ projectId, services, onDone }) {
+export default function CredentialsGateModal({ projectId, services, onDone, onClose }) {
   const [savedCount, setSavedCount]   = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
 
@@ -160,6 +189,9 @@ export default function CredentialsGateModal({ projectId, services, onDone }) {
               הזן את קודי הגישה כדי שהקוד יכלול אותם מוכן לפריסה.
             </div>
           </div>
+          {onClose && (
+            <button className="creds-modal__close" onClick={onClose} title="סגור">✕</button>
+          )}
         </div>
 
         <div className="creds-modal__body">

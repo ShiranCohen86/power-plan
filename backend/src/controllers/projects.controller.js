@@ -342,6 +342,49 @@ exports.skipService = asyncHandler(async (req, res) => {
   res.json({ ok: true, skipped: true, allDone });
 });
 
+exports.consultService = asyncHandler(async (req, res) => {
+  const { serviceId } = req.params;
+  const registry = require('../config/serviceRegistry');
+  const serviceDef = registry[serviceId];
+  if (!serviceDef) throw ApiError.badRequest(`Unknown service: ${serviceId}`);
+
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const Document = require('../models/Document');
+  const docs = await Document.find({ projectId: req.params.id, isApproved: true })
+    .sort({ createdAt: 1 }).limit(3).select('content type').lean();
+
+  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, 600)}`).join('\n\n---\n\n');
+
+  const { getPlatformClient } = require('../services/ai/claude.client');
+  const env = require('../config/env');
+  const client = getPlatformClient();
+
+  const prompt = `פרויקט: "${project.title}"
+רעיון: ${project.idea || '—'}
+
+תיעוד תכנון (קטעים נבחרים):
+${docSummary || 'אין מסמכים עדיין'}
+
+שירות חיצוני: ${serviceDef.name}
+${serviceDef.howto ? `(איך מקבלים: ${serviceDef.howto})` : ''}
+
+ענה בעברית ב-3 נקודות קצרות (משפט-שניים כל אחד):
+1. מה השירות הזה עושה באפליקציה הספציפית הזו
+2. מה יחסר אם הלקוח ידלג עליו
+3. המלצה: לדלג / לא לדלג (ולמה)`;
+
+  const response = await client.messages.create({
+    model:      env.ANTHROPIC_MODEL,
+    max_tokens: 400,
+    messages:   [{ role: 'user', content: prompt }],
+  });
+
+  const explanation = response.content[0]?.text?.trim() || 'לא ניתן לייצר הסבר כרגע.';
+  res.json({ explanation });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function _ownedProject(req) {

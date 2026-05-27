@@ -22,6 +22,7 @@ router.get('/:id/meetings', validate(projectValidator.objectId), projectsControl
 router.get  ('/:id/required-services',                                    projectsController.getRequiredServices);
 router.post ('/:id/required-services/:serviceId/credentials',             projectsController.saveServiceCredentials);
 router.patch('/:id/required-services/:serviceId/skip',                    projectsController.skipService);
+router.post ('/:id/required-services/:serviceId/consult',                 projectsController.consultService);
 
 // Per-project settings
 router.get   ('/:id/settings',              projectsController.getProjectSettings);

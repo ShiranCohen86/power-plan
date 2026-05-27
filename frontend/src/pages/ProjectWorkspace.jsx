@@ -525,6 +525,7 @@ export default function ProjectWorkspace() {
           projectId={id}
           services={awaitingServices}
           onDone={() => setAwaitingServices(null)}
+          onClose={() => setAwaitingServices(null)}
         />
       )}
 
@@ -586,19 +587,32 @@ export default function ProjectWorkspace() {
 
         {/* Center: Document output + approval footer */}
         <div className="workspace-center">
+          {/* Sticky doc bar — export + approve always visible */}
+          {activeDoc && (
+            <div className="workspace-doc-bar">
+              <button
+                className="btn-ghost workspace-doc-bar__export"
+                onClick={handleExportDoc}
+                title="הורד כקובץ Markdown"
+              >
+                ⬇️ ייצוא
+              </button>
+              {awaitingPhase !== null && awaitingPhase === activePhaseIndex && (
+                <button
+                  className={`btn btn--primary workspace-doc-bar__approve${hasScrolledToBottom ? ' workspace-approval-footer__approve--unlocked' : ''}`}
+                  onClick={handleApprove}
+                  disabled={!hasScrolledToBottom}
+                  title={!hasScrolledToBottom ? 'גלול עד הסוף לקריאת המסמך' : ''}
+                >
+                  ✅ אשר והמשך
+                </button>
+              )}
+            </div>
+          )}
+
           <main className="workspace-main" ref={mainRef}>
             {activeDoc ? (
               <div className="workspace-doc">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 0' }}>
-                  <button
-                    className="btn-ghost"
-                    onClick={handleExportDoc}
-                    style={{ fontSize: 12, padding: '4px 10px' }}
-                    title="הורד כקובץ Markdown"
-                  >
-                    ⬇️ ייצוא
-                  </button>
-                </div>
                 <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
               </div>
             ) : (
