@@ -166,7 +166,7 @@ async function startPlanning(projectId) {
 
     // Approval gate check
     const updated = await Project.findById(projectId).lean();
-    if (updated.approvalGates) {
+    if (updated.approvalGates !== false) {
       emitToProject(projectId, 'phase:awaiting_approval', { phaseIndex: i });
       logger.info('planning-runner: waiting for approval', { projectId, phaseIndex: i });
       break; // Pipeline pauses; resume via approvePhase()

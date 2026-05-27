@@ -131,3 +131,57 @@ $font-sans:   'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
   --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(6,182,212,0.20) 0%, transparent 60%),
               linear-gradient(180deg, #090b0d 0%, #0b1116 100%);
 }
+
+// ── Light theme overrides ─────────────────────────────────────────────────────
+[data-theme="light"] {
+  --brand-primary:           #0284c7;
+  --brand-primary-dark:      #0369a1;
+  --brand-primary-light:     #0891b2;
+  --brand-accent:            #0ea5e9;
+
+  --danger:       #dc2626;
+  --success:      #16a34a;
+  --warning:      #d97706;
+  --info:         #0284c7;
+  --text-danger:  #b91c1c;
+  --text-success: #15803d;
+  --text-warning: #b45309;
+  --text-info:    #0369a1;
+
+  --bg:           #f0f5f8;
+  --surface:      #ffffff;
+  --surface-1:    #ffffff;
+  --surface-2:    #f4f8fb;
+  --surface-3:    #e8f0f5;
+  --surface-3-hover: #dde8f0;
+  --surface-4:    #c8d8e4;
+
+  --border:        #ccd9e3;
+  --border-subtle: rgba(2,132,199,0.12);
+  --border-strong: #aac0d0;
+
+  --text:         #111820;
+  --text-muted:   #4a6070;
+  --text-subtle:  #7a9ab0;
+
+  --shadow-sm:       0 1px 2px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03);
+  --shadow:          0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg:       0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
+  --shadow-brand:    0 4px 24px rgba(2,132,199,0.22);
+  --shadow-brand-lg: 0 8px 40px rgba(2,132,199,0.30);
+
+  --glass-bg:     rgba(255,255,255,0.90);
+  --glass-border: rgba(2,132,199,0.18);
+
+  --brand-primary-alpha-10: rgba(2,132,199,0.08);
+  --brand-primary-alpha-20: rgba(2,132,199,0.13);
+  --brand-primary-alpha-25: rgba(2,132,199,0.17);
+  --brand-primary-alpha-30: rgba(2,132,199,0.23);
+
+  --hover-overlay:  rgba(0,0,0,0.04);
+  --active-overlay: rgba(0,0,0,0.08);
+  --focus-ring:     0 0 0 3px rgba(2,132,199,0.28);
+
+  --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(2,132,199,0.12) 0%, transparent 60%),
+              linear-gradient(180deg, #f0f5f8 0%, #e6eef5 100%);
+}

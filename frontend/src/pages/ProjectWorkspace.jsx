@@ -27,6 +27,7 @@ import QuotaBanner                  from '../components/workspace/QuotaBanner';
 import DeploymentStatus             from '../components/workspace/DeploymentStatus';
 import CelebrationOverlay           from '../components/workspace/CelebrationOverlay';
 import SettingsGate                 from '../components/SettingsGate';
+import Skeleton                     from '@mui/material/Skeleton';
 
 const STATUS_LABEL = {
   pending:            '⏳',
@@ -665,14 +666,22 @@ export default function ProjectWorkspace() {
       <div className="workspace-body">
         {/* Left: Phase list (visually RIGHT in RTL) */}
         <aside className="workspace-sidebar" ref={sidebarRef} style={{ width: sidebarWidth }}>
-          <PhaseList
-            phases={phases}
-            activeIndex={activePhaseIndex}
-            onSelect={(idx) => {
-              setActive(idx);
-              loadDocument(idx);
-            }}
-          />
+          {loading ? (
+            <div style={{ padding: '12px 8px' }}>
+              {[0,1,2,3,4].map((i) => (
+                <Skeleton key={i} variant="rectangular" height={36} sx={{ mb: 1, borderRadius: 1.5 }} />
+              ))}
+            </div>
+          ) : (
+            <PhaseList
+              phases={phases}
+              activeIndex={activePhaseIndex}
+              onSelect={(idx) => {
+                setActive(idx);
+                loadDocument(idx);
+              }}
+            />
+          )}
 
           {/* Discovery hint — shown for onboarding projects, but doesn't block */}
           {isOnboarding && (
@@ -746,7 +755,15 @@ export default function ProjectWorkspace() {
           )}
 
           <main className="workspace-main" ref={mainRef}>
-            {activeDoc ? (
+            {loading ? (
+              <div>
+                <Skeleton variant="text" width="45%" height={32} sx={{ mb: 2 }} />
+                <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 1.5, mb: 2 }} />
+                <Skeleton variant="text" width="90%" />
+                <Skeleton variant="text" width="85%" />
+                <Skeleton variant="text" width="70%" />
+              </div>
+            ) : activeDoc ? (
               <div className="workspace-doc">
                 <SafeMarkdown content={activeDoc.content} className="workspace-doc__content" />
               </div>
@@ -764,7 +781,7 @@ export default function ProjectWorkspace() {
                   </div>
                 ) : (
                   <div className="workspace-empty">
-                    <div style={{ fontSize: 48 }}>👈</div>
+                    <div style={{ fontSize: 48 }}>{lang === 'he' ? '👉' : '👈'}</div>
                     <p>בחר שלב מהרשימה כדי לצפות במסמך</p>
                   </div>
                 )}

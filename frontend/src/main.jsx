@@ -7,6 +7,7 @@ import { store } from './store/index.js';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import { SocketProvider } from './context/SocketContext.jsx';
+import { AppThemeProvider } from './context/ThemeContext.jsx';
 import './i18n';
 import './styles/main.scss';
 
@@ -22,6 +23,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Apply persisted theme before first paint to avoid flash
+const _savedTheme = localStorage.getItem('pp-theme');
+if (_savedTheme === 'light') document.documentElement.dataset.theme = 'light';
+
 // Apply persisted language + direction before first paint to avoid flash
 const savedLang = localStorage.getItem('lang') || 'en';
 document.documentElement.setAttribute('dir',  savedLang === 'he' ? 'rtl' : 'ltr');
@@ -34,7 +39,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <LanguageProvider>
           <AuthProvider>
             <SocketProvider>
-              <App />
+              <AppThemeProvider>
+                <App />
+              </AppThemeProvider>
             </SocketProvider>
           </AuthProvider>
         </LanguageProvider>

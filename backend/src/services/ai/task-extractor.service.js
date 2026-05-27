@@ -3,6 +3,7 @@ const env = require('../../config/env');
 const Task   = require('../../models/Task');
 const Sprint = require('../../models/Sprint');
 const logger = require('../../utils/logger');
+const { emitToProject } = require('../../sockets');
 
 const SYSTEM_PROMPT = `You extract structured task data from a software development plan document.
 
@@ -73,11 +74,17 @@ async function extractTasks(projectId, phaseId, documentContent) {
     return;
   }
 
+  await Task.deleteMany({ projectId });
   await _saveSprints(projectId, parsed.sprints || []);
   await _saveTasks(projectId, phaseId, parsed.epics || []);
 
   logger.info('task-extractor: tasks saved', {
     projectId,
+    sprints: (parsed.sprints || []).length,
+    epics:   (parsed.epics   || []).length,
+  });
+
+  emitToProject(projectId, 'tasks:extracted', {
     sprints: (parsed.sprints || []).length,
     epics:   (parsed.epics   || []).length,
   });

@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
 import { fetchEpicTree, selectEpicTree, selectTasksStatus } from '../store/slices/tasksSlice';
+import { fetchSprints } from '../store/slices/sprintsSlice';
 import { selectProjectById } from '../store/slices/projectsSlice';
 import EpicGroup from '../components/tasks/EpicGroup';
 import SprintBoard from '../components/tasks/SprintBoard';
+import { useProjectSocket } from '../hooks/useProjectSocket';
 
 export default function TaskManagement() {
   const { t } = useTranslation();
@@ -19,6 +21,13 @@ export default function TaskManagement() {
   useEffect(() => {
     dispatch(fetchEpicTree(projectId));
   }, [dispatch, projectId]);
+
+  useProjectSocket(projectId, {
+    onTasksExtracted: () => {
+      dispatch(fetchEpicTree(projectId));
+      dispatch(fetchSprints(projectId));
+    },
+  });
 
   const totalTasks = epics.reduce(
     (sum, e) => sum + (e.features || []).reduce((s, f) => s + (f.tasks || []).length, 0), 0,

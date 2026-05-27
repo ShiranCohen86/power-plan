@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import Skeleton from '@mui/material/Skeleton';
 import toast from 'react-hot-toast';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
 import {
@@ -150,8 +151,13 @@ export default function Dashboard() {
 
         {status === 'loading' ? (
           <div className="projects-grid">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="project-card skeleton" style={{ height: 140 }} />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="project-card" style={{ padding: 18 }}>
+                <Skeleton variant="text" width="60%" height={20} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="90%" height={14} />
+                <Skeleton variant="text" width="80%" height={14} />
+                <Skeleton variant="rectangular" height={24} width="40%" sx={{ mt: 2, borderRadius: '4px' }} />
+              </div>
             ))}
           </div>
         ) : projects.length === 0 ? (

@@ -6,6 +6,13 @@ import { selectCurrentUser, logoutUser } from '../store/slices/authSlice';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice';
 import NotificationBell from './ui/NotificationBell';
 import BottomSheet from './ui/BottomSheet.jsx';
+import { useAppTheme } from '../context/ThemeContext.jsx';
+import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
+import HomeOutlined from '@mui/icons-material/HomeOutlined';
+import BuildOutlined from '@mui/icons-material/BuildOutlined';
+import MenuOutlined from '@mui/icons-material/MenuOutlined';
+import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
+import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 
 export default function AppShell({ children }) {
   const { t } = useTranslation();
@@ -14,6 +21,7 @@ export default function AppShell({ children }) {
   const location = useLocation();
   const user = useSelector(selectCurrentUser);
   const lang = useSelector(selectLanguage);
+  const { mode, toggleTheme } = useAppTheme();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -34,7 +42,7 @@ export default function AppShell({ children }) {
           </button>
           {!isHome && (
             <button className="btn-ghost app-topbar__home" onClick={() => navigate('/dashboard')}>
-              ⌂ בית
+              <HomeOutlined fontSize="small" /> בית
             </button>
           )}
         </div>
@@ -42,6 +50,9 @@ export default function AppShell({ children }) {
         <div className="app-topbar__end">
           <button className="btn-ghost app-topbar__lang" onClick={() => dispatch(toggleLanguage())}>
             {lang === 'he' ? 'EN' : 'עב'}
+          </button>
+          <button className="btn-ghost app-topbar__theme" onClick={toggleTheme} title={mode === 'dark' ? 'מצב בהיר' : 'מצב כהה'}>
+            {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
           </button>
           <NotificationBell />
           {user?.name && (
@@ -52,11 +63,11 @@ export default function AppShell({ children }) {
             onClick={() => navigate('/settings')}
             title="הגדרות"
           >
-            ⚙
+            <SettingsOutlined fontSize="small" />
           </button>
           {user?.role === 'admin' && (
             <button className="btn-ghost app-topbar__admin" onClick={() => navigate('/admin')} title="Admin">
-              🔧
+              <BuildOutlined fontSize="small" />
             </button>
           )}
           <button
@@ -68,7 +79,7 @@ export default function AppShell({ children }) {
 
           {/* Hamburger — mobile only */}
           <button className="btn-ghost app-topbar__hamburger" onClick={() => setMenuOpen(true)} aria-label="תפריט">
-            ☰
+            <MenuOutlined />
           </button>
         </div>
       </header>
@@ -78,6 +89,9 @@ export default function AppShell({ children }) {
           <div className="app-menu">
             <button className="app-menu__item" onClick={() => { dispatch(toggleLanguage()); setMenuOpen(false); }}>
               🌐 {lang === 'he' ? 'English' : 'עברית'}
+            </button>
+            <button className="app-menu__item" onClick={() => { toggleTheme(); setMenuOpen(false); }}>
+              {mode === 'dark' ? '☀️ מצב בהיר' : '🌙 מצב כהה'}
             </button>
             <button className="app-menu__item" onClick={() => { navigate('/settings'); setMenuOpen(false); }}>
               ⚙️ {t('settings.title')}

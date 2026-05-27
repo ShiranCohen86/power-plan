@@ -2369,3 +2369,31 @@ input, select, textarea {
   .meeting-room__table { width: 110px; height: 60px; }
   .meeting-room__subtitles { padding: 6px 12px 10px; }
 }
+
+// ── Light theme component overrides ──────────────────────────────────────────
+
+[data-theme="light"] {
+  .dashboard-topbar { background: rgba(240,245,248,.95); }
+  .pwa-spinner { border-color: rgba(2,132,199,.2); border-top-color: #0284c7; }
+  input, select, textarea { background: var(--surface-1); }
+
+  .badge.success { background: rgba(22,163,74,.10);  color: #15803d; border-color: rgba(22,163,74,.25); }
+  .badge.warning { background: rgba(217,119,6,.10);  color: #b45309; border-color: rgba(217,119,6,.25); }
+  .badge.danger  { background: rgba(185,28,28,.10);  color: #991b1b; border-color: rgba(185,28,28,.22); }
+  .badge.info    { background: rgba(2,132,199,.10);  color: #0369a1; border-color: rgba(2,132,199,.22); }
+
+  .project-status--onboarding       { background: rgba(2,132,199,.10);  color: #0369a1; border-color: rgba(2,132,199,.22); }
+  .project-status--planning         { background: rgba(37,99,235,.10);  color: #1d4ed8; border-color: rgba(37,99,235,.22); }
+  .project-status--coding           { background: rgba(5,150,105,.10);  color: #047857; border-color: rgba(5,150,105,.22); }
+  .project-status--deploying        { background: rgba(180,83,9,.10);   color: #92400e; border-color: rgba(180,83,9,.22); }
+  .project-status--live             { background: rgba(22,163,74,.10);  color: #15803d; border-color: rgba(22,163,74,.22); }
+  .project-status--failed           { background: rgba(185,28,28,.10);  color: #991b1b; border-color: rgba(185,28,28,.20); }
+  .project-status--paused           { background: rgba(75,85,99,.10);   color: #374151; border-color: rgba(75,85,99,.20); }
+  .project-status--awaiting_credentials { background: rgba(180,83,9,.10); color: #92400e; border-color: rgba(180,83,9,.22); }
+
+  .phase-item--active { background: rgba(2,132,199,.10) !important; border-color: rgba(2,132,199,.28); }
+  .meeting-msg--external { border-image: linear-gradient(180deg, transparent, #0ea5e9, transparent) 1; }
+  .discovery-msg--user .discovery-msg__bubble { background: rgba(2,132,199,.12); }
+  .tech-log--started { color: #0369a1; }
+  .workspace-doc__content { background: var(--surface); border-color: var(--border); }
+}
