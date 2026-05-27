@@ -1339,7 +1339,7 @@ input, select, textarea {
   }
   &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
   &__admin { font-size: 16px; padding: 4px 8px; min-height: auto; }
-  &__hamburger { display: none; font-size: 18px; padding: 4px 8px; min-height: auto; }
+  &__hamburger { display: none; font-size: 18px; min-width: 44px; min-height: 44px; padding: 0; }
 }
 
 // ── Hamburger menu (BottomSheet) ──────────────────────────────────────────────
@@ -2411,4 +2411,24 @@ input, select, textarea {
   .discovery-msg--user .discovery-msg__bubble { background: rgba(2,132,199,.12); }
   .tech-log--started { color: #0369a1; }
   .workspace-doc__content { background: var(--surface); border-color: var(--border); }
+}
+
+// ── Accessibility — reduced motion ────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ── Accessibility — touch targets ≥ 44px (WCAG 2.5.5) ────────────────────────
+.btn-icon {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

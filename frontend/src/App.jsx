@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
+import DOMPurify from 'dompurify';
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './context/AuthContext.jsx';
@@ -128,8 +129,8 @@ function InstallSheetContent({ deferredPrompt, onClose }) {
       <>
         <div className="bsheet__title">{t('pwa.iosTitle')}</div>
         <div className="bsheet__body">
-          <p dangerouslySetInnerHTML={{ __html: t('pwa.iosStep1') }} />
-          <p style={{ marginTop: 8 }} dangerouslySetInnerHTML={{ __html: t('pwa.iosStep2') }} />
+          <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('pwa.iosStep1')) }} />
+          <p style={{ marginTop: 8 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('pwa.iosStep2')) }} />
           <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>{t('pwa.iosHint')}</p>
         </div>
         <div className="bsheet__actions">

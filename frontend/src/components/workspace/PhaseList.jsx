@@ -1,3 +1,4 @@
+import React from 'react';
 import { PLANNING_PHASES, CODEGEN_PHASES } from '../../utils/phaseConfig';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 
@@ -45,7 +46,7 @@ function PhaseItem({ config, phaseData, isActive, onClick, lang }) {
   );
 }
 
-export default function PhaseList({ phases, activeIndex, onSelect }) {
+function PhaseList({ phases, activeIndex, onSelect }) {
   const { lang } = useLanguage();
   const phaseMap = Object.fromEntries(phases.map((p) => [p.index, p]));
 
@@ -84,3 +85,5 @@ export default function PhaseList({ phases, activeIndex, onSelect }) {
     </div>
   );
 }
+
+export default React.memo(PhaseList);

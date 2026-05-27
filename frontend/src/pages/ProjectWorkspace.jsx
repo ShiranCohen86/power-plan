@@ -173,6 +173,7 @@ export default function ProjectWorkspace() {
         }
 
         setProject(projRes);
+        if (projRes.deployedUrl) setLiveUrl(projRes.deployedUrl);
         setPhases(statusRes.phases || []);
 
         // Phase entry animation

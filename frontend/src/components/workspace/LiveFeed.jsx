@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TEAM_MEMBERS, PHASE_LEAD } from '../../utils/phaseConfig';
 import MeetingCountdownBanner from './MeetingCountdownBanner';
@@ -26,7 +26,7 @@ const EVENT_ICON = {
   narrative:    '💬',
 };
 
-export default function LiveFeed({
+function LiveFeed({
   meetingMsgs, consultantMsgs = [], consultantsRunning = false,
   techLogs, isRunning,
   activeTab, onTabChange,
@@ -261,3 +261,5 @@ export default function LiveFeed({
     </aside>
   );
 }
+
+export default React.memo(LiveFeed);
