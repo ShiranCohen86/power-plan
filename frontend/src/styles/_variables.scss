@@ -1,22 +1,32 @@
 // ── SCSS layout constants ─────────────────────────────────────────────────
-$topbar-h:   56px;
-$radius:     10px;
-$radius-sm:  6px;
-$radius-lg:  14px;
+$topbar-h:    56px;
+$radius:      10px;
+$radius-sm:   6px;
+$radius-lg:   14px;
 $radius-full: 999px;
-$font-sans:  'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
+$font-sans:   'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
 
 // ── Dark — Default (AI purple theme) ─────────────────────────────────────
 :root {
+  // ── Brand ────────────────────────────────────────────────────────────
   --brand-primary:           #7c3aed;
   --brand-primary-dark:      #6d28d9;
   --brand-primary-light:     #a78bfa;
   --brand-accent:            #06b6d4;
+
+  // ── Semantic status
   --danger:                  #f87171;
   --success:                 #34d399;
   --warning:                 #fbbf24;
+  --info:                    #67e8f9;
 
-  // Backgrounds — deep dark with purple tint
+  // ── Semantic text colors (for inline status text)
+  --text-danger:             #f87171;
+  --text-success:            #4ade80;
+  --text-warning:            #fbbf24;
+  --text-info:               #67e8f9;
+
+  // ── Backgrounds — deep dark with purple tint
   --bg:                      #0a0a0f;
   --surface:                 #111118;
   --surface-1:               #111118;
@@ -25,54 +35,99 @@ $font-sans:  'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
   --surface-3-hover:         #2c2c38;
   --surface-4:               #36364a;
 
-  // Borders — purple-tinted dark
+  // ── Borders
   --border:                  #1e1e2e;
   --border-subtle:           rgba(124, 58, 237, 0.12);
   --border-strong:           #2e2e44;
 
-  // Text hierarchy
+  // ── Text hierarchy
   --text:                    #e8e8f0;
   --text-muted:              #7878a0;
   --text-subtle:             #555578;
 
-  // Shadows
+  // ── Shadows
   --shadow-sm:               0 1px 2px rgba(0,0,0,0.6), 0 1px 6px rgba(0,0,0,0.3);
   --shadow:                  0 4px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.3);
   --shadow-lg:               0 12px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
   --shadow-brand:            0 4px 24px rgba(124,58,237,0.35);
+  --shadow-brand-lg:         0 8px 40px rgba(124,58,237,0.55);
 
-  // Glass
+  // ── Glass
   --glass-bg:                rgba(10,10,18,0.9);
   --glass-border:            rgba(124,58,237,0.22);
 
-  // Alpha tokens
+  // ── Brand alpha tokens
   --brand-primary-alpha-10:  rgba(124, 58, 237, 0.10);
   --brand-primary-alpha-20:  rgba(124, 58, 237, 0.18);
   --brand-primary-alpha-25:  rgba(124, 58, 237, 0.22);
+  --brand-primary-alpha-30:  rgba(124, 58, 237, 0.30);
 
-  // Login gradient
-  --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.4) 0%, transparent 60%),
-              linear-gradient(180deg, #0a0a0f 0%, #0f0818 100%);
+  // ── Interactive state overlays
+  --hover-overlay:           rgba(255, 255, 255, 0.04);
+  --active-overlay:          rgba(255, 255, 255, 0.08);
 
-  // Typography scale
-  --text-xs:   11px;
-  --text-sm:   12px;
-  --text-base: 14px;
-  --text-md:   15px;
-  --text-lg:   17px;
-  --text-xl:   20px;
-  --text-2xl:  24px;
-  --text-3xl:  30px;
+  // ── Focus ring — global keyboard-nav indicator
+  --focus-ring:              0 0 0 3px rgba(124, 58, 237, 0.40);
 
-  // Spacing scale (4px base)
+  // ── Typography scale ─────────────────────────────────────────────────
+  --text-xs:    11px;
+  --text-sm:    12px;
+  --text-base:  14px;
+  --text-md:    15px;
+  --text-lg:    16px;
+  --text-xl:    18px;
+  --text-2xl:   24px;
+  --text-3xl:   30px;
+  --text-4xl:   38px;
+
+  // ── Font weights
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+
+  // ── Line heights
+  --leading-tight:   1.2;
+  --leading-snug:    1.35;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  // ── Spacing scale (4px base) ──────────────────────────────────────────
   --space-1:   4px;
   --space-2:   8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  // ── Border radius (as CSS props for CSS-only usage) ───────────────────
+  --radius-sm:   6px;
+  --radius:      10px;
+  --radius-lg:   14px;
+  --radius-full: 999px;
+
+  // ── Z-index scale ────────────────────────────────────────────────────
+  --z-base:     0;
+  --z-dropdown: 100;
+  --z-sticky:   100;
+  --z-panel:    200;
+  --z-overlay:  1000;
+  --z-toast:    2000;
+  --z-top:      99999;
+
+  // ── Transitions ──────────────────────────────────────────────────────
+  --ease-fast:    100ms ease;
+  --ease-base:    180ms ease;
+  --ease-slow:    300ms ease;
+  --ease-spring:  120ms cubic-bezier(.34,1.56,.64,1);
+  --ease-smooth:  350ms cubic-bezier(.22,1,.36,1);
+
+  // ── Login gradient
+  --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.4) 0%, transparent 60%),
+              linear-gradient(180deg, #0a0a0f 0%, #0f0818 100%);
 }

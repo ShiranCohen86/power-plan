@@ -1,0 +1,91 @@
+// ── Responsive breakpoints ────────────────────────────────────────────────
+
+@mixin small-phone     { @media (max-width: 480px)  { @content; } }
+@mixin mobile          { @media (max-width: 767px)  { @content; } }
+@mixin tablet          { @media (min-width: 768px) and (max-width: 1279px) { @content; } }
+@mixin desktop         { @media (min-width: 1280px) { @content; } }
+@mixin landscape-phone { @media (orientation: landscape) and (max-height: 500px) { @content; } }
+
+// ── Text truncation ───────────────────────────────────────────────────────
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Focus ring — keyboard navigation indicator ────────────────────────────
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+// ── Thin custom scrollbar ─────────────────────────────────────────────────
+
+@mixin thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+
+  &::-webkit-scrollbar             { width: 5px; height: 5px; }
+  &::-webkit-scrollbar-track       { background: transparent; }
+  &::-webkit-scrollbar-thumb       { background: var(--surface-4); border-radius: 99px; }
+  &::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+}
+
+// ── Surface card container ────────────────────────────────────────────────
+
+@mixin surface-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+// ── Shimmer accent line (top edge of cards) ───────────────────────────────
+
+@mixin shimmer-line($opacity: 0.45) {
+  &::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 5%,
+      var(--brand-primary) 40%,
+      var(--brand-accent) 65%,
+      transparent 95%
+    );
+    opacity: $opacity;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+// ── Typography presets ────────────────────────────────────────────────────
+
+@mixin heading-1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-tight);
+}
+
+@mixin heading-2 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+@mixin label-caps {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
