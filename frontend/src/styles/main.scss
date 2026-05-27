@@ -214,6 +214,64 @@ input, select, textarea {
   &:hover { box-shadow: 0 8px 32px rgba(124,58,237,.5); transform: translateY(-2px); }
 }
 
+// ── Dashboard typography & toolbar ────────────────────────────────────────────
+
+.dashboard-title {
+  margin: 0; font-size: var(--text-2xl, 24px); font-weight: 800; line-height: 1.2;
+}
+.dashboard-subtitle {
+  margin: 4px 0 0; color: var(--text-muted); font-size: var(--text-base, 14px);
+}
+
+.dashboard-toolbar {
+  display: flex; align-items: center; gap: 12px; margin: 12px 0; flex-wrap: wrap;
+
+  &__search { max-width: 280px; font-size: 14px; padding: 6px 12px; }
+  &__sort   { display: flex; gap: 4px; flex-wrap: wrap; }
+  &__count  { font-size: 13px; color: var(--text-muted); margin-inline-start: auto; }
+}
+
+.sort-btn {
+  font: inherit; font-size: 12px; padding: 4px 10px; border-radius: $radius-sm;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+  font-weight: 400; transition: all 0.15s; min-height: auto; cursor: pointer;
+
+  &:hover { background: var(--surface-3); color: var(--text); transform: none; box-shadow: none; border-color: var(--border-strong); }
+  &--active {
+    background: var(--brand-primary); color: #fff; font-weight: 600; border-color: var(--brand-primary);
+    &:hover { background: var(--brand-primary-dark); transform: none; }
+  }
+}
+
+.dashboard-empty-state { margin-top: 40px; }
+.dashboard-empty__cta  { margin-top: 20px; }
+.dashboard-load-more   { text-align: center; margin-top: 24px;
+  .btn { min-width: 160px; }
+}
+
+// ── Project status badge ───────────────────────────────────────────────────────
+
+.project-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px; border-radius: $radius-full;
+  font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+
+  &--onboarding          { background: rgba(124,58,237,.13);  color: #a78bfa; border-color: rgba(124,58,237,.25); }
+  &--planning            { background: rgba(37,99,235,.13);   color: #60a5fa; border-color: rgba(37,99,235,.25); }
+  &--coding              { background: rgba(5,150,105,.13);   color: #34d399; border-color: rgba(5,150,105,.25); }
+  &--deploying           { background: rgba(217,119,6,.13);   color: #fbbf24; border-color: rgba(217,119,6,.25); }
+  &--live                { background: rgba(22,163,74,.13);   color: #4ade80; border-color: rgba(22,163,74,.25); }
+  &--failed              { background: rgba(220,38,38,.12);   color: #f87171; border-color: rgba(220,38,38,.22); }
+  &--paused              { background: rgba(107,114,128,.12); color: #9ca3af; border-color: rgba(107,114,128,.22); }
+  &--awaiting_credentials { background: rgba(251,191,36,.12); color: #fbbf24; border-color: rgba(251,191,36,.22); }
+
+  &__dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
 // â”€â”€ Projects grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .projects-grid {
@@ -227,7 +285,7 @@ input, select, textarea {
   cursor: pointer;
   transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, border-color .2s ease;
 
-  &:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--brand-primary); }
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
 
   &__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
   &__title  { font-size: 15px; font-weight: 700; color: var(--text); }
@@ -244,6 +302,14 @@ input, select, textarea {
     transition: width .5s ease;
   }
   &__percent { font-size: 12px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+
+  &__delete {
+    background: none; border: none; min-height: auto;
+    padding: 2px 4px; color: var(--text-subtle); opacity: 0.5;
+    font-size: 14px; line-height: 1; cursor: pointer; border-radius: $radius-sm;
+    transition: color 0.15s, opacity 0.15s;
+    &:hover { opacity: 1; color: var(--danger); transform: none; box-shadow: none; }
+  }
 }
 
 // â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -948,6 +1014,9 @@ input, select, textarea {
   .dashboard-header { flex-direction: column; align-items: stretch; }
   .btn-new-project { text-align: center; }
   .projects-grid { grid-template-columns: 1fr; }
+  .dashboard-toolbar { gap: 8px; }
+  .dashboard-toolbar__search { max-width: 100%; }
+  .dashboard-toolbar__count { margin-inline-start: 0; }
 
   // New project / discovery
   .new-project-card { padding: 20px 16px; }
@@ -1002,7 +1071,6 @@ input, select, textarea {
   // iOS Safari auto-zoom prevention — inputs <16px trigger full-page zoom on focus
   input, textarea, select { font-size: 16px; }
 
-  // Dashboard search input — full width on mobile (overrides inline maxWidth: 280)
   .form-input { max-width: 100% !important; }
 }
 
