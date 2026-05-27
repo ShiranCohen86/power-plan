@@ -1,91 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  getSettings, updatePlan, updateApiKey, deleteApiKey, validateApiKey,
+  getSettings, updateApiKey, deleteApiKey, validateApiKey,
 } from '../api/settings.api';
-
-const PLANS = [
-  {
-    key:   'starter',
-    name:  'Starter',
-    price: 'חינם לחלוטין',
-    badge: null,
-    color: '#6b7280',
-    highlight: false,
-    tagline: 'הכי משתלם — אתה משלם ישירות לאנתרופיק',
-    description: 'תשתמש במפתח API אישי שלך מאנתרופיק. Power Plan לא גובה כלום — אנתרופיק גובה ממך ישירות לפי שימוש (בערך ₪1-5 לפרויקט).',
-    features: [
-      { label: '12 שלבי תכנון מלאים', included: true },
-      { label: 'קוד מוכן לפריסה', included: true },
-      { label: 'פגישות צוות AI (Meeting System)', included: false, note: 'ב-Pro בלבד' },
-      { label: 'ביקורת יועצים חיצוניים', included: false, note: 'ב-Pro בלבד' },
-      { label: 'ציון איכות האפיון', included: false, note: 'ב-Pro בלבד' },
-      { label: 'מודל AI מהיר (Claude Haiku)', included: true },
-    ],
-    requiresKey: true,
-  },
-  {
-    key:   'pro',
-    name:  'Pro',
-    price: '₪99 / חודש',
-    badge: 'הכי פופולרי',
-    color: '#7c3aed',
-    highlight: true,
-    tagline: 'תוצאות הטובות ביותר — ללא עסקה עם אנתרופיק',
-    description: 'Power Plan מנהלת את כל ה-AI בשבילך. לא צריך להירשם לאנתרופיק, לא צריך להבין API — פשוט מתחיל לבנות.',
-    features: [
-      { label: '12 שלבי תכנון מלאים', included: true },
-      { label: 'קוד מוכן לפריסה', included: true },
-      { label: 'פגישות צוות AI (Meeting System)', included: true },
-      { label: 'ביקורת יועצים חיצוניים', included: true },
-      { label: 'ציון איכות האפיון', included: true },
-      { label: 'מודל AI חזק יותר (Claude Sonnet)', included: true },
-    ],
-    requiresKey: false,
-  },
-];
-
-function PlanCard({ plan, currentPlan, hasApiKey, onSelect, loading }) {
-  const isActive  = currentPlan === plan.key;
-  const canSelect = plan.key === 'pro' || hasApiKey;
-
-  return (
-    <div className={`settings-plan-card${plan.highlight ? ' settings-plan-card--highlight' : ''}${isActive ? ' settings-plan-card--active' : ''}`}>
-      {plan.badge && <div className="settings-plan-card__badge">{plan.badge}</div>}
-
-      <div className="settings-plan-card__header">
-        <h3 className="settings-plan-card__name">{plan.name}</h3>
-        <div className="settings-plan-card__price">{plan.price}</div>
-        <p className="settings-plan-card__tagline">{plan.tagline}</p>
-      </div>
-
-      <p className="settings-plan-card__desc">{plan.description}</p>
-
-      <ul className="settings-plan-card__features">
-        {plan.features.map((f, i) => (
-          <li key={i} className={`settings-plan-card__feature${f.included ? '' : ' settings-plan-card__feature--off'}`}>
-            <span className="settings-plan-card__feature-icon">{f.included ? '✓' : '✗'}</span>
-            <span>{f.label}</span>
-            {f.note && <span className="settings-plan-card__feature-note">{f.note}</span>}
-          </li>
-        ))}
-      </ul>
-
-      {isActive ? (
-        <div className="settings-plan-card__current-badge">התוכנית הנוכחית שלך</div>
-      ) : (
-        <button
-          className={`btn settings-plan-card__cta${plan.highlight ? ' btn--primary' : ' btn--secondary'}`}
-          onClick={() => onSelect(plan.key)}
-          disabled={loading || (!canSelect && plan.requiresKey)}
-        >
-          {plan.requiresKey && !hasApiKey
-            ? 'הזן מפתח Anthropic קודם ↓'
-            : loading ? 'מחליף...' : `עבור ל-${plan.name}`}
-        </button>
-      )}
-    </div>
-  );
-}
 
 function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, saving, saveError, inputProps, onValidate }) {
   const [mode, setMode]         = useState('idle');
@@ -221,31 +137,14 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, savin
 }
 
 export default function Settings() {
-  const [settings,    setSettings]    = useState(null);
-  const [planLoading, setPlanLoading] = useState(false);
-  const [planError,   setPlanError]   = useState('');
-  const [loadError,   setLoadError]   = useState('');
+  const [settings,  setSettings]  = useState(null);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     getSettings()
       .then((res) => setSettings(res))
       .catch(() => setLoadError('לא ניתן לטעון הגדרות. נסה לרענן.'));
   }, []);
-
-  // After key is configured we know the user came from onboarding — show CTA
-  const readyToBuild = settings?.hasApiKey;
-
-  async function handleSelectPlan(plan) {
-    setPlanLoading(true); setPlanError('');
-    try {
-      const res = await updatePlan(plan);
-      setSettings((s) => ({ ...s, plan: res.plan }));
-    } catch (err) {
-      setPlanError(err.message || 'שגיאה בשינוי תוכנית');
-    } finally {
-      setPlanLoading(false);
-    }
-  }
 
   return (
     <div className="settings-page">
@@ -266,41 +165,19 @@ export default function Settings() {
         </div>
       )}
 
-      {readyToBuild && (
+      {settings?.hasApiKey && (
         <div className="settings-ready-cta">
           <span className="settings-ready-cta__icon">✅</span>
           <div>
             <strong>הכל מוכן!</strong>
             <span> מפתח ה-AI מוגדר — אפשר להתחיל לבנות.</span>
           </div>
-          <a href="/new-project" className="btn btn--primary">
-            התחל לבנות אפליקציה →
-          </a>
+          <a href="/new-project" className="btn btn--primary">התחל לבנות אפליקציה →</a>
         </div>
       )}
 
       {settings && (
         <div className="settings-page__body">
-          <section className="settings-section">
-            <h2 className="settings-section__title">בחר תוכנית</h2>
-            <p className="settings-section__desc">
-              בשתי התוכניות תקבל אפיון מלא וקוד עובד — ההבדל הוא <strong>מי מספק את ה-AI</strong>.
-            </p>
-            {planError && <p className="settings-plan__error">{planError}</p>}
-            <div className="settings-plans">
-              {PLANS.map((plan) => (
-                <PlanCard
-                  key={plan.key}
-                  plan={plan}
-                  currentPlan={settings.plan}
-                  hasApiKey={settings.hasApiKey}
-                  onSelect={handleSelectPlan}
-                  loading={planLoading}
-                />
-              ))}
-            </div>
-          </section>
-
           <section className="settings-section">
             <h2 className="settings-section__title">מפתח AI (Anthropic)</h2>
             <p className="settings-section__desc">
@@ -320,7 +197,7 @@ export default function Settings() {
               }}
               onDelete={async () => {
                 const res = await deleteApiKey();
-                setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null, plan: res.plan }));
+                setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null }));
               }}
               inputProps={{
                 placeholder: 'sk-ant-api03-...',
