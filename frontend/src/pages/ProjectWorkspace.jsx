@@ -29,8 +29,6 @@ import CelebrationOverlay           from '../components/workspace/CelebrationOve
 import SettingsGate                 from '../components/SettingsGate';
 import Skeleton                     from '@mui/material/Skeleton';
 import ArrowForwardOutlined         from '@mui/icons-material/ArrowForwardOutlined';
-import MenuOutlined                 from '@mui/icons-material/MenuOutlined';
-import { useAppMenu }               from '../context/AppMenuContext.jsx';
 
 const STATUS_LABEL = {
   pending:            '⏳',
@@ -58,7 +56,6 @@ export default function ProjectWorkspace() {
   const { lang }   = useLanguage();
   const dispatch   = useDispatch();
   const navigate   = useNavigate();
-  const { openMenu } = useAppMenu();
 
   const [project, setProject]           = useState(null);
   const [phases, setPhases]             = useState([]);
@@ -573,9 +570,6 @@ export default function ProjectWorkspace() {
             </button>
           )}
         </div>
-        <button className="btn-ghost workspace-topbar__app-menu" onClick={openMenu} style={{ minHeight: 36, padding: '4px 10px' }} aria-label="תפריט">
-          <MenuOutlined fontSize="small" />
-        </button>
       </header>
 
       {/* Fallback key hint — shown when using global user key instead of project key */}

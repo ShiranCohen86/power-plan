@@ -543,7 +543,6 @@ input, select, textarea {
   &__project-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   &__status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   &__btn-label { /* hidden on mobile via media query */ }
-  &__app-menu { display: none; }
   // Join meeting button only visible when LiveFeed panel is hidden (mobile/tablet)
   &__join-meeting { display: none; }
 }
@@ -1044,7 +1043,6 @@ input, select, textarea {
   .workspace-topbar__title { font-size: 13px; }
   .workspace-topbar__project-name { font-size: 13px; }
   .workspace-topbar__btn-label { display: none; }
-  .workspace-topbar__app-menu { display: flex; }
 
   // AppShell — hamburger replaces topbar nav items
   .app-topbar__hamburger { display: flex; }
