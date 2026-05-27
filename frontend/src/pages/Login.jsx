@@ -124,7 +124,7 @@ export default function Login() {
             <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--danger)' }}>{apiKeyErr}</p>
           )}
           {apiKeyValid && (
-            <p style={{ margin: '0 0 8px', fontSize: 12, color: apiKeyValid.valid ? '#16a34a' : 'var(--danger)' }}>
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: apiKeyValid.valid ? 'var(--text-success)' : 'var(--danger)' }}>
               {apiKeyValid.valid ? '✓ המפתח תקין' : `✗ ${apiKeyValid.error}`}
             </p>
           )}

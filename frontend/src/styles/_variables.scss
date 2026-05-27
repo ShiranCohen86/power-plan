@@ -6,13 +6,13 @@ $radius-lg:   14px;
 $radius-full: 999px;
 $font-sans:   'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
 
-// ── Dark — Default (AI purple theme) ─────────────────────────────────────
+// ── Dark — Charcoal & Cyan ────────────────────────────────────────────────
 :root {
-  // ── Brand ────────────────────────────────────────────────────────────
-  --brand-primary:           #7c3aed;
-  --brand-primary-dark:      #6d28d9;
-  --brand-primary-light:     #a78bfa;
-  --brand-accent:            #06b6d4;
+  // ── Brand (Cyan family) ───────────────────────────────────────────────
+  --brand-primary:           #06b6d4;
+  --brand-primary-dark:      #0891b2;
+  --brand-primary-light:     #22d3ee;
+  --brand-accent:            #38bdf8;
 
   // ── Semantic status
   --danger:                  #f87171;
@@ -26,48 +26,48 @@ $font-sans:   'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
   --text-warning:            #fbbf24;
   --text-info:               #67e8f9;
 
-  // ── Backgrounds — deep dark with purple tint
-  --bg:                      #0a0a0f;
-  --surface:                 #111118;
-  --surface-1:               #111118;
-  --surface-2:               #18181f;
-  --surface-3:               #22222c;
-  --surface-3-hover:         #2c2c38;
-  --surface-4:               #36364a;
+  // ── Backgrounds — charcoal, no purple tint
+  --bg:                      #090b0d;
+  --surface:                 #111417;
+  --surface-1:               #111417;
+  --surface-2:               #171b1f;
+  --surface-3:               #1e2329;
+  --surface-3-hover:         #252c33;
+  --surface-4:               #2d3540;
 
   // ── Borders
-  --border:                  #1e1e2e;
-  --border-subtle:           rgba(124, 58, 237, 0.12);
-  --border-strong:           #2e2e44;
+  --border:                  #1a2028;
+  --border-subtle:           rgba(6, 182, 212, 0.10);
+  --border-strong:           #283038;
 
   // ── Text hierarchy
-  --text:                    #e8e8f0;
-  --text-muted:              #7878a0;
-  --text-subtle:             #555578;
+  --text:                    #e2eaed;
+  --text-muted:              #5a7280;
+  --text-subtle:             #364550;
 
   // ── Shadows
   --shadow-sm:               0 1px 2px rgba(0,0,0,0.6), 0 1px 6px rgba(0,0,0,0.3);
   --shadow:                  0 4px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.3);
   --shadow-lg:               0 12px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-brand:            0 4px 24px rgba(124,58,237,0.35);
-  --shadow-brand-lg:         0 8px 40px rgba(124,58,237,0.55);
+  --shadow-brand:            0 4px 24px rgba(6,182,212,0.28);
+  --shadow-brand-lg:         0 8px 40px rgba(6,182,212,0.40);
 
   // ── Glass
-  --glass-bg:                rgba(10,10,18,0.9);
-  --glass-border:            rgba(124,58,237,0.22);
+  --glass-bg:                rgba(9,11,13,0.92);
+  --glass-border:            rgba(6,182,212,0.18);
 
-  // ── Brand alpha tokens
-  --brand-primary-alpha-10:  rgba(124, 58, 237, 0.10);
-  --brand-primary-alpha-20:  rgba(124, 58, 237, 0.18);
-  --brand-primary-alpha-25:  rgba(124, 58, 237, 0.22);
-  --brand-primary-alpha-30:  rgba(124, 58, 237, 0.30);
+  // ── Brand alpha tokens (cyan-based)
+  --brand-primary-alpha-10:  rgba(6, 182, 212, 0.08);
+  --brand-primary-alpha-20:  rgba(6, 182, 212, 0.14);
+  --brand-primary-alpha-25:  rgba(6, 182, 212, 0.18);
+  --brand-primary-alpha-30:  rgba(6, 182, 212, 0.26);
 
   // ── Interactive state overlays
   --hover-overlay:           rgba(255, 255, 255, 0.04);
   --active-overlay:          rgba(255, 255, 255, 0.08);
 
   // ── Focus ring — global keyboard-nav indicator
-  --focus-ring:              0 0 0 3px rgba(124, 58, 237, 0.40);
+  --focus-ring:              0 0 0 3px rgba(6, 182, 212, 0.35);
 
   // ── Typography scale ─────────────────────────────────────────────────
   --text-xs:    11px;
@@ -127,7 +127,7 @@ $font-sans:   'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
   --ease-spring:  120ms cubic-bezier(.34,1.56,.64,1);
   --ease-smooth:  350ms cubic-bezier(.22,1,.36,1);
 
-  // ── Login gradient
-  --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.4) 0%, transparent 60%),
-              linear-gradient(180deg, #0a0a0f 0%, #0f0818 100%);
+  // ── Login gradient (charcoal with cyan bloom)
+  --login-bg: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(6,182,212,0.20) 0%, transparent 60%),
+              linear-gradient(180deg, #090b0d 0%, #0b1116 100%);
 }
