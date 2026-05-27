@@ -6,7 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
+      workbox: {
+        // Skip waiting so the new SW activates immediately without needing
+        // the user to close all tabs.
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: 'Power Plan',
         short_name: 'PowerPlan',

@@ -12,6 +12,15 @@ import './styles/main.scss';
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
+// Auto-reload when a new service worker takes control (i.e. new deploy detected).
+// hadController guards against reloading on the very first SW installation.
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) window.location.reload();
+  });
+}
+
 // Apply persisted language + direction before first paint to avoid flash
 const savedLang = localStorage.getItem('lang') || 'he';
 document.documentElement.setAttribute('dir',  savedLang === 'he' ? 'rtl' : 'ltr');
