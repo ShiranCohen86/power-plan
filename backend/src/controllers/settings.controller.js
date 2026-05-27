@@ -44,8 +44,8 @@ exports.updateApiKey = asyncHandler(async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey || typeof apiKey !== 'string') throw ApiError.badRequest('apiKey required');
 
-  if (!apiKey.startsWith('sk-ant-')) {
-    throw ApiError.badRequest('מפתח API לא תקין — צריך להתחיל עם "sk-ant-"');
+  if (!apiKey.startsWith('sk-ant-') || apiKey.length < 40) {
+    throw ApiError.badRequest('מפתח API לא תקין — צריך להתחיל עם "sk-ant-" ולהיות באורך מלא');
   }
 
   const user = await User.findById(req.user.id);

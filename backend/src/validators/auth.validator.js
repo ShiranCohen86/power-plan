@@ -1,7 +1,8 @@
 const Joi = require('joi');
 
 const password = Joi.string().min(6).max(128);
-const email = Joi.string().email({ tlds: { allow: false } }).lowercase().trim();
+// tlds: false disables IANA list; the pattern enforces at least one dot in the domain (blocks user@localhost)
+const email = Joi.string().email({ tlds: { allow: false } }).pattern(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/).lowercase().trim();
 
 exports.signup = {
   body: Joi.object({

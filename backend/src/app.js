@@ -9,8 +9,13 @@ const env = require('./config/env');
 const routes = require('./routes');
 const errorMiddleware = require('./middleware/error');
 const requestLogger = require('./middleware/logger');
+const logger = require('./utils/logger');
 
 const app = express();
+
+if (env.JWT_SECRET === env.JWT_REFRESH_SECRET) {
+  logger.warn('JWT_SECRET and JWT_REFRESH_SECRET are identical — use two different values.');
+}
 
 app.set('trust proxy', 1);
 
@@ -35,7 +40,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-const allowedOrigins = [env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = env.NODE_ENV === 'production'
+  ? [env.FRONTEND_URL].filter(Boolean)
+  : [env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'].filter(Boolean);
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);

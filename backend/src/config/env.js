@@ -67,11 +67,11 @@ if (env.NODE_ENV === 'production') {
   if (!process.env.ENCRYPTION_KEY) {
     throw new Error('FATAL: ENCRYPTION_KEY must be set in production — all stored API keys will be unencrypted otherwise');
   }
+  if (env.RETURN_DEV_TOKEN) {
+    throw new Error('FATAL: RETURN_DEV_TOKEN must not be enabled in production — it leaks password reset tokens');
+  }
 }
 
-if (env.JWT_SECRET === env.JWT_REFRESH_SECRET) {
-  // eslint-disable-next-line no-console
-  console.warn('JWT_SECRET and JWT_REFRESH_SECRET are identical — use two different values.');
-}
+// NOTE: identical-JWT-secret check is done in app.js (after logger is available)
 
 module.exports = env;

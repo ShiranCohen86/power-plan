@@ -203,7 +203,7 @@ exports.getProjectSettings = asyncHandler(async (req, res) => {
 
 exports.setProjectApiKey = asyncHandler(async (req, res) => {
   const { apiKey } = req.body;
-  if (!apiKey?.startsWith('sk-ant-')) throw ApiError.badRequest('מפתח API לא תקין — חייב להתחיל עם "sk-ant-"');
+  if (!apiKey?.startsWith('sk-ant-') || apiKey.length < 40) throw ApiError.badRequest('מפתח API לא תקין — חייב להתחיל עם "sk-ant-" ולהיות באורך מלא');
   const project = await _ownedProject(req);
   if (!project.settings) project.settings = {};
   project.settings.anthropicApiKey = encrypt(apiKey);
