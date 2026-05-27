@@ -79,6 +79,60 @@ export default function ProjectWorkspace() {
   const mainRef                                  = useRef(null);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
+  // Resizable panels
+  const sidebarRef     = useRef(null);
+  const feedWrapperRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(() =>
+    Math.max(160, Math.min(400, parseInt(localStorage.getItem('ws-sidebar-w'), 10) || 240))
+  );
+  const [feedWidth, setFeedWidth] = useState(() =>
+    Math.max(200, Math.min(480, parseInt(localStorage.getItem('ws-feed-w'), 10) || 280))
+  );
+
+  function startResize(e, which) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = which === 'sidebar'
+      ? sidebarRef.current.offsetWidth
+      : feedWrapperRef.current.offsetWidth;
+
+    document.body.style.cursor    = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(ev) {
+      const delta = ev.clientX - startX;
+      if (which === 'sidebar') {
+        // In RTL: sidebar is on the right. Right handle → drag right = smaller sidebar.
+        const w = Math.max(160, Math.min(400, startW - delta));
+        sidebarRef.current.style.width = w + 'px';
+      } else {
+        // Feed is on the left. Left handle → drag right = bigger feed.
+        const w = Math.max(200, Math.min(480, startW + delta));
+        feedWrapperRef.current.style.width = w + 'px';
+      }
+    }
+
+    function onUp() {
+      document.body.style.cursor     = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      const finalW = which === 'sidebar'
+        ? sidebarRef.current.offsetWidth
+        : feedWrapperRef.current.offsetWidth;
+      if (which === 'sidebar') {
+        setSidebarWidth(finalW);
+        localStorage.setItem('ws-sidebar-w', finalW);
+      } else {
+        setFeedWidth(finalW);
+        localStorage.setItem('ws-feed-w', finalW);
+      }
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
   // Load project + pipeline status + historical meetings
   useEffect(() => {
     (async () => {
@@ -540,8 +594,8 @@ export default function ProjectWorkspace() {
 
       {/* 3-panel layout */}
       <div className="workspace-body">
-        {/* Left: Phase list */}
-        <aside className="workspace-sidebar">
+        {/* Left: Phase list (visually RIGHT in RTL) */}
+        <aside className="workspace-sidebar" ref={sidebarRef} style={{ width: sidebarWidth }}>
           <PhaseList
             phases={phases}
             activeIndex={activePhaseIndex}
@@ -584,6 +638,8 @@ export default function ProjectWorkspace() {
             </div>
           )}
         </aside>
+
+        <div className="workspace-resize-handle" onMouseDown={(e) => startResize(e, 'sidebar')} />
 
         {/* Center: Document output + approval footer */}
         <div className="workspace-center">
@@ -648,22 +704,26 @@ export default function ProjectWorkspace() {
           )}
         </div>
 
-        {/* Right: Live feed */}
-        <LiveFeed
-          meetingMsgs={meetingMsgs}
-          consultantMsgs={consultantMsgs}
-          consultantsRunning={consultantsRunning}
-          techLogs={techLogs}
-          isRunning={isRunning}
-          activeTab={activeFeedTab}
-          onTabChange={setActiveFeedTab}
-          scheduledMeeting={scheduledMeeting}
-          isMeetingLive={isMeetingLive}
-          missedMeeting={missedMeeting}
-          onClearMissed={() => setMissedMeeting(false)}
-          onJoinMeeting={() => setShowMeetingRoom(true)}
-          activePhaseIndex={activePhaseIndex}
-        />
+        <div className="workspace-resize-handle" onMouseDown={(e) => startResize(e, 'feed')} />
+
+        {/* Right: Live feed (visually LEFT in RTL) */}
+        <div ref={feedWrapperRef} className="workspace-feed-wrapper" style={{ width: feedWidth }}>
+          <LiveFeed
+            meetingMsgs={meetingMsgs}
+            consultantMsgs={consultantMsgs}
+            consultantsRunning={consultantsRunning}
+            techLogs={techLogs}
+            isRunning={isRunning}
+            activeTab={activeFeedTab}
+            onTabChange={setActiveFeedTab}
+            scheduledMeeting={scheduledMeeting}
+            isMeetingLive={isMeetingLive}
+            missedMeeting={missedMeeting}
+            onClearMissed={() => setMissedMeeting(false)}
+            onJoinMeeting={() => setShowMeetingRoom(true)}
+            activePhaseIndex={activePhaseIndex}
+          />
+        </div>
       </div>
     </div>
   );
