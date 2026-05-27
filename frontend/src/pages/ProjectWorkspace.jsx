@@ -477,7 +477,8 @@ export default function ProjectWorkspace() {
   const inProgress     = ['coding', 'deploying', 'live'].includes(projectStatus);
   const hasStalledPhase = phases.some((p) => p.status === 'failed' || p.status === 'interrupted');
   const canStart       = notStarted && !inProgress && !isQuotaPaused;
-  const canResume      = (isPaused || isFailed || hasStalledPhase) && !isRunning && hasPhases && !isQuotaPaused;
+  const isAwaitingCreds = project?.status === 'awaiting_credentials';
+  const canResume      = (isPaused || isFailed || hasStalledPhase || isAwaitingCreds) && !isRunning && hasPhases && !isQuotaPaused;
 
   // Estimated time remaining: each planning phase ≈ 2.5 min
   const TOTAL_PLANNING = 12;
@@ -635,7 +636,15 @@ export default function ProjectWorkspace() {
         <CredentialsGateModal
           projectId={id}
           services={awaitingServices}
-          onDone={() => setAwaitingServices(null)}
+          onDone={async () => {
+            setAwaitingServices(null);
+            try {
+              await startPipeline(id);
+              toast.success('המפתחות נשמרו — הפייפליין ממשיך');
+            } catch {
+              // pipeline may already be resuming server-side — Resume button will appear as fallback
+            }
+          }}
           onClose={() => setAwaitingServices(null)}
         />
       )}
