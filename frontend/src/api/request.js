@@ -8,9 +8,13 @@ export const httpClient = axios.create({
   timeout: 30000,
 });
 
-// Store reference injected by store/index.js to avoid circular imports
+// Store + setAccessToken injected by store/index.js to avoid circular imports
 let _store = null;
-export function injectStore(store) { _store = store; }
+let _setAccessToken = null;
+export function injectStore(store, setAccessToken) {
+  _store = store;
+  _setAccessToken = setAccessToken;
+}
 export function getAccessToken() { return _store?.getState()?.auth?.accessToken || null; }
 
 // ---- Request interceptor: attach JWT from Redux memory ----
@@ -67,9 +71,8 @@ httpClient.interceptors.response.use(
         // Refresh token is in httpOnly cookie — send credentials, no body needed
         const { data } = await axios.post(`${apiBaseUrl}/api/auth/refresh`, {}, { withCredentials: true });
         // Store new token in Redux memory (never localStorage)
-        if (_store) {
-          const { setAccessToken } = await import('../store/slices/authSlice.js');
-          _store.dispatch(setAccessToken(data.accessToken));
+        if (_store && _setAccessToken) {
+          _store.dispatch(_setAccessToken(data.accessToken));
         }
         processQueue(null, data.accessToken);
         originalReq.headers.Authorization = `Bearer ${data.accessToken}`;

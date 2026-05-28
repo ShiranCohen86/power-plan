@@ -38,14 +38,14 @@ async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 
 }
 
 async function getById(id, ownerId) {
-  const project = await Project.findById(id).lean();
+  const project = await Project.findOne({ _id: id, deletedAt: null }).lean();
   if (!project) throw ApiError.notFound('Project not found');
   if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
   return project;
 }
 
 async function saveDiscoveryAnswers(id, ownerId, answers) {
-  const project = await Project.findById(id);
+  const project = await Project.findOne({ _id: id, deletedAt: null });
   if (!project) throw ApiError.notFound('Project not found');
   if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
   if (project.status !== 'onboarding') throw ApiError.badRequest('Discovery already completed');
@@ -57,7 +57,7 @@ async function saveDiscoveryAnswers(id, ownerId, answers) {
 }
 
 async function saveDiscoveryProgress(id, ownerId, answers) {
-  const project = await Project.findById(id);
+  const project = await Project.findOne({ _id: id, deletedAt: null });
   if (!project) throw ApiError.notFound('Project not found');
   if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
   if (project.status !== 'onboarding') throw ApiError.badRequest('Discovery already completed');
