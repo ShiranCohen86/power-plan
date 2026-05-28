@@ -1107,7 +1107,7 @@ input, select, textarea {
   }
 
   // On all pages: hamburger visible, brand+bell grouped together
-  .app-topbar { height: 52px; }
+  .app-topbar__row { height: 52px; }
   .app-topbar__start { flex: 1; }
   .notif-bell-wrap { margin-inline-start: auto; }
   .app-topbar__brand { margin-inline-start: 0; }
@@ -1191,7 +1191,7 @@ input, select, textarea {
   // Notification panel — fixed below header, above footer, full width (explicit L/R — no direction ambiguity)
   .notif-panel {
     position: fixed;
-    top: calc(52px + env(safe-area-inset-top, 0) + 8px);
+    top: calc(52px + env(safe-area-inset-top, 0) + 8px); /* __row height + safe area */
     bottom: calc(60px + env(safe-area-inset-bottom, 0) + 8px);
     left: 8px; right: 8px;
     width: auto; min-width: 0; max-height: none;
@@ -1395,14 +1395,31 @@ input, select, textarea {
 }
 
 .app-topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  height: 44px; padding: 0 16px;
+  display: flex; flex-direction: column;
   background: var(--surface-1); border-bottom: 1px solid var(--border);
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 
-  padding-top: env(safe-area-inset-top, 0);
+  &__row {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 44px; padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0);
+  }
   &__start { display: flex; align-items: center; gap: 4px; }
   &__end   { display: flex; align-items: center; gap: 4px; }
+
+  &__search-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px 10px; border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  &__search-icon { color: var(--text-muted); flex-shrink: 0; font-size: 18px; }
+  &__search-input {
+    flex: 1; background: none; border: none; outline: none;
+    font-size: 15px; color: var(--text); padding: 4px 0;
+    &::placeholder { color: var(--text-muted); }
+  }
+  &__search-toggle { font-size: 18px; padding: 4px 8px; min-height: auto; }
+  &__search-close  { font-size: 16px; padding: 4px 8px; min-height: auto; }
 
   &__brand {
     display: flex; align-items: center; gap: 6px;

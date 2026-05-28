@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { selectCurrentUser, logoutUser } from '../store/slices/authSlice';
+import { setSearch } from '../store/slices/projectsSlice';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice';
 import { selectProjectById } from '../store/slices/projectsSlice';
 import NotificationBell from './ui/NotificationBell';
@@ -17,6 +18,8 @@ import MenuOutlined from '@mui/icons-material/MenuOutlined';
 import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import CloseOutlined from '@mui/icons-material/CloseOutlined';
 
 export default function AppShell({ children }) {
   const { t } = useTranslation();
@@ -29,7 +32,44 @@ export default function AppShell({ children }) {
   const currentProject = useSelector(selectProjectById(projectId));
   const { mode, toggleTheme } = useAppTheme();
   const { menuOpen, openMenu, closeMenu } = useAppMenu();
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelp, setShowHelp]       = useState(false);
+  const [showSearch, setShowSearch]   = useState(false);
+  const [searchVal, setSearchVal]     = useState('');
+  const searchTimerRef                = useRef(null);
+  const searchInputRef                = useRef(null);
+
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) searchInputRef.current.focus();
+  }, [showSearch]);
+
+  // Close search when entering workspace
+  useEffect(() => {
+    if (isInProject && showSearch) {
+      setShowSearch(false);
+      setSearchVal('');
+      dispatch(setSearch(''));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInProject]);
+
+  function openSearch() { setShowSearch(true); }
+
+  function closeSearch() {
+    setShowSearch(false);
+    setSearchVal('');
+    clearTimeout(searchTimerRef.current);
+    dispatch(setSearch(''));
+  }
+
+  function handleSearchChange(e) {
+    const val = e.target.value;
+    setSearchVal(val);
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      dispatch(setSearch(val));
+      if (val && location.pathname !== '/dashboard') navigate('/dashboard');
+    }, 350);
+  }
 
   const isHome = location.pathname === '/dashboard';
   const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
@@ -44,6 +84,7 @@ export default function AppShell({ children }) {
   return (
     <div className={`app-shell${!isInProject ? ' app-shell--has-footer' : ''}`}>
       <header className={`app-topbar${isInProject ? ' app-topbar--in-project' : ''}`}>
+        <div className="app-topbar__row">
         <div className="app-topbar__start">
           {/* Hamburger first in DOM = rightmost in RTL ✓ */}
           <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
@@ -92,7 +133,31 @@ export default function AppShell({ children }) {
           >
             {t('auth.logout')}
           </button>
+          {!isInProject && (
+            <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch} title={t('search.open')}>
+              <SearchOutlined fontSize="small" />
+            </button>
+          )}
         </div>
+        </div>
+        {showSearch && !isInProject && (
+          <div className="app-topbar__search-row">
+            <SearchOutlined className="app-topbar__search-icon" fontSize="small" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              className="app-topbar__search-input"
+              placeholder={t('search.placeholder')}
+              value={searchVal}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
+              dir={lang === 'he' ? 'rtl' : 'ltr'}
+            />
+            <button className="btn-ghost app-topbar__search-close" onClick={closeSearch} aria-label="סגור חיפוש">
+              <CloseOutlined fontSize="small" />
+            </button>
+          </div>
+        )}
       </header>
 
       {menuOpen && (

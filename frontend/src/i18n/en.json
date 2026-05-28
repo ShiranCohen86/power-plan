@@ -341,5 +341,9 @@
   "nav": {
     "projects": "Projects",
     "new": "New"
+  },
+  "search": {
+    "placeholder": "Search projects...",
+    "open": "Search"
   }
 }

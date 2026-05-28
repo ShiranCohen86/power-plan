@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import { friendlyError } from '../utils/errorMessages.js';
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectLoadingMore,
-  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSearch, setSort,
+  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort,
 } from '../store/slices/projectsSlice.js';
 import { restoreProject } from '../api/projects.api.js';
 
@@ -90,38 +90,24 @@ export default function Dashboard() {
   const storeSort    = useSelector(selectProjectsSort);
   const loadingMore  = useSelector(selectLoadingMore);
 
-  const [searchInput, setSearchInput] = useState(storeSearch);
-  const searchAbortRef = useRef(null);
-
   function handleSort(newSort) {
     dispatch(setSort(newSort));
-    dispatch(fetchProjects({ page: 1, search: searchInput, sort: newSort }));
   }
 
-  // Debounced search with AbortController to cancel stale requests
+  // Fetch projects when search or sort changes (covers initial load too)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchAbortRef.current) searchAbortRef.current.abort();
-      searchAbortRef.current = new AbortController();
-      dispatch(setSearch(searchInput));
-      dispatch(fetchProjects({ page: 1, search: searchInput, sort: storeSort, signal: searchAbortRef.current.signal }));
-    }, 400);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
-
-  // Initial load (no search)
-  useEffect(() => {
-    if (status === 'idle') dispatch(fetchProjects({ page: 1, search: '' }));
-  }, [dispatch, status]);
+    const ctrl = new AbortController();
+    dispatch(fetchProjects({ page: 1, search: storeSearch, sort: storeSort, signal: ctrl.signal }));
+    return () => ctrl.abort();
+  }, [storeSearch, storeSort, dispatch]);
 
   // Auto-refresh every 30s while any project is actively running — paused during active search
   const hasActive = projects.some((p) => ACTIVE_STATUSES.has(p.status));
   useEffect(() => {
-    if (!hasActive || searchInput) return;
+    if (!hasActive || storeSearch) return;
     const timer = setInterval(() => dispatch(refreshProjects()), 30_000);
     return () => clearInterval(timer);
-  }, [hasActive, dispatch, searchInput]);
+  }, [hasActive, dispatch, storeSearch]);
 
   const handleLoadMore = useCallback(() => {
     const nextPage = Math.floor(projects.length / 12) + 1;
@@ -141,16 +127,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Search + sort bar */}
+        {/* Sort bar */}
         <div className="dashboard-toolbar">
-          <input
-            type="search"
-            className="form-input dashboard-toolbar__search"
-            placeholder="חיפוש פרויקטים..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            dir="rtl"
-          />
           <div className="dashboard-toolbar__sort">
             {[
               { key: 'date',       label: '📅 תאריך' },
