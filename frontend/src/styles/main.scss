@@ -1115,8 +1115,7 @@ input, select, textarea {
   .app-topbar__brand-icon { font-size: 20px; }
   .notif-bell-btn { font-size: 22px; padding: 8px 10px; }
   .app-topbar__theme,
-  .app-topbar__help,
-  .app-topbar__back { display: none; }
+  .app-topbar__help { display: none; }
   .app-topbar__lang,
   .app-topbar__settings,
   .app-topbar__logout,
@@ -1806,10 +1805,16 @@ input, select, textarea {
     padding: 12px 16px; border-bottom: 1px solid var(--border);
   }
   &__title { font-size: 14px; font-weight: 700; }
+  &__actions { display: flex; align-items: center; gap: 8px; }
   &__mark-all {
     background: none; border: 0; padding: 0; min-height: auto;
     font-size: 12px; color: var(--brand-primary-light); cursor: pointer;
     &:hover { text-decoration: underline; transform: none; box-shadow: none; background: none; }
+  }
+  &__close {
+    background: none; border: 0; padding: 2px 6px; min-height: auto;
+    font-size: 14px; color: var(--text-muted); cursor: pointer; border-radius: $radius;
+    &:hover { background: var(--surface-3); color: var(--text); transform: none; box-shadow: none; }
   }
   &__empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
 }

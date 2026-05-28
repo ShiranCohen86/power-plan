@@ -30,7 +30,6 @@ function ProjectCard({ project, dispatch }) {
 
   function handleDelete(e) {
     e.stopPropagation();
-    if (!window.confirm(`למחוק את "${project.title}"?`)) return;
     const projectId = project._id;
     const projectTitle = project.title;
     dispatch(deleteProjectThunk(projectId))

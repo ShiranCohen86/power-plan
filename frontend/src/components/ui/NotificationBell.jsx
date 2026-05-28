@@ -74,14 +74,17 @@ export default function NotificationBell() {
         <div className="notif-panel">
           <div className="notif-panel__header">
             <span className="notif-panel__title">התראות</span>
-            {unreadCount > 0 && (
-              <button
-                className="notif-panel__mark-all"
-                onClick={() => dispatch(doMarkAllRead())}
-              >
-                סמן הכל כנקרא
-              </button>
-            )}
+            <div className="notif-panel__actions">
+              {unreadCount > 0 && (
+                <button
+                  className="notif-panel__mark-all"
+                  onClick={() => dispatch(doMarkAllRead())}
+                >
+                  סמן הכל כנקרא
+                </button>
+              )}
+              <button className="notif-panel__close" onClick={() => setOpen(false)} aria-label="סגור">✕</button>
+            </div>
           </div>
 
           {notifications.length === 0 ? (
