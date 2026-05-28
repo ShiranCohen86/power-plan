@@ -1188,13 +1188,15 @@ input, select, textarea {
   .task-management__tabs { padding: 0 12px; }
   .task-management__body { padding: 12px; }
 
-  // Notification panel — fixed below header, full width, safe-area aware
+  // Notification panel — fixed below header, above footer, full width
   .notif-panel {
     position: fixed;
     top: calc(52px + env(safe-area-inset-top, 0) + 8px);
+    bottom: calc(60px + env(safe-area-inset-bottom, 0) + 8px);
     inset-inline-start: 8px;
     inset-inline-end: 8px;
-    width: auto; min-width: 0;
+    width: auto; min-width: 0; max-height: none;
+    overflow-y: auto;
   }
 
   // iOS Safari auto-zoom prevention — inputs <16px trigger full-page zoom on focus
