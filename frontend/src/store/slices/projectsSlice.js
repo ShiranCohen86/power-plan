@@ -5,10 +5,11 @@ const PAGE_LIMIT = 12;
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchAll',
-  async ({ page = 1, search = '', sort = 'date' } = {}, { rejectWithValue }) => {
+  async ({ page = 1, search = '', sort = 'date', signal } = {}, { rejectWithValue }) => {
     try {
-      return await listProjects({ page, limit: PAGE_LIMIT, search, sort });
+      return await listProjects({ page, limit: PAGE_LIMIT, search, sort, signal });
     } catch (err) {
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return rejectWithValue('aborted');
       return rejectWithValue(err.message || 'Failed to load projects');
     }
   },
@@ -124,6 +125,7 @@ const projectsSlice = createSlice({
         state.status     = 'succeeded';
       })
       .addCase(fetchProjects.rejected, (state, action) => {
+        if (action.payload === 'aborted') return; // stale request cancelled — ignore
         state.status = 'failed';
         state.error  = action.payload;
       })

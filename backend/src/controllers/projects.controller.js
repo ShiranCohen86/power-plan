@@ -38,6 +38,11 @@ exports.deleteProject = asyncHandler(async (req, res) => {
   res.status(204).end();
 });
 
+exports.restoreProject = asyncHandler(async (req, res) => {
+  const project = await projectService.restoreProject(req.params.id, req.user.id);
+  res.json(project);
+});
+
 const VALID_SORTS = new Set(['date', 'status', 'completion']);
 
 exports.list = asyncHandler(async (req, res) => {

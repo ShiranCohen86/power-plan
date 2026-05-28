@@ -1,15 +1,17 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Skeleton from '@mui/material/Skeleton';
 import toast from 'react-hot-toast';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
+import { friendlyError } from '../utils/errorMessages.js';
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectLoadingMore,
   fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSearch, setSort,
 } from '../store/slices/projectsSlice.js';
+import { restoreProject } from '../api/projects.api.js';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 
@@ -28,11 +30,29 @@ function ProjectCard({ project, dispatch }) {
 
   function handleDelete(e) {
     e.stopPropagation();
-    if (!window.confirm(`למחוק את "${project.title}"?\nכל הנתונים יימחקו לצמיתות.`)) return;
-    dispatch(deleteProjectThunk(project._id))
+    if (!window.confirm(`למחוק את "${project.title}"?`)) return;
+    const projectId = project._id;
+    const projectTitle = project.title;
+    dispatch(deleteProjectThunk(projectId))
       .unwrap()
-      .then(() => toast.success('הפרויקט נמחק'))
-      .catch((err) => toast.error(err || 'שגיאה במחיקה'));
+      .then(() => {
+        toast((toastInstance) => (
+          <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {`"${projectTitle}" נמחק`}
+            <button
+              style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+              onClick={() => {
+                restoreProject(projectId)
+                  .then(() => { dispatch(fetchProjects({ page: 1 })); toast.dismiss(toastInstance.id); })
+                  .catch(() => toast.error('לא ניתן לשחזר'));
+              }}
+            >
+              ביטול
+            </button>
+          </span>
+        ), { duration: 5000 });
+      })
+      .catch((err) => toast.error(friendlyError(err)));
   }
 
   return (
@@ -72,17 +92,20 @@ export default function Dashboard() {
   const loadingMore  = useSelector(selectLoadingMore);
 
   const [searchInput, setSearchInput] = useState(storeSearch);
+  const searchAbortRef = useRef(null);
 
   function handleSort(newSort) {
     dispatch(setSort(newSort));
     dispatch(fetchProjects({ page: 1, search: searchInput, sort: newSort }));
   }
 
-  // Debounced search: fire fetchProjects 400ms after user stops typing
+  // Debounced search with AbortController to cancel stale requests
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (searchAbortRef.current) searchAbortRef.current.abort();
+      searchAbortRef.current = new AbortController();
       dispatch(setSearch(searchInput));
-      dispatch(fetchProjects({ page: 1, search: searchInput, sort: storeSort }));
+      dispatch(fetchProjects({ page: 1, search: searchInput, sort: storeSort, signal: searchAbortRef.current.signal }));
     }, 400);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,17 +185,32 @@ export default function Dashboard() {
           </div>
         ) : projects.length === 0 ? (
           <div className="empty-state dashboard-empty-state">
-            <div className="empty-state__icon">
-              {searchInput ? '🔍' : '🚀'}
-            </div>
-            <div className="empty-state__title">
-              {searchInput ? `אין תוצאות עבור "${searchInput}"` : t('dashboard.empty')}
-            </div>
-            {!searchInput && (
+            {searchInput ? (
               <>
-                <div className="empty-state__sub">{t('dashboard.emptySub')}</div>
+                <div className="empty-state__icon">🔍</div>
+                <div className="empty-state__title">{`אין תוצאות עבור "${searchInput}"`}</div>
+              </>
+            ) : (
+              <>
+                <div className="empty-state__icon">⚡</div>
+                <div className="empty-state__title">ברוך הבא ל-Power Plan!</div>
+                <div className="empty-state__sub">תאר רעיון לאפליקציה ו-AI יבנה אותה בשבילך</div>
+                <div className="dashboard-empty__steps">
+                  <div className="dashboard-empty__step">
+                    <span className="dashboard-empty__step-num">1</span>
+                    הגדר מפתח Anthropic בהגדרות
+                  </div>
+                  <div className="dashboard-empty__step">
+                    <span className="dashboard-empty__step-num">2</span>
+                    לחץ "פרויקט חדש" ותאר את הרעיון
+                  </div>
+                  <div className="dashboard-empty__step">
+                    <span className="dashboard-empty__step-num">3</span>
+                    ענה על שאלות גילוי ו-AI יבנה הכל
+                  </div>
+                </div>
                 <button className="btn btn--primary dashboard-empty__cta" onClick={() => navigate('/new-project')}>
-                  + {t('dashboard.newProject')}
+                  התחל פרויקט ראשון →
                 </button>
               </>
             )}

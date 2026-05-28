@@ -3,11 +3,11 @@ import { safeRequest } from './request';
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
 
-export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date' } = {}) => {
+export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date', signal } = {}) => {
   const params = { page, limit };
   if (search) params.search = search;
   if (sort && sort !== 'date') params.sort = sort;
-  return safeRequest({ method: 'get', url: '/projects', params });
+  return safeRequest({ method: 'get', url: '/projects', params, signal });
 };
 
 export const getProject = (id) =>
@@ -15,6 +15,9 @@ export const getProject = (id) =>
 
 export const deleteProject = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}` });
+
+export const restoreProject = (id) =>
+  safeRequest({ method: 'patch', url: `/projects/${id}/restore` });
 
 export const discoveryComplete = (id, answers) =>
   safeRequest({ method: 'post', url: `/projects/${id}/discovery/complete`, data: { answers } });

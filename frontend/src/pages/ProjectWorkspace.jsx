@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import SafeMarkdown from '../components/ui/SafeMarkdown';
 import { PLANNING_PHASES, PHASE_LEAD, ALL_PHASES } from '../utils/phaseConfig';
+import { friendlyError } from '../utils/errorMessages';
 import { useLanguage } from '../context/LanguageContext.jsx';
 
 import { selectProjectById, updateProject } from '../store/slices/projectsSlice';
@@ -18,6 +19,7 @@ import { getAgentLogs } from '../api/agents.api';
 import { getRateLimit } from '../api/settings.api';
 
 import PhaseList                    from '../components/workspace/PhaseList';
+import FeatureErrorBoundary         from '../components/ui/FeatureErrorBoundary';
 import LiveFeed                     from '../components/workspace/LiveFeed';
 import WorkspaceApprovalFooter      from '../components/workspace/WorkspaceApprovalFooter';
 import MeetingRoomOverlay           from '../components/workspace/MeetingRoomOverlay';
@@ -369,14 +371,14 @@ export default function ProjectWorkspace() {
   });
 
   function handleActionError(err) {
-    const msg = err.message || '';
-    const isKeyErr = msg.includes('מפתח') || msg.includes('הגדרות') ||
-                     msg.includes('credit') || msg.includes('קרדיט') ||
-                     msg.includes('API key') || msg.includes('api key');
+    const raw = err.message || '';
+    const isKeyErr = raw.includes('מפתח') || raw.includes('הגדרות') ||
+                     raw.includes('credit') || raw.includes('קרדיט') ||
+                     raw.includes('API key') || raw.includes('api key');
     if (isKeyErr) {
-      setHasApiKey(false); // surface the inline SettingsGate
+      setHasApiKey(false);
     } else {
-      setActionError(msg || 'שגיאה — נסה שוב'); // persistent banner instead of disappearing toast
+      setActionError(friendlyError(err));
     }
   }
 
@@ -642,7 +644,9 @@ export default function ProjectWorkspace() {
       {/* Deployment status panel */}
       {(isDeploying || liveUrl || deployFailed) && (
         <div className="workspace-deploy-overlay">
-          <DeploymentStatus steps={deploySteps} liveUrl={liveUrl} failed={deployFailed} />
+          <FeatureErrorBoundary>
+            <DeploymentStatus steps={deploySteps} liveUrl={liveUrl} failed={deployFailed} />
+          </FeatureErrorBoundary>
         </div>
       )}
 
@@ -693,15 +697,17 @@ export default function ProjectWorkspace() {
               ))}
             </div>
           ) : (
-            <PhaseList
-              phases={phases}
-              activeIndex={activePhaseIndex}
-              onSelect={(idx) => {
-                setActive(idx);
-                loadDocument(idx);
-              }}
-              onRollback={!isRunning ? handleRollback : null}
-            />
+            <FeatureErrorBoundary>
+              <PhaseList
+                phases={phases}
+                activeIndex={activePhaseIndex}
+                onSelect={(idx) => {
+                  setActive(idx);
+                  loadDocument(idx);
+                }}
+                onRollback={!isRunning ? handleRollback : null}
+              />
+            </FeatureErrorBoundary>
           )}
 
           {/* Discovery hint — shown for onboarding projects, but doesn't block */}
@@ -825,21 +831,23 @@ export default function ProjectWorkspace() {
 
         {/* Right: Live feed (visually LEFT in RTL) */}
         <div ref={feedWrapperRef} className="workspace-feed-wrapper" style={{ width: feedWidth }}>
-          <LiveFeed
-            meetingMsgs={meetingMsgs}
-            consultantMsgs={consultantMsgs}
-            consultantsRunning={consultantsRunning}
-            techLogs={techLogs}
-            isRunning={isRunning}
-            activeTab={activeFeedTab}
-            onTabChange={setActiveFeedTab}
-            scheduledMeeting={scheduledMeeting}
-            isMeetingLive={isMeetingLive}
-            missedMeeting={missedMeeting}
-            onClearMissed={() => setMissedMeeting(false)}
-            onJoinMeeting={() => setShowMeetingRoom(true)}
-            activePhaseIndex={activePhaseIndex}
-          />
+          <FeatureErrorBoundary>
+            <LiveFeed
+              meetingMsgs={meetingMsgs}
+              consultantMsgs={consultantMsgs}
+              consultantsRunning={consultantsRunning}
+              techLogs={techLogs}
+              isRunning={isRunning}
+              activeTab={activeFeedTab}
+              onTabChange={setActiveFeedTab}
+              scheduledMeeting={scheduledMeeting}
+              isMeetingLive={isMeetingLive}
+              missedMeeting={missedMeeting}
+              onClearMissed={() => setMissedMeeting(false)}
+              onJoinMeeting={() => setShowMeetingRoom(true)}
+              activePhaseIndex={activePhaseIndex}
+            />
+          </FeatureErrorBoundary>
         </div>
       </div>
     </div>

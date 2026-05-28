@@ -54,6 +54,7 @@ const ProjectSchema = new mongoose.Schema(
     quotaResumedAt:  Date,
 
     deployedUrl:     String,  // final live URL (copy of infra.renderUrl)
+    deletedAt:       { type: Date, default: null, index: true },
   },
   { timestamps: true },
 );

@@ -22,7 +22,7 @@ const SORT_MAP = {
 };
 
 async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date' } = {}) {
-  const query = { ownerId };
+  const query = { ownerId, deletedAt: null };
   if (search) {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(escaped, 'i');
@@ -68,9 +68,29 @@ async function saveDiscoveryProgress(id, ownerId, answers) {
 }
 
 async function deleteProject(id, ownerId) {
+  const project = await Project.findOne({ _id: id, deletedAt: null });
+  if (!project) throw ApiError.notFound('Project not found');
+  if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
+
+  // Soft delete — keep data for 30 days so user can undo
+  project.deletedAt = new Date();
+  await project.save();
+}
+
+async function restoreProject(id, ownerId) {
   const project = await Project.findById(id);
   if (!project) throw ApiError.notFound('Project not found');
   if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
+  if (!project.deletedAt) throw ApiError.badRequest('Project is not deleted');
+
+  project.deletedAt = null;
+  await project.save();
+  return project.toObject();
+}
+
+async function hardDeleteProject(id) {
+  const project = await Project.findById(id);
+  if (!project) return;
 
   const meetings = await Meeting.find({ projectId: id }, '_id').lean();
   const meetingIds = meetings.map((m) => m._id);
@@ -90,4 +110,4 @@ async function deleteProject(id, ownerId) {
   await Project.findByIdAndDelete(id);
 }
 
-module.exports = { create, listByOwner, getById, saveDiscoveryAnswers, saveDiscoveryProgress, deleteProject };
+module.exports = { create, listByOwner, getById, saveDiscoveryAnswers, saveDiscoveryProgress, deleteProject, restoreProject, hardDeleteProject };

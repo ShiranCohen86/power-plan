@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
 import BuildOutlined from '@mui/icons-material/BuildOutlined';
 import MenuOutlined from '@mui/icons-material/MenuOutlined';
+import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 
@@ -23,6 +25,7 @@ export default function AppShell({ children }) {
   const lang = useSelector(selectLanguage);
   const { mode, toggleTheme } = useAppTheme();
   const { menuOpen, openMenu, closeMenu } = useAppMenu();
+  const [showHelp, setShowHelp] = useState(false);
 
   const isHome = location.pathname === '/dashboard';
   const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
@@ -71,6 +74,9 @@ export default function AppShell({ children }) {
               <BuildOutlined fontSize="small" />
             </button>
           )}
+          <button className="btn-ghost app-topbar__help" onClick={() => setShowHelp(true)} title="עזרה">
+            <HelpOutlineOutlined fontSize="small" />
+          </button>
           <button
             className="btn btn--secondary app-topbar__logout"
             onClick={() => dispatch(logoutUser())}
@@ -97,6 +103,9 @@ export default function AppShell({ children }) {
             <button className="app-menu__item" onClick={() => { navigate('/settings'); closeMenu(); }}>
               ⚙️ {t('settings.title')}
             </button>
+            <button className="app-menu__item" onClick={() => { setShowHelp(true); closeMenu(); }}>
+              ❓ עזרה
+            </button>
             {user?.role === 'admin' && (
               <button className="app-menu__item" onClick={() => { navigate('/admin'); closeMenu(); }}>
                 🔧 Admin
@@ -105,6 +114,39 @@ export default function AppShell({ children }) {
             <button className="app-menu__item app-menu__item--danger" onClick={handleLogout}>
               {t('auth.logout')}
             </button>
+          </div>
+        </BottomSheet>
+      )}
+
+      {showHelp && (
+        <BottomSheet onClose={() => setShowHelp(false)}>
+          <div className="help-panel">
+            <h3 className="help-panel__title">❓ עזרה מהירה</h3>
+            <div className="help-panel__section">
+              <h4>כיצד להשיג מפתח Anthropic</h4>
+              <p>עבור ל-<strong>console.anthropic.com</strong> → API Keys → Create Key. העתק את המפתח והדבק בהגדרות.</p>
+            </div>
+            <div className="help-panel__section">
+              <h4>מה עושה כל שלב בפייפליין</h4>
+              <ul>
+                <li>שלבים 1-12: Claude מתכנן — ניתוח רעיון, PRD, ארכיטקטורה, DB, DevOps</li>
+                <li>שלבים 13-18: Claude כותב קוד — Backend, Frontend, Tests, Config</li>
+                <li>שלב פריסה: GitHub push + Render deploy</li>
+              </ul>
+            </div>
+            <div className="help-panel__section">
+              <h4>שאלות נפוצות</h4>
+              <ul>
+                <li><strong>הפייפליין נתקע?</strong> לחץ "נסה שוב" בדף הפרויקט</li>
+                <li><strong>שגיאת quota?</strong> בדוק יתרה ב-Anthropic Console</li>
+                <li><strong>שאלות גילוי?</strong> ניתן לצאת ולחזור — ההתקדמות נשמרת</li>
+              </ul>
+            </div>
+            <div className="help-panel__section">
+              <a href="mailto:shiranc86@gmail.com" className="btn btn--secondary btn--full">
+                📧 צור קשר עם תמיכה
+              </a>
+            </div>
           </div>
         </BottomSheet>
       )}
