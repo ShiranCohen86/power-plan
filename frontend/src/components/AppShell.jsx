@@ -48,11 +48,11 @@ export default function AppShell({ children }) {
           <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
             <MenuOutlined />
           </button>
+          <NotificationBell />
           <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
             <span className="app-topbar__brand-icon">⚡</span>
             <span className="app-topbar__brand-name">{brandLabel}</span>
           </button>
-          <NotificationBell />
           {showBack && (
             <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
               <ArrowForwardOutlined fontSize="small" /> חזור

@@ -1102,8 +1102,13 @@ input, select, textarea {
   .app-topbar--in-project .app-topbar__brand-name { display: block; font-size: 13px; }
 
   // On all pages: hamburger visible, brand+bell grouped together
+  .app-topbar { height: 52px; }
   .app-topbar__start { flex: 1; }
-  .app-topbar__brand { margin-inline-start: auto; }
+  .notif-bell-wrap { margin-inline-start: auto; }
+  .app-topbar__brand { margin-inline-start: 0; }
+  .app-topbar__hamburger { font-size: 22px; min-width: 48px; min-height: 48px; }
+  .app-topbar__brand-icon { font-size: 20px; }
+  .notif-bell-btn { font-size: 22px; padding: 8px 10px; }
   .app-topbar__theme,
   .app-topbar__help,
   .app-topbar__back { display: none; }
@@ -1179,7 +1184,7 @@ input, select, textarea {
   // Notification panel — fixed below header, full width, safe-area aware
   .notif-panel {
     position: fixed;
-    top: calc(44px + env(safe-area-inset-top, 0) + 8px);
+    top: calc(52px + env(safe-area-inset-top, 0) + 8px);
     inset-inline-start: 8px;
     inset-inline-end: 8px;
     width: auto; min-width: 0;
