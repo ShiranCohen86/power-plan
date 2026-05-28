@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { selectCurrentUser, logoutUser } from '../store/slices/authSlice';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice';
+import { selectProjectById } from '../store/slices/projectsSlice';
 import NotificationBell from './ui/NotificationBell';
 import BottomSheet from './ui/BottomSheet.jsx';
 import { useAppTheme } from '../context/ThemeContext.jsx';
@@ -21,8 +22,10 @@ export default function AppShell({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: projectId } = useParams();
   const user = useSelector(selectCurrentUser);
   const lang = useSelector(selectLanguage);
+  const currentProject = useSelector(selectProjectById(projectId));
   const { mode, toggleTheme } = useAppTheme();
   const { menuOpen, openMenu, closeMenu } = useAppMenu();
   const [showHelp, setShowHelp] = useState(false);
@@ -30,6 +33,7 @@ export default function AppShell({ children }) {
   const isHome = location.pathname === '/dashboard';
   const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
   const showBack = !isHome && !isInProject;
+  const brandLabel = (isInProject && currentProject?.title) ? currentProject.title : 'Power Plan';
 
   function handleLogout() {
     closeMenu();
@@ -46,7 +50,7 @@ export default function AppShell({ children }) {
           </button>
           <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
             <span className="app-topbar__brand-icon">⚡</span>
-            <span className="app-topbar__brand-name">Power Plan</span>
+            <span className="app-topbar__brand-name">{brandLabel}</span>
           </button>
           {showBack && (
             <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>

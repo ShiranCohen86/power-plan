@@ -1089,11 +1089,7 @@ input, select, textarea {
   .workspace-topbar__project-name { font-size: 13px; }
   .workspace-topbar__btn-label { display: none; }
 
-  // AppShell in workspace — compact strip with hamburger + logo only
-  .app-topbar--in-project {
-    height: 40px;
-    padding: 0 8px;
-  }
+  // AppShell in workspace — same height (44px), hide non-essential items
   .app-topbar--in-project .app-topbar__logout,
   .app-topbar--in-project .app-topbar__username,
   .app-topbar--in-project .app-topbar__theme,
@@ -1102,6 +1098,8 @@ input, select, textarea {
   .app-topbar--in-project .app-topbar__settings,
   .app-topbar--in-project .app-topbar__help,
   .app-topbar--in-project .app-topbar__back { display: none; }
+  // Always show brand-name in workspace (it shows project name, not "Power Plan")
+  .app-topbar--in-project .app-topbar__brand-name { display: block; font-size: 13px; }
 
   // On all pages: hamburger replaces desktop nav items
   .app-topbar__hamburger { display: flex; }

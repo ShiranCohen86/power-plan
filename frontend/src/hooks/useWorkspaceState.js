@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { updateProject } from '../store/slices/projectsSlice';
 import toast from 'react-hot-toast';
 import { PLANNING_PHASES } from '../utils/phaseConfig';
 import { friendlyError } from '../utils/errorMessages';
@@ -27,6 +29,7 @@ export function useWorkspaceState(id) {
   const { t }      = useTranslation();
   const { lang }   = useLanguage();
   const navigate   = useNavigate();
+  const dispatch   = useDispatch();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [project, setProject]           = useState(null);
@@ -139,6 +142,7 @@ export function useWorkspaceState(id) {
         if (projRes.status === 'onboarding') { navigate(`/new-project?resumeId=${id}`); return; }
 
         setProject(projRes);
+        dispatch(updateProject(projRes)); // sync to Redux so AppShell can read the title
         if (projRes.deployedUrl) setLiveUrl(projRes.deployedUrl);
         setPhases(statusRes.phases || []);
 

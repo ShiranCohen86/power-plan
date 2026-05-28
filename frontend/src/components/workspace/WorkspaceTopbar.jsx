@@ -62,11 +62,6 @@ export default function WorkspaceTopbar({
         </button>
       )}
 
-      <div className="workspace-topbar__title">
-        <span>⚡</span>
-        <span className="workspace-topbar__project-name">{project?.title}</span>
-      </div>
-
       <div className="workspace-progress">
         <div className="workspace-progress__fill" style={{ width: `${project?.completionPercent || 0}%` }} />
       </div>
