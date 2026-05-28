@@ -38,6 +38,11 @@ export default function AppShell({ children }) {
   const searchTimerRef                = useRef(null);
   const searchInputRef                = useRef(null);
 
+  const isHome = location.pathname === '/dashboard';
+  const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
+  const showBack = !isHome && !isInProject;
+  const brandLabel = (isInProject && currentProject?.title) ? currentProject.title : 'Power Plan';
+
   useEffect(() => {
     if (showSearch && searchInputRef.current) searchInputRef.current.focus();
   }, [showSearch]);
@@ -70,11 +75,6 @@ export default function AppShell({ children }) {
       if (val && location.pathname !== '/dashboard') navigate('/dashboard');
     }, 350);
   }
-
-  const isHome = location.pathname === '/dashboard';
-  const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
-  const showBack = !isHome && !isInProject;
-  const brandLabel = (isInProject && currentProject?.title) ? currentProject.title : 'Power Plan';
 
   function handleLogout() {
     closeMenu();
