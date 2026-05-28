@@ -52,6 +52,7 @@ export default function AppShell({ children }) {
             <span className="app-topbar__brand-icon">⚡</span>
             <span className="app-topbar__brand-name">{brandLabel}</span>
           </button>
+          <NotificationBell />
           {showBack && (
             <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
               <ArrowForwardOutlined fontSize="small" /> חזור
@@ -66,7 +67,6 @@ export default function AppShell({ children }) {
           <button className="btn-ghost app-topbar__theme" onClick={toggleTheme} title={mode === 'dark' ? 'מצב בהיר' : 'מצב כהה'}>
             {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
           </button>
-          <NotificationBell />
           {user?.name && (
             <span className="app-topbar__username">{user.name}</span>
           )}

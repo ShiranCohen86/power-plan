@@ -1101,8 +1101,12 @@ input, select, textarea {
   // Always show brand-name in workspace (it shows project name, not "Power Plan")
   .app-topbar--in-project .app-topbar__brand-name { display: block; font-size: 13px; }
 
-  // On all pages: hamburger replaces desktop nav items
-  .app-topbar__hamburger { display: flex; }
+  // On all pages: hamburger visible, brand+bell grouped together
+  .app-topbar__start { flex: 1; }
+  .app-topbar__brand { margin-inline-start: auto; }
+  .app-topbar__theme,
+  .app-topbar__help,
+  .app-topbar__back { display: none; }
   .app-topbar__lang,
   .app-topbar__settings,
   .app-topbar__logout,
@@ -1172,8 +1176,14 @@ input, select, textarea {
   .task-management__tabs { padding: 0 12px; }
   .task-management__body { padding: 12px; }
 
-  // Notification panel — clamp to screen width
-  .notif-panel { width: calc(100vw - 16px); min-width: 0; right: 0; left: auto; }
+  // Notification panel — fixed below header, full width, safe-area aware
+  .notif-panel {
+    position: fixed;
+    top: calc(44px + env(safe-area-inset-top, 0) + 8px);
+    inset-inline-start: 8px;
+    inset-inline-end: 8px;
+    width: auto; min-width: 0;
+  }
 
   // iOS Safari auto-zoom prevention — inputs <16px trigger full-page zoom on focus
   input, textarea, select { font-size: 16px; }
@@ -1392,7 +1402,10 @@ input, select, textarea {
   }
   &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
   &__admin { font-size: 16px; padding: 4px 8px; min-height: auto; }
-  &__hamburger { display: none; font-size: 18px; min-width: 44px; min-height: 44px; padding: 0; }
+  &__hamburger {
+    display: none; font-size: 18px; min-width: 44px; min-height: 44px; padding: 0;
+    @media (max-width: 767px) { display: flex; }
+  }
 }
 
 // ── Hamburger menu (BottomSheet) ──────────────────────────────────────────────
