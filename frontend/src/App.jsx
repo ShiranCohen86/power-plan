@@ -236,17 +236,15 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
 
-    // iOS Safari cannot trigger beforeinstallprompt — show manual instructions after 4 s.
+    // iOS Safari cannot trigger beforeinstallprompt — show manual instructions immediately.
     // Chrome/Edge/Android are handled by the beforeinstallprompt event above.
-    let installTimer;
     if (isIOS() && !isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
-      installTimer = setTimeout(() => setSheet((s) => s || 'install'), 4000);
+      setSheet((s) => s || 'install');
     }
 
     return () => {
       window.removeEventListener('sw-updated', onSwUpdated);
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-      clearTimeout(installTimer);
     };
   }, []);
 
