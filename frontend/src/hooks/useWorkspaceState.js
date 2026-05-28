@@ -6,7 +6,6 @@ import { PLANNING_PHASES } from '../utils/phaseConfig';
 import { friendlyError } from '../utils/errorMessages';
 import { analytics } from '../utils/analytics';
 import { useLanguage } from '../context/LanguageContext.jsx';
-import { useAppMenu } from '../context/AppMenuContext.jsx';
 import { useProjectSocket } from './useProjectSocket';
 import {
   startPipeline, pausePipeline, approvePhase, refinePhase,
@@ -28,7 +27,6 @@ export function useWorkspaceState(id) {
   const { t }      = useTranslation();
   const { lang }   = useLanguage();
   const navigate   = useNavigate();
-  const { openMenu } = useAppMenu();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [project, setProject]           = useState(null);
@@ -356,7 +354,7 @@ export function useWorkspaceState(id) {
 
   return {
     // routing / i18n
-    navigate, t, lang, openMenu,
+    navigate, t, lang,
     // state
     project, setProject,
     phases, setPhases,

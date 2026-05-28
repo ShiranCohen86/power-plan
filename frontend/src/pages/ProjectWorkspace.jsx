@@ -96,7 +96,6 @@ export default function ProjectWorkspace() {
         onCelebrate={() => ws.setShowCelebration(true)}
         onPause={ws.handlePause}
         onOpenSettings={() => ws.setShowProjectSettings(true)}
-        onOpenMenu={ws.openMenu}
         onJoinMeeting={() => ws.setShowMeetingRoom(true)}
       />
 

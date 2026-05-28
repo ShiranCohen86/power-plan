@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
-import MenuOutlined from '@mui/icons-material/MenuOutlined';
 
 export default function WorkspaceTopbar({
   project,
@@ -18,7 +17,6 @@ export default function WorkspaceTopbar({
   onCelebrate,
   onPause,
   onOpenSettings,
-  onOpenMenu,
   onJoinMeeting,
 }) {
   const navigate = useNavigate();
@@ -121,9 +119,6 @@ export default function WorkspaceTopbar({
         )}
       </div>
 
-      <button className="btn-ghost workspace-topbar__hamburger" onClick={onOpenMenu} aria-label="תפריט">
-        <MenuOutlined fontSize="small" />
-      </button>
     </header>
   );
 }

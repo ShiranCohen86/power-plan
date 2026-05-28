@@ -40,6 +40,10 @@ export default function AppShell({ children }) {
     <div className="app-shell">
       <header className={`app-topbar${isInProject ? ' app-topbar--in-project' : ''}`}>
         <div className="app-topbar__start">
+          {/* Hamburger first in DOM = rightmost in RTL ✓ */}
+          <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
+            <MenuOutlined />
+          </button>
           <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
             <span className="app-topbar__brand-icon">⚡</span>
             <span className="app-topbar__brand-name">Power Plan</span>
@@ -82,11 +86,6 @@ export default function AppShell({ children }) {
             onClick={() => dispatch(logoutUser())}
           >
             {t('auth.logout')}
-          </button>
-
-          {/* Hamburger — mobile only */}
-          <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
-            <MenuOutlined />
           </button>
         </div>
       </header>
