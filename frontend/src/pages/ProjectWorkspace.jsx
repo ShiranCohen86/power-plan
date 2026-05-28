@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import SafeMarkdown from '../components/ui/SafeMarkdown';
 import { PLANNING_PHASES, PHASE_LEAD, ALL_PHASES } from '../utils/phaseConfig';
 import { friendlyError } from '../utils/errorMessages';
+import { analytics } from '../utils/analytics';
 import { useLanguage } from '../context/LanguageContext.jsx';
 
 import { selectProjectById, updateProject } from '../store/slices/projectsSlice';
@@ -388,7 +389,7 @@ export default function ProjectWorkspace() {
       await startPipeline(id);
       setActionError('');
       toast.success('הפייפליין התחיל!');
-      // Refresh rate limit counter after a successful start
+      analytics.pipelineStarted(id);
       getRateLimit().then(setRateLimit).catch(() => {});
     } catch (err) {
       handleActionError(err);
@@ -423,6 +424,7 @@ export default function ProjectWorkspace() {
       setAwaiting(null);
       setActionError('');
       toast.success('השלב אושר — ממשיך לשלב הבא');
+      analytics.phaseApproved(id, awaitingPhase);
     } catch (err) {
       handleActionError(err);
     }

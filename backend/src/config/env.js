@@ -44,6 +44,12 @@ const env = {
 
   RETURN_DEV_TOKEN: process.env.RETURN_DEV_TOKEN === 'true',
 
+  // Sentry (optional) — error monitoring
+  SENTRY_DSN: process.env.SENTRY_DSN || '',
+
+  // Encryption key rotation (optional v2 key)
+  ENCRYPTION_KEY_V2: process.env.ENCRYPTION_KEY_V2 || '',
+
   // Redis (optional) — Socket.io pub/sub adapter for multi-instance deployments
   REDIS_URL: process.env.REDIS_URL || '',
 

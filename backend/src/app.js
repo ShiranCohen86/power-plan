@@ -11,7 +11,16 @@ const errorMiddleware = require('./middleware/error');
 const requestLogger = require('./middleware/logger');
 const logger = require('./utils/logger');
 
+// Sentry — init before any other middleware; no-op when DSN not configured
+let Sentry = null;
+if (env.SENTRY_DSN) {
+  Sentry = require('@sentry/node');
+  Sentry.init({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV, tracesSampleRate: 0.1 });
+}
+
 const app = express();
+
+if (Sentry) app.use(Sentry.Handlers.requestHandler());
 
 if (env.JWT_SECRET === env.JWT_REFRESH_SECRET) {
   logger.warn('JWT_SECRET and JWT_REFRESH_SECRET are identical — use two different values.');
@@ -111,6 +120,7 @@ if (env.NODE_ENV === 'production') {
   });
 }
 
+if (Sentry) app.use(Sentry.Handlers.errorHandler());
 app.use(errorMiddleware);
 
 module.exports = app;
