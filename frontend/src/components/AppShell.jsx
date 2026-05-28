@@ -6,6 +6,7 @@ import { selectCurrentUser, logoutUser } from '../store/slices/authSlice';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice';
 import { selectProjectById } from '../store/slices/projectsSlice';
 import NotificationBell from './ui/NotificationBell';
+import AppFooter from './AppFooter.jsx';
 import BottomSheet from './ui/BottomSheet.jsx';
 import { useAppTheme } from '../context/ThemeContext.jsx';
 import { useAppMenu } from '../context/AppMenuContext.jsx';
@@ -41,7 +42,7 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${!isInProject ? ' app-shell--has-footer' : ''}`}>
       <header className={`app-topbar${isInProject ? ' app-topbar--in-project' : ''}`}>
         <div className="app-topbar__start">
           {/* Hamburger first in DOM = rightmost in RTL ✓ */}
@@ -103,9 +104,6 @@ export default function AppShell({ children }) {
             <button className="app-menu__item" onClick={() => { toggleTheme(); closeMenu(); }}>
               {mode === 'dark' ? '☀️ מצב בהיר' : '🌙 מצב כהה'}
             </button>
-            <button className="app-menu__item" onClick={() => { navigate('/settings'); closeMenu(); }}>
-              ⚙️ {t('settings.title')}
-            </button>
             <button className="app-menu__item" onClick={() => { setShowHelp(true); closeMenu(); }}>
               ❓ עזרה
             </button>
@@ -157,6 +155,7 @@ export default function AppShell({ children }) {
       <div className="app-shell__content">
         {children}
       </div>
+      {!isInProject && <AppFooter />}
     </div>
   );
 }

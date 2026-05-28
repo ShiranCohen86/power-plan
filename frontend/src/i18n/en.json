@@ -332,5 +332,9 @@
     "faq3Q": "Discovery questions?",
     "faq3A": "You can leave and return — progress is saved",
     "contactBtn": "📧 Contact Support"
+  },
+  "nav": {
+    "projects": "Projects",
+    "new": "New"
   }
 }

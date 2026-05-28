@@ -1101,6 +1101,11 @@ input, select, textarea {
   // Always show brand-name in workspace (it shows project name, not "Power Plan")
   .app-topbar--in-project .app-topbar__brand-name { display: block; font-size: 13px; }
 
+  // Footer padding — content not hidden behind bottom nav
+  .app-shell--has-footer .app-shell__content {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0) + 4px);
+  }
+
   // On all pages: hamburger visible, brand+bell grouped together
   .app-topbar { height: 52px; }
   .app-topbar__start { flex: 1; }
@@ -1435,6 +1440,33 @@ input, select, textarea {
   padding: 12px 16px; border-radius: $radius;
   background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
   color: var(--text-muted); font-size: 13px;
+}
+
+// ── Bottom nav footer (mobile only) ─────────────────────────────────────────
+
+.app-footer {
+  display: none;
+
+  @media (max-width: 767px) {
+    display: flex;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: calc(60px + env(safe-area-inset-bottom, 0));
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    background: var(--surface-1); border-top: 1px solid var(--border);
+    z-index: 100;
+
+    &__tab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); padding: 8px; min-height: auto;
+      font-size: 22px; border-radius: 0;
+      &:hover, &:active { background: var(--surface-3); }
+      &--active { color: var(--brand-primary); }
+    }
+
+    &__tab-label { font-size: 11px; font-weight: 500; }
+  }
 }
 
 // ── Help Panel ──────────────────────────────────────────────────────────────
