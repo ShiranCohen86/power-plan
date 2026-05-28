@@ -162,10 +162,10 @@ export default function Dashboard() {
           </div>
         ) : projects.length === 0 ? (
           <div className="empty-state dashboard-empty-state">
-            {searchInput ? (
+            {storeSearch ? (
               <>
                 <div className="empty-state__icon">🔍</div>
-                <div className="empty-state__title">{`אין תוצאות עבור "${searchInput}"`}</div>
+                <div className="empty-state__title">{`אין תוצאות עבור "${storeSearch}"`}</div>
               </>
             ) : (
               <>
