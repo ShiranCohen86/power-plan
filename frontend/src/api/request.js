@@ -8,10 +8,15 @@ export const httpClient = axios.create({
   timeout: 30000,
 });
 
-// ---- Request interceptor: attach JWT ----
+// Store reference injected by store/index.js to avoid circular imports
+let _store = null;
+export function injectStore(store) { _store = store; }
+export function getAccessToken() { return _store?.getState()?.auth?.accessToken || null; }
+
+// ---- Request interceptor: attach JWT from Redux memory ----
 httpClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = _store?.getState()?.auth?.accessToken;
     if (token) config.headers.Authorization = `Bearer ${token}`;
     logDebug('api', '→', config.method?.toUpperCase(), config.url);
     return config;
@@ -61,13 +66,16 @@ httpClient.interceptors.response.use(
       try {
         // Refresh token is in httpOnly cookie — send credentials, no body needed
         const { data } = await axios.post(`${apiBaseUrl}/api/auth/refresh`, {}, { withCredentials: true });
-        localStorage.setItem('token', data.accessToken);
+        // Store new token in Redux memory (never localStorage)
+        if (_store) {
+          const { setAccessToken } = await import('../store/slices/authSlice.js');
+          _store.dispatch(setAccessToken(data.accessToken));
+        }
         processQueue(null, data.accessToken);
         originalReq.headers.Authorization = `Bearer ${data.accessToken}`;
         return httpClient(originalReq);
       } catch (refreshError) {
         processQueue(refreshError);
-        localStorage.removeItem('token');
         location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

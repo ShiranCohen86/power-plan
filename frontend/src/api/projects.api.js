@@ -1,4 +1,4 @@
-import { safeRequest } from './request';
+import { safeRequest, getAccessToken } from './request';
 
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
@@ -80,7 +80,7 @@ export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
     onError(new Error('Discovery request timed out — please try again'));
   }, 45000);
 
-  const token = localStorage.getItem('token');
+  const token = getAccessToken();
   fetch(`${apiBaseUrl}/api/projects/${id}/discovery/next`, {
     method: 'POST',
     headers: {

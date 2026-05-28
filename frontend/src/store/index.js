@@ -6,6 +6,7 @@ import phasesReducer        from './slices/phasesSlice.js';
 import tasksReducer         from './slices/tasksSlice.js';
 import sprintsReducer       from './slices/sprintsSlice.js';
 import notificationsReducer from './slices/notificationsSlice.js';
+import { injectStore }      from '../api/request.js';
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,8 @@ export const store = configureStore({
     notifications: notificationsReducer,
   },
 });
+
+// Give the axios interceptor access to Redux state (avoids circular imports)
+injectStore(store);
 
 export { CACHE_TTL_MS, isCacheStale } from './cacheUtils.js';
