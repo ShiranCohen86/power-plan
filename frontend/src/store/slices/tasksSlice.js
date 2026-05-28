@@ -61,6 +61,7 @@ const tasksSlice = createSlice({
         const { projectId, sprintIndex, items } = action.payload;
         state.sprintTasks[`${projectId}:${sprintIndex}`] = items;
       })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState)
       .addCase(changeTaskStatus.fulfilled, (state, action) => {
         const { projectId, task } = action.payload;
         // update in epicsByProject

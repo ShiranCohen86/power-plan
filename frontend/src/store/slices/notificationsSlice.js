@@ -62,7 +62,9 @@ const notificationsSlice = createSlice({
       .addCase(doMarkAllRead.fulfilled, (state) => {
         state.items.forEach((n) => { n.read = true; });
         state.unreadCount = 0;
-      });
+      })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled',
+        (state) => { state.items = []; state.unreadCount = 0; state.status = 'idle'; });
   },
 });
 

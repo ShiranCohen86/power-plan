@@ -160,7 +160,8 @@ const projectsSlice = createSlice({
         state.items  = state.items.filter((p) => p._id !== action.payload);
         state.total  = Math.max(0, state.total - 1);
         state.hasMore = state.items.length < state.total;
-      });
+      })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState);
   },
 });
 

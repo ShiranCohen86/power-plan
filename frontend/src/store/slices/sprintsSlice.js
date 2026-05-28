@@ -50,7 +50,8 @@ const sprintsSlice = createSlice({
         const idx = state.byProject[projectId].findIndex((s) => s.index === sprint.index);
         if (idx !== -1) state.byProject[projectId][idx] = sprint;
         else state.byProject[projectId].push(sprint);
-      });
+      })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState);
   },
 });
 

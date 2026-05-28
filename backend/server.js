@@ -42,3 +42,33 @@ start().catch((err) => {
   logger.error('Failed to start server', { err: err.message });
   process.exit(1);
 });
+
+// ── Graceful shutdown ──────────────────────────────────────────────────────────
+
+function shutdown(signal) {
+  logger.info(`${signal} received — shutting down gracefully`);
+  server.close(() => {
+    logger.info('HTTP server closed');
+    const mongoose = require('mongoose');
+    mongoose.disconnect().then(() => {
+      logger.info('MongoDB disconnected');
+      process.exit(0);
+    }).catch(() => process.exit(0));
+  });
+  // Force exit if graceful shutdown takes too long (Render's timeout is 10s)
+  setTimeout(() => { logger.warn('Forced exit after timeout'); process.exit(1); }, 9000);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+
+// ── Unhandled errors ───────────────────────────────────────────────────────────
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled promise rejection', { reason: String(reason) });
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught exception — exiting', { error: err.message, stack: err.stack });
+  process.exit(1);
+});

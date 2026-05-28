@@ -49,7 +49,8 @@ const phasesSlice = createSlice({
       .addCase(fetchPhases.rejected, (state, action) => {
         const pid = action.meta.arg;
         if (state.byProject[pid]) state.byProject[pid].status = 'failed';
-      });
+      })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState);
   },
 });
 

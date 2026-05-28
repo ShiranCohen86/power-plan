@@ -1,6 +1,8 @@
 const { Server } = require('socket.io');
-const env = require('../config/env');
-const logger = require('../utils/logger');
+const jwt        = require('jsonwebtoken');
+const env        = require('../config/env');
+const logger     = require('../utils/logger');
+const Project    = require('../models/Project');
 
 let io;
 
@@ -28,13 +30,30 @@ async function initSocket(server) {
     logger.warn('Socket.io: No REDIS_URL set — running single-instance (WS events will not cross instances)');
   }
 
-  io.on('connection', (socket) => {
-    logger.debug('socket connected', { id: socket.id });
+  // Require valid JWT on every connection
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('auth:required'));
+    try {
+      const decoded = jwt.verify(token, env.JWT_SECRET);
+      socket.userId = decoded.sub;
+      next();
+    } catch {
+      next(new Error('auth:invalid'));
+    }
+  });
 
-    socket.on('join:project', (projectId) => {
-      if (!projectId) return;
-      socket.join(`project:${projectId}`);
-      logger.debug('socket joined project room', { socketId: socket.id, projectId });
+  io.on('connection', (socket) => {
+    logger.debug('socket connected', { id: socket.id, userId: socket.userId });
+
+    socket.on('join:project', async (projectId) => {
+      if (!projectId || !socket.userId) return;
+      try {
+        const project = await Project.findOne({ _id: projectId, ownerId: socket.userId }).lean();
+        if (!project) return; // silently reject — don't leak project existence
+        socket.join(`project:${projectId}`);
+        logger.debug('socket joined project room', { socketId: socket.id, projectId });
+      } catch { /* ignore malformed projectId */ }
     });
 
     socket.on('leave:project', (projectId) => {
