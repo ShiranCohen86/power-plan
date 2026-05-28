@@ -20,7 +20,7 @@ exports.login = {
 };
 
 exports.refresh = {
-  body: Joi.object({ refreshToken: Joi.string().required() }),
+  body: Joi.object({ refreshToken: Joi.string() }),
 };
 
 exports.requestReset = {
