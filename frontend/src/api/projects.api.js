@@ -19,6 +19,9 @@ export const deleteProject = (id) =>
 export const discoveryComplete = (id, answers) =>
   safeRequest({ method: 'post', url: `/projects/${id}/discovery/complete`, data: { answers } });
 
+export const saveDiscoveryProgress = (id, answers) =>
+  safeRequest({ method: 'patch', url: `/projects/${id}/discovery-progress`, data: { answers } });
+
 export const getMeetings = (id) =>
   safeRequest({ method: 'get', url: `/projects/${id}/meetings` });
 

@@ -17,6 +17,12 @@ export const approvePhase = (projectId, phaseIndex) =>
 export const refinePhase = (projectId, phaseIndex, feedback) =>
   safeRequest({ method: 'post', url: `${base(projectId)}/refine`, data: { phaseIndex, feedback } });
 
+export const retryPipeline = (projectId) =>
+  safeRequest({ method: 'post', url: `${base(projectId)}/retry` });
+
+export const rollbackToPhase = (projectId, toPhaseIndex) =>
+  safeRequest({ method: 'post', url: `${base(projectId)}/rollback`, data: { toPhaseIndex } });
+
 export const listPhases = (projectId) =>
   safeRequest({ method: 'get', url: `/projects/${projectId}/phases` });
 

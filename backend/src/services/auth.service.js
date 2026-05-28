@@ -54,11 +54,24 @@ async function login({ email, password, userAgent, ip }) {
     throw ApiError.unauthorized('Invalid credentials');
   }
 
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    const mins = Math.ceil((user.lockUntil - Date.now()) / 60000);
+    throw ApiError.tooManyRequests(`חשבון נעול. נסה שוב בעוד ${mins} דקות`);
+  }
+
   const ok = await user.verifyPassword(password);
   if (!ok) {
+    user.loginAttempts = (user.loginAttempts || 0) + 1;
+    if (user.loginAttempts >= 5) {
+      user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+    }
+    await user.save();
     AuditLog.create({ userId: user._id, action: 'auth.login.failed', ip, userAgent, meta: { email } }).catch(() => {});
     throw ApiError.unauthorized('Invalid credentials');
   }
+
+  user.loginAttempts = 0;
+  user.lockUntil = undefined;
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
   pushSession(user, { jtiHash, userAgent, ip });

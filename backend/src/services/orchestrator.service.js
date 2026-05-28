@@ -120,4 +120,62 @@ async function _hasApiKey(projectId, ownerId) {
   return !!(user?.settings?.anthropicApiKey);
 }
 
-module.exports = { startPipeline, pausePipeline, getPipelineStatus };
+async function retryFromPhase(projectId, userId) {
+  const project = await Project.findById(projectId);
+  if (!project) throw ApiError.notFound('Project not found');
+  if (String(project.ownerId) !== String(userId)) throw ApiError.forbidden();
+
+  if (project.status !== 'failed') {
+    throw ApiError.badRequest(`Cannot retry — project status is: ${project.status}`);
+  }
+
+  const hasKey = await _hasApiKey(projectId, project.ownerId);
+  if (!hasKey) {
+    throw ApiError.badRequest('מפתח Anthropic לא מוגדר — הגדר מפתח API לפני הפעלת הפייפליין');
+  }
+
+  // Reset the failed phase so it can re-run
+  await Phase.findOneAndUpdate(
+    { projectId, index: project.currentPhaseIndex, status: 'failed' },
+    { status: 'pending', output: null, error: null },
+  );
+
+  project.status = 'planning';
+  await project.save();
+
+  await _recordStart(userId);
+  logger.info('orchestrator: retrying pipeline from phase', { projectId, phaseIndex: project.currentPhaseIndex });
+
+  emitToProject(projectId, 'pipeline:started', { projectId });
+
+  startPlanning(projectId).catch((err) => {
+    logger.error('orchestrator: retry error', { projectId, error: err.message });
+    emitToProject(projectId, 'pipeline:error', { error: err.message });
+  });
+}
+
+async function rollbackToPhase(projectId, userId, toPhaseIndex) {
+  const project = await Project.findById(projectId);
+  if (!project) throw ApiError.notFound('Project not found');
+  if (String(project.ownerId) !== String(userId)) throw ApiError.forbidden();
+
+  if (['coding', 'deploying', 'live'].includes(project.status)) {
+    throw ApiError.badRequest(`Cannot rollback — project is currently: ${project.status}`);
+  }
+
+  // Mark phases from toPhaseIndex onward as pending
+  await Phase.updateMany(
+    { projectId, index: { $gte: toPhaseIndex } },
+    { status: 'pending', output: null, error: null, approvedAt: null },
+  );
+
+  project.currentPhaseIndex = toPhaseIndex;
+  project.status = 'planning';
+  project.awaitingApprovalAt = null;
+  await project.save();
+
+  logger.info('orchestrator: rolled back to phase', { projectId, toPhaseIndex });
+  emitToProject(projectId, 'pipeline:rolled_back', { projectId, toPhaseIndex });
+}
+
+module.exports = { startPipeline, pausePipeline, getPipelineStatus, retryFromPhase, rollbackToPhase };

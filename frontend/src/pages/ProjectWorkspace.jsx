@@ -11,7 +11,7 @@ import { selectProjectById, updateProject } from '../store/slices/projectsSlice'
 import { useProjectSocket } from '../hooks/useProjectSocket';
 import {
   startPipeline, pausePipeline, approvePhase, refinePhase,
-  getPipelineStatus, getPhaseDocument,
+  getPipelineStatus, getPhaseDocument, retryPipeline, rollbackToPhase,
 } from '../api/pipeline.api';
 import { getProject, getProjectSettings, getMeetings, getRequiredServices } from '../api/projects.api';
 import { getAgentLogs } from '../api/agents.api';
@@ -426,6 +426,30 @@ export default function ProjectWorkspace() {
     }
   }
 
+  async function handleRetry() {
+    try {
+      await retryPipeline(id);
+      setActionError('');
+      toast.success('מנסה שוב מהשלב שנכשל...');
+      getRateLimit().then(setRateLimit).catch(() => {});
+    } catch (err) {
+      handleActionError(err);
+    }
+  }
+
+  async function handleRollback(toPhaseIndex) {
+    try {
+      await rollbackToPhase(id, toPhaseIndex);
+      setPhases((prev) => prev.map((p) => p.index >= toPhaseIndex ? { ...p, status: 'pending', output: null } : p));
+      setProject((p) => p ? { ...p, status: 'planning', currentPhaseIndex: toPhaseIndex } : p);
+      setAwaiting(null);
+      setActionError('');
+      toast.success(`חזרנו לשלב ${toPhaseIndex + 1}`);
+    } catch (err) {
+      handleActionError(err);
+    }
+  }
+
   async function handleRefine(feedback) {
     if (!feedback?.trim() || awaitingPhase == null) return;
     try {
@@ -676,6 +700,7 @@ export default function ProjectWorkspace() {
                 setActive(idx);
                 loadDocument(idx);
               }}
+              onRollback={!isRunning ? handleRollback : null}
             />
           )}
 
@@ -706,7 +731,7 @@ export default function ProjectWorkspace() {
 
           {canResume && (
             <div className="workspace-start-btn">
-              <button className="btn btn--primary btn--full" onClick={handleStart}>
+              <button className="btn btn--primary btn--full" onClick={isFailed ? handleRetry : handleStart}>
                 {isPaused ? '▶️ המשך Pipeline' : '🔄 נסה שוב'}
               </button>
             </div>

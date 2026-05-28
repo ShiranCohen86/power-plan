@@ -166,3 +166,20 @@ exports.platformStats = asyncHandler(async (req, res) => {
     recentActivity,
   });
 });
+
+// ── Paginated activity log ────────────────────────────────────────────────────
+
+exports.getActivity = asyncHandler(async (req, res) => {
+  const AgentLog = require('../models/AgentLog');
+
+  const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  const skip  = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    AgentLog.find().sort({ timestamp: -1 }).skip(skip).limit(limit).lean(),
+    AgentLog.countDocuments(),
+  ]);
+
+  res.json({ items, total, page, totalPages: Math.ceil(total / limit) || 1 });
+});

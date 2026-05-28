@@ -6,6 +6,7 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 const Meeting = require('../models/Meeting');
 const MeetingMessage = require('../models/MeetingMessage');
+const mongoose = require('mongoose');
 const { encrypt, decrypt } = require('../services/encryption.service');
 
 function friendlyAIError(err) {
@@ -133,6 +134,16 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   }
 });
 
+// Auto-saves discovery answers without transitioning status (for resume/draft)
+exports.discoveryProgress = asyncHandler(async (req, res) => {
+  const project = await projectService.saveDiscoveryProgress(
+    req.params.id,
+    req.user.id,
+    req.body.answers,
+  );
+  res.json(project);
+});
+
 // Saves all discovery answers and transitions project to 'planning'
 exports.discoveryComplete = asyncHandler(async (req, res) => {
   const project = await projectService.saveDiscoveryAnswers(
@@ -207,10 +218,22 @@ exports.setProjectApiKey = asyncHandler(async (req, res) => {
   const project = await _ownedProject(req);
   if (!project.settings) project.settings = {};
   project.settings.anthropicApiKey = encrypt(apiKey);
-  await Promise.all([
-    project.save(),
-    User.findByIdAndUpdate(req.user.id, { $set: { 'settings.anthropicApiKey': encrypt(apiKey) } }),
-  ]);
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    await project.save({ session });
+    await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { 'settings.anthropicApiKey': encrypt(apiKey) } },
+      { session },
+    );
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
   res.json({ hasApiKey: true, apiKeyHint: _maskKey(apiKey) });
 });
 

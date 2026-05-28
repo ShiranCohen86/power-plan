@@ -53,11 +53,15 @@ export default function Admin() {
   const navigate = useNavigate();
   const user     = useSelector(selectCurrentUser);
 
-  const [stats,     setStats]     = useState(null);
-  const [analytics, setAnalytics] = useState(null);
-  const [lessons,   setLessons]   = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
+  const [stats,        setStats]        = useState(null);
+  const [analytics,    setAnalytics]    = useState(null);
+  const [lessons,      setLessons]      = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState('');
+  const [activity,     setActivity]     = useState([]);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const ACTIVITY_LIMIT = 20;
 
   // Add lesson form
   const [showForm,    setShowForm]    = useState(false);
@@ -73,19 +77,34 @@ export default function Admin() {
   async function load() {
     setLoading(true);
     try {
-      const [statsRes, analyticsRes, lessonsRes] = await Promise.all([
+      const [statsRes, analyticsRes, lessonsRes, activityRes] = await Promise.all([
         adminApi.getStats(),
         adminApi.getAnalytics().catch(() => null),
         adminApi.getLessons(),
+        adminApi.getActivity({ page: 1, limit: ACTIVITY_LIMIT }).catch(() => null),
       ]);
       setStats(statsRes);
       setAnalytics(analyticsRes);
       setLessons(lessonsRes.lessons);
+      if (activityRes) {
+        setActivity(activityRes.items);
+        setActivityTotal(activityRes.total);
+        setActivityPage(1);
+      }
     } catch {
       setError('Failed to load admin data');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadActivityPage(page) {
+    try {
+      const res = await adminApi.getActivity({ page, limit: ACTIVITY_LIMIT });
+      setActivity(res.items);
+      setActivityTotal(res.total);
+      setActivityPage(page);
+    } catch { /* non-fatal */ }
   }
 
   async function handleSubmit(e) {
@@ -281,12 +300,15 @@ export default function Admin() {
           )}
         </section>
 
-        {/* Recent activity */}
-        {stats?.recentActivity?.length > 0 && (
+        {/* Recent activity — paginated */}
+        {activity.length > 0 && (
           <section className="admin-section">
-            <h2 className="admin-section__title">{t('admin.recentActivity')}</h2>
+            <h2 className="admin-section__title">
+              {t('admin.recentActivity')}
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 8 }}>({activityTotal} סה"כ)</span>
+            </h2>
             <div className="admin-activity">
-              {stats.recentActivity.map((log, i) => (
+              {activity.map((log, i) => (
                 <div key={i} className="admin-activity-row">
                   <span className="admin-activity-agent">{log.agentName}</span>
                   <span className="admin-activity-event">{log.event}</span>
@@ -294,6 +316,29 @@ export default function Admin() {
                 </div>
               ))}
             </div>
+            {activityTotal > ACTIVITY_LIMIT && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, justifyContent: 'center' }}>
+                <button
+                  className="btn btn--secondary"
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                  disabled={activityPage <= 1}
+                  onClick={() => loadActivityPage(activityPage - 1)}
+                >
+                  ← הקודם
+                </button>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  עמוד {activityPage} / {Math.ceil(activityTotal / ACTIVITY_LIMIT)}
+                </span>
+                <button
+                  className="btn btn--secondary"
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                  disabled={activityPage >= Math.ceil(activityTotal / ACTIVITY_LIMIT)}
+                  onClick={() => loadActivityPage(activityPage + 1)}
+                >
+                  הבא →
+                </button>
+              </div>
+            )}
           </section>
         )}
       </main>

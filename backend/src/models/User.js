@@ -33,6 +33,8 @@ const UserSchema = new mongoose.Schema(
       renderApiKey:    { type: String, select: false }, // encrypted AES-256
     },
     pipelineStarts: { type: [Date], select: false, default: [] },
+    loginAttempts:  { type: Number, default: 0 },
+    lockUntil:      { type: Date },
   },
   { timestamps: true },
 );

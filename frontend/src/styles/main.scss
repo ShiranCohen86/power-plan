@@ -810,6 +810,36 @@ input, select, textarea {
   &__pulse  { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-primary); animation: pulse-glow 1s infinite; flex-shrink: 0; }
 }
 
+.phase-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &:hover .phase-item__rollback { opacity: 1; }
+}
+
+.phase-item__rollback {
+  position: absolute;
+  left: 4px;
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: opacity 0.15s, color 0.15s;
+  min-width: 24px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover { color: var(--brand-primary); background: rgba(6,182,212,0.10); }
+}
+
 .workspace-mobile-phase-title { display: none; }
 
 // â”€â”€ Live Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

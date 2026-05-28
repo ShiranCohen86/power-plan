@@ -12,8 +12,9 @@ router.get   ('/:id', validate(projectValidator.objectId), projectsController.ge
 router.delete('/:id', validate(projectValidator.objectId), projectsController.deleteProject);
 
 // Discovery chat
-router.post('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);
-router.post('/:id/discovery/complete', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryComplete);
+router.post ('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);
+router.post ('/:id/discovery/complete', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryComplete);
+router.patch('/:id/discovery-progress', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryProgress);
 
 // Meeting history
 router.get('/:id/meetings', validate(projectValidator.objectId), projectsController.getMeetings);

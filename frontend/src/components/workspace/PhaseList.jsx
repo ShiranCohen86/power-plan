@@ -11,42 +11,53 @@ const STATUS_ICON = {
   interrupted:       '⏸️',
 };
 
-function PhaseItem({ config, phaseData, isActive, onClick, lang }) {
+function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
   const status = phaseData?.status || 'pending';
   const icon   = STATUS_ICON[status] || '⏳';
   const tokens = phaseData?.tokensUsed;
 
   return (
-    <button
-      className={`phase-item phase-item--${status}${isActive ? ' phase-item--active' : ''}`}
-      onClick={onClick}
-      disabled={status === 'pending'}
-    >
-      <span className="phase-item__status">{icon}</span>
-      <span className="phase-item__icon">{config.icon}</span>
-      <span className="phase-item__num">{config.index + 1}</span>
-      <span className="phase-item__name">{lang === 'he' ? config.nameHe : config.name}</span>
-      {status === 'running' && <span className="phase-item__pulse" />}
-      {tokens > 0 && status !== 'running' && status !== 'failed' && (
-        <span className="phase-item__tokens" style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
-          {tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t
-        </span>
-      )}
-      {status === 'failed' && phaseData?.errorMessage && (
-        <span
-          className="phase-item__error"
-          title={phaseData.errorMessage}
-          style={{ fontSize: 10, color: 'var(--danger)', marginRight: 'auto', maxWidth: 80,
-                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.8 }}
+    <div className="phase-item-wrapper">
+      <button
+        className={`phase-item phase-item--${status}${isActive ? ' phase-item--active' : ''}`}
+        onClick={onClick}
+        disabled={status === 'pending'}
+      >
+        <span className="phase-item__status">{icon}</span>
+        <span className="phase-item__icon">{config.icon}</span>
+        <span className="phase-item__num">{config.index + 1}</span>
+        <span className="phase-item__name">{lang === 'he' ? config.nameHe : config.name}</span>
+        {status === 'running' && <span className="phase-item__pulse" />}
+        {tokens > 0 && status !== 'running' && status !== 'failed' && (
+          <span className="phase-item__tokens" style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
+            {tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t
+          </span>
+        )}
+        {status === 'failed' && phaseData?.errorMessage && (
+          <span
+            className="phase-item__error"
+            title={phaseData.errorMessage}
+            style={{ fontSize: 10, color: 'var(--danger)', marginRight: 'auto', maxWidth: 80,
+                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.8 }}
+          >
+            {phaseData.errorMessage}
+          </span>
+        )}
+      </button>
+      {onRollback && status === 'completed' && (
+        <button
+          className="phase-item__rollback"
+          title={lang === 'he' ? `חזור לשלב ${config.index + 1}` : `Roll back to phase ${config.index + 1}`}
+          onClick={(e) => { e.stopPropagation(); onRollback(config.index); }}
         >
-          {phaseData.errorMessage}
-        </span>
+          ↩
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 
-function PhaseList({ phases, activeIndex, onSelect }) {
+function PhaseList({ phases, activeIndex, onSelect, onRollback }) {
   const { lang } = useLanguage();
   const phaseMap = Object.fromEntries(phases.map((p) => [p.index, p]));
 
@@ -64,6 +75,7 @@ function PhaseList({ phases, activeIndex, onSelect }) {
             phaseData={phaseMap[cfg.index]}
             isActive={activeIndex === cfg.index}
             onClick={() => onSelect(cfg.index)}
+            onRollback={onRollback}
             lang={lang}
           />
         ))}
@@ -78,6 +90,7 @@ function PhaseList({ phases, activeIndex, onSelect }) {
             phaseData={phaseMap[cfg.index]}
             isActive={activeIndex === cfg.index}
             onClick={() => onSelect(cfg.index)}
+            onRollback={onRollback}
             lang={lang}
           />
         ))}

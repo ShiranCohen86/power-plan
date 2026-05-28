@@ -2,7 +2,8 @@ import { safeRequest } from './request';
 
 const BASE = '/admin';
 
-export const getStats    = ()         => safeRequest({ method: 'get',    url: `${BASE}/stats` });
+export const getStats      = ()           => safeRequest({ method: 'get', url: `${BASE}/stats` });
+export const getActivity   = (params)    => safeRequest({ method: 'get', url: `${BASE}/activity`, params });
 export const getAnalytics = ()        => safeRequest({ method: 'get',    url: `${BASE}/analytics` });
 export const getLessons = (params)   => safeRequest({ method: 'get',    url: `${BASE}/lessons`, params });
 export const createLesson = (data)   => safeRequest({ method: 'post',   url: `${BASE}/lessons`, data });

@@ -56,6 +56,17 @@ async function saveDiscoveryAnswers(id, ownerId, answers) {
   return project.toObject();
 }
 
+async function saveDiscoveryProgress(id, ownerId, answers) {
+  const project = await Project.findById(id);
+  if (!project) throw ApiError.notFound('Project not found');
+  if (String(project.ownerId) !== String(ownerId)) throw ApiError.forbidden();
+  if (project.status !== 'onboarding') throw ApiError.badRequest('Discovery already completed');
+
+  project.discoveryAnswers = answers;
+  await project.save();
+  return project.toObject();
+}
+
 async function deleteProject(id, ownerId) {
   const project = await Project.findById(id);
   if (!project) throw ApiError.notFound('Project not found');
@@ -79,4 +90,4 @@ async function deleteProject(id, ownerId) {
   await Project.findByIdAndDelete(id);
 }
 
-module.exports = { create, listByOwner, getById, saveDiscoveryAnswers, deleteProject };
+module.exports = { create, listByOwner, getById, saveDiscoveryAnswers, saveDiscoveryProgress, deleteProject };

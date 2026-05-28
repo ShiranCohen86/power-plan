@@ -28,11 +28,17 @@ const startLimiter = rateLimit({
   message: { error: 'יותר מדי הפעלות — נסה שוב בעוד שעה' },
 });
 
+const rollbackBody = {
+  body: Joi.object({ toPhaseIndex: Joi.number().integer().min(0).required() }),
+};
+
 // All routes are scoped under /api/projects/:projectId/pipeline
-router.post('/start', startLimiter, ctrl.start);
-router.post('/pause',   ctrl.pause);
-router.get('/status',   ctrl.status);
-router.post('/approve', validate(phaseIndexBody), ctrl.approve);
-router.post('/refine',  validate(refineBody),     ctrl.refine);
+router.post('/start',    startLimiter,              ctrl.start);
+router.post('/pause',                               ctrl.pause);
+router.get('/status',                               ctrl.status);
+router.post('/approve',  validate(phaseIndexBody),  ctrl.approve);
+router.post('/refine',   validate(refineBody),      ctrl.refine);
+router.post('/retry',                               ctrl.retry);
+router.post('/rollback', validate(rollbackBody),    ctrl.rollback);
 
 module.exports = router;

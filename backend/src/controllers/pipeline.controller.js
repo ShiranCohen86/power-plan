@@ -32,6 +32,17 @@ exports.approve = asyncHandler(async (req, res) => {
   res.json({ message: 'Phase approved, pipeline resuming' });
 });
 
+exports.retry = asyncHandler(async (req, res) => {
+  await orchestrator.retryFromPhase(req.params.projectId, req.user.id);
+  res.status(202).json({ message: 'Retrying from failed phase' });
+});
+
+exports.rollback = asyncHandler(async (req, res) => {
+  const { toPhaseIndex } = req.body;
+  await orchestrator.rollbackToPhase(req.params.projectId, req.user.id, Number(toPhaseIndex));
+  res.json({ message: 'Rolled back' });
+});
+
 exports.refine = asyncHandler(async (req, res) => {
   const { phaseIndex, feedback } = req.body;
   if (phaseIndex == null) throw ApiError.badRequest('phaseIndex required');

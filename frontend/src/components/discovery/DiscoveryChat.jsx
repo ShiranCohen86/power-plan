@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { discoveryNextSSE } from '../../api/projects.api';
+import { discoveryNextSSE, saveDiscoveryProgress } from '../../api/projects.api';
 
 export default function DiscoveryChat({ projectId, onComplete }) {
   const { t } = useTranslation();
@@ -94,10 +94,13 @@ export default function DiscoveryChat({ projectId, onComplete }) {
     fetchNextQuestion(newAnswers);
   }
 
-  // Persist answers to sessionStorage so progress survives a page refresh
+  // Persist answers to sessionStorage and auto-save to server
   useEffect(() => {
     if (answers.length > 0) {
       sessionStorage.setItem(`discovery_${projectId}`, JSON.stringify({ messages, answers }));
+      if (projectId) {
+        saveDiscoveryProgress(projectId, answers).catch(() => {});
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers]);
