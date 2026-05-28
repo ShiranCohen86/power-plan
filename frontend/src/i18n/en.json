@@ -295,5 +295,42 @@
     "errorUpdate": "Error updating lesson — try again",
     "errorDelete": "Error deleting lesson — try again",
     "confirmDelete": "Delete this lesson?"
+  },
+  "topbar": {
+    "back": "Back",
+    "tasks": "Tasks",
+    "settings": "Settings",
+    "pause": "Pause",
+    "phaseOf": "Phase {{current}}/{{total}}",
+    "estMinutes": "~{{n}} min",
+    "live": "🎉 App is live!",
+    "aiWorking": "AI working...",
+    "awaitingApproval": "Awaiting approval",
+    "joinMeeting": "🏢 Join"
+  },
+  "onboarding": {
+    "welcome": "Welcome to Power Plan!",
+    "tagline": "Describe an app idea and AI will build it for you",
+    "step1": "Set your Anthropic API key in settings",
+    "step2": "Click \"New Project\" and describe your idea",
+    "step3": "Answer discovery questions and AI builds everything",
+    "cta": "Start your first project →"
+  },
+  "help": {
+    "title": "❓ Quick Help",
+    "anthropicTitle": "How to get an Anthropic API key",
+    "anthropicDesc": "Go to console.anthropic.com → API Keys → Create Key. Copy the key and paste it in settings.",
+    "pipelineTitle": "What each pipeline phase does",
+    "planning": "Phases 1-12: Claude plans — idea analysis, PRD, architecture, DB, DevOps",
+    "coding": "Phases 13-18: Claude writes code — Backend, Frontend, Tests, Config",
+    "deploy": "Deploy phase: GitHub push + Render deploy",
+    "faqTitle": "Frequently Asked Questions",
+    "faq1Q": "Pipeline stuck?",
+    "faq1A": "Click \"Retry\" on the project page",
+    "faq2Q": "Quota error?",
+    "faq2A": "Check your balance on Anthropic Console",
+    "faq3Q": "Discovery questions?",
+    "faq3A": "You can leave and return — progress is saved",
+    "contactBtn": "📧 Contact Support"
   }
 }

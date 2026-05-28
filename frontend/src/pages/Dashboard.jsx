@@ -193,24 +193,24 @@ export default function Dashboard() {
             ) : (
               <>
                 <div className="empty-state__icon">⚡</div>
-                <div className="empty-state__title">ברוך הבא ל-Power Plan!</div>
-                <div className="empty-state__sub">תאר רעיון לאפליקציה ו-AI יבנה אותה בשבילך</div>
+                <div className="empty-state__title">{t('onboarding.welcome')}</div>
+                <div className="empty-state__sub">{t('onboarding.tagline')}</div>
                 <div className="dashboard-empty__steps">
                   <div className="dashboard-empty__step">
                     <span className="dashboard-empty__step-num">1</span>
-                    הגדר מפתח Anthropic בהגדרות
+                    {t('onboarding.step1')}
                   </div>
                   <div className="dashboard-empty__step">
                     <span className="dashboard-empty__step-num">2</span>
-                    לחץ "פרויקט חדש" ותאר את הרעיון
+                    {t('onboarding.step2')}
                   </div>
                   <div className="dashboard-empty__step">
                     <span className="dashboard-empty__step-num">3</span>
-                    ענה על שאלות גילוי ו-AI יבנה הכל
+                    {t('onboarding.step3')}
                   </div>
                 </div>
                 <button className="btn btn--primary dashboard-empty__cta" onClick={() => navigate('/new-project')}>
-                  התחל פרויקט ראשון →
+                  {t('onboarding.cta')}
                 </button>
               </>
             )}

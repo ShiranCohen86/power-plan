@@ -67,12 +67,14 @@ app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(requestLogger);
 
-app.use('/api', rateLimit({
+const globalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
-}));
+});
+app.use('/api', globalLimiter);
+app.use('/api/v1', globalLimiter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -95,6 +97,9 @@ app.get('/health/claude', (_req, res) => {
   res.json({ ok: hasKey, model: env.ANTHROPIC_MODEL });
 });
 
+// v1 prefix — canonical going forward
+app.use('/api/v1', routes);
+// Backward-compat: keep unversioned /api working for 3 months (deprecation: 2026-09-01)
 app.use('/api', routes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found', path: _req.originalUrl }));
 

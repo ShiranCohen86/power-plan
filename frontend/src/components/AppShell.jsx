@@ -121,30 +121,30 @@ export default function AppShell({ children }) {
       {showHelp && (
         <BottomSheet onClose={() => setShowHelp(false)}>
           <div className="help-panel">
-            <h3 className="help-panel__title">❓ עזרה מהירה</h3>
+            <h3 className="help-panel__title">{t('help.title')}</h3>
             <div className="help-panel__section">
-              <h4>כיצד להשיג מפתח Anthropic</h4>
-              <p>עבור ל-<strong>console.anthropic.com</strong> → API Keys → Create Key. העתק את המפתח והדבק בהגדרות.</p>
+              <h4>{t('help.anthropicTitle')}</h4>
+              <p>{t('help.anthropicDesc')}</p>
             </div>
             <div className="help-panel__section">
-              <h4>מה עושה כל שלב בפייפליין</h4>
+              <h4>{t('help.pipelineTitle')}</h4>
               <ul>
-                <li>שלבים 1-12: Claude מתכנן — ניתוח רעיון, PRD, ארכיטקטורה, DB, DevOps</li>
-                <li>שלבים 13-18: Claude כותב קוד — Backend, Frontend, Tests, Config</li>
-                <li>שלב פריסה: GitHub push + Render deploy</li>
+                <li>{t('help.planning')}</li>
+                <li>{t('help.coding')}</li>
+                <li>{t('help.deploy')}</li>
               </ul>
             </div>
             <div className="help-panel__section">
-              <h4>שאלות נפוצות</h4>
+              <h4>{t('help.faqTitle')}</h4>
               <ul>
-                <li><strong>הפייפליין נתקע?</strong> לחץ "נסה שוב" בדף הפרויקט</li>
-                <li><strong>שגיאת quota?</strong> בדוק יתרה ב-Anthropic Console</li>
-                <li><strong>שאלות גילוי?</strong> ניתן לצאת ולחזור — ההתקדמות נשמרת</li>
+                <li><strong>{t('help.faq1Q')}</strong> {t('help.faq1A')}</li>
+                <li><strong>{t('help.faq2Q')}</strong> {t('help.faq2A')}</li>
+                <li><strong>{t('help.faq3Q')}</strong> {t('help.faq3A')}</li>
               </ul>
             </div>
             <div className="help-panel__section">
               <a href="mailto:shiranc86@gmail.com" className="btn btn--secondary btn--full">
-                📧 צור קשר עם תמיכה
+                {t('help.contactBtn')}
               </a>
             </div>
           </div>
