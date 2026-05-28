@@ -1180,7 +1180,10 @@ input, select, textarea {
   .settings-page__heading { padding: 16px 12px 0; }
 
   // Task management
-  .task-management__header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px; }
+  .task-management__header { grid-template-columns: auto 1fr; grid-template-rows: auto auto; padding: 10px 16px; }
+  .task-management__back-wrap { grid-column: 1; grid-row: 1; }
+  .task-management__title { grid-column: 2; grid-row: 1; justify-self: start; font-size: 14px; max-width: none; }
+  .task-management__stats { grid-column: 1 / -1; grid-row: 2; justify-self: start; gap: 12px; }
   .task-management__stats { flex-wrap: wrap; gap: 8px; }
   .task-management__tabs { padding: 0 12px; }
   .task-management__body { padding: 12px; }
@@ -1235,14 +1238,23 @@ input, select, textarea {
   flex: 1; overflow-y: auto; min-height: 0; background: var(--bg); color: var(--text);
 
   &__header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 24px; border-bottom: 1px solid var(--border);
-    background: var(--surface-1);
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 12px 24px; border-bottom: 1px solid var(--border);
+    background: var(--surface-1); gap: 8px;
   }
-  &__breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-  &__back { color: var(--brand-primary-light); &:hover { text-decoration: underline; } }
-  &__sep { color: var(--text-subtle); }
-  &__stats { display: flex; gap: 20px; font-size: 13px; color: var(--text-muted);
+  &__back-wrap { justify-self: start; }
+  &__back-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--text-muted); font-size: 13px;
+    padding: 6px 10px; border-radius: $radius;
+    &:hover { background: var(--surface-3); color: var(--text); text-decoration: none; }
+  }
+  &__title {
+    justify-self: center; text-align: center;
+    font-size: 16px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;
+  }
+  &__stats { justify-self: end; display: flex; gap: 20px; font-size: 13px; color: var(--text-muted);
     strong { color: var(--text); }
   }
 
@@ -1262,8 +1274,9 @@ input, select, textarea {
   &__loading { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px; color: var(--text-muted); }
 
   &__empty { text-align: center; padding: 60px 20px; color: var(--text-muted);
-    p { max-width: 360px; margin: 0 auto; line-height: 1.7; }
+    p { max-width: 360px; margin: 0 auto 20px; line-height: 1.7; }
   }
+  &__extract-btn { margin-top: 4px; }
 
   &__epics { display: flex; flex-direction: column; gap: 12px; }
 }

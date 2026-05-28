@@ -13,3 +13,6 @@ export const getTasksBySprint = (projectId, sprintIndex) =>
 
 export const updateTaskStatus = (projectId, taskId, status) =>
   safeRequest({ method: 'patch', url: `${base(projectId)}/${taskId}/status`, data: { status } });
+
+export const triggerExtract = (projectId) =>
+  safeRequest({ method: 'post', url: `${base(projectId)}/extract` });

@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { fetchEpicTree, selectEpicTree, selectTasksStatus } from '../store/slices/tasksSlice';
 import { fetchSprints } from '../store/slices/sprintsSlice';
 import { selectProjectById } from '../store/slices/projectsSlice';
+import { triggerExtract } from '../api/tasks.api';
 import EpicGroup from '../components/tasks/EpicGroup';
 import SprintBoard from '../components/tasks/SprintBoard';
 import { useProjectSocket } from '../hooks/useProjectSocket';
@@ -16,7 +18,19 @@ export default function TaskManagement() {
   const project            = useSelector(selectProjectById(projectId));
   const epics              = useSelector(selectEpicTree(projectId));
   const status             = useSelector(selectTasksStatus);
-  const [view, setView]    = useState('epics');
+  const [view, setView]      = useState('epics');
+  const [extracting, setExtracting] = useState(false);
+
+  async function handleExtract() {
+    setExtracting(true);
+    try {
+      await triggerExtract(projectId);
+      toast.success(t('tasks.extractStarted'));
+    } catch (err) {
+      toast.error(err.message || t('tasks.extractError'));
+      setExtracting(false);
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchEpicTree(projectId));
@@ -46,20 +60,14 @@ export default function TaskManagement() {
   return (
     <div className="task-management">
       <div className="task-management__header">
-        <div className="task-management__breadcrumb">
-          <Link to="/dashboard" className="task-management__back">{t('tasks.back')}</Link>
-          {project && (
-            <>
-              <span className="task-management__sep">/</span>
-              <Link to={`/projects/${projectId}/workspace`} className="task-management__back">
-                {project.title}
-              </Link>
-            </>
-          )}
-          <span className="task-management__sep">/</span>
-          <span>{t('tasks.title')}</span>
+        <div className="task-management__back-wrap">
+          <Link to={`/projects/${projectId}/workspace`} className="task-management__back-btn">
+            ← {t('tasks.backToProject')}
+          </Link>
         </div>
-
+        <div className="task-management__title">
+          {project?.title || t('tasks.title')}
+        </div>
         <div className="task-management__stats">
           <span className="task-management__stat">
             <strong>{totalTasks}</strong> {t('tasks.title')}
@@ -98,6 +106,13 @@ export default function TaskManagement() {
             {epics.length === 0 ? (
               <div className="task-management__empty">
                 <p>{t('tasks.empty')}</p>
+                <button
+                  className="btn btn--primary task-management__extract-btn"
+                  onClick={handleExtract}
+                  disabled={extracting}
+                >
+                  {extracting ? t('tasks.extracting') : t('tasks.extractBtn')}
+                </button>
               </div>
             ) : (
               epics.map((epic, i) => (

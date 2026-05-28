@@ -197,11 +197,16 @@
   },
   "tasks": {
     "back": "← Dashboard",
+    "backToProject": "Back to Project",
     "title": "Tasks",
     "tabEpics": "Epics & Features",
     "tabSprints": "Sprint Board",
     "loading": "Loading tasks...",
     "empty": "Tasks are generated automatically after the Dev Planning phase (phase 10).",
+    "extractBtn": "Generate Tasks",
+    "extracting": "Generating tasks...",
+    "extractStarted": "Task extraction started — will update when done",
+    "extractError": "Error generating tasks",
     "completed": "Completed",
     "epics": "Epics"
   },

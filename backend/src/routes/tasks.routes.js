@@ -17,6 +17,7 @@ const statusBody = {
 router.get('/',                                ctrl.list);
 router.get('/epics',                           ctrl.epicTree);
 router.get('/sprint/:sprintIndex',             ctrl.bySprint);
+router.post('/extract',                        ctrl.extract);
 router.patch('/:taskId/status', validate(statusBody), ctrl.updateStatus);
 
 module.exports = router;
