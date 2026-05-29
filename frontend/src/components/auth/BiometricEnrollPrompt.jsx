@@ -24,13 +24,7 @@ export default function BiometricEnrollPrompt({ onDone }) {
   }
 
   return (
-    <>
-      <div className="login-brand">
-        <span className="login-brand__icon">⚡</span>
-        <span className="login-brand__name">{t('app.name')}</span>
-      </div>
-
-      <div className="login-card biometric-enroll-card">
+    <div className="login-card biometric-enroll-card">
         {status === 'success' ? (
           <div className="biometric-enroll__success">
             <span className="biometric-enroll__success-icon">✅</span>
@@ -63,7 +57,6 @@ export default function BiometricEnrollPrompt({ onDone }) {
             </p>
           </>
         )}
-      </div>
-    </>
+    </div>
   );
 }

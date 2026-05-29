@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -71,6 +71,15 @@ export default function Login() {
 
   useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line
 
+  // Hide Google section if the button never rendered (script blocked / network issue)
+  useEffect(() => {
+    if (!googleReady) return;
+    const timer = setTimeout(() => {
+      if (!document.querySelector('.google-btn-wrap iframe')) setGoogleReady(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [googleReady]);
+
   const isLoading = authStatus === 'loading';
   const error     = localError || authError;
 
@@ -98,19 +107,12 @@ export default function Login() {
     dispatch(clearAuthError());
   }
 
-  if (showBiometricEnroll) return (
-    <div className="login-page">
-      <BiometricEnrollPrompt onDone={() => {
-        setShowBiometricEnroll(false);
-        afterBiometricRef.current?.();
-      }} />
-    </div>
-  );
-
-  if (showApiKeyPrompt) return <ApiKeyPrompt />;
-
-  return (
-    <div className="login-page">
+  const loginHeader = (
+    <header className="login-header">
+      <Link to="/" className="login-header__brand">
+        <span className="login-header__icon">⚡</span>
+        <span className="login-header__name">{t('app.name')}</span>
+      </Link>
       <button
         type="button"
         className="login-page__lang"
@@ -118,14 +120,29 @@ export default function Login() {
       >
         {lang === 'he' ? 'EN' : 'עב'}
       </button>
+    </header>
+  );
 
-      <div className="login-brand">
-        <span className="login-brand__icon">⚡</span>
-        <span className="login-brand__name">{t('app.name')}</span>
-        <span className="login-brand__tagline">{t('app.tagline')}</span>
+  if (showBiometricEnroll) return (
+    <div className="login-page">
+      {loginHeader}
+      <div className="login-body">
+        <BiometricEnrollPrompt onDone={() => {
+          setShowBiometricEnroll(false);
+          afterBiometricRef.current?.();
+        }} />
       </div>
+    </div>
+  );
 
-      <div className="login-card">
+  if (showApiKeyPrompt) return <ApiKeyPrompt />;
+
+  return (
+    <div className="login-page">
+      {loginHeader}
+
+      <div className="login-body">
+        <div className="login-card">
         <h2 className="login-card__title">
           {isRegister ? t('auth.register') : t('auth.signIn')}
         </h2>
@@ -134,7 +151,7 @@ export default function Login() {
           <>
             <GoogleButton
               onSuccess={handleGoogleSuccess}
-              onError={() => setLocalError('Google sign-in failed')}
+              onError={() => setGoogleReady(false)}
             />
             <div className="login-divider">
               <span>{t('auth.orEmail')}</span>
@@ -204,6 +221,7 @@ export default function Login() {
             </>
           )}
         </p>
+        </div>
       </div>
     </div>
   );
