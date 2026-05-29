@@ -7,13 +7,12 @@ const agentlog       = require('./agentlog.service');
 const { getAgent }   = require('./ai/agents.registry');
 const { runMeeting } = require('./ai/meeting-runner.service');
 const { extractTasks } = require('./ai/task-extractor.service');
-const { decrypt }    = require('./encryption.service');
 const queue          = require('./pipeline-queue.service');
 const notifier       = require('./phase-notifier.service');
 const { autoExtractLessons } = require('./lesson-extractor.service');
+const { resolveApiKey } = require('./pipeline-utils.service');
 const { emitToProject } = require('../sockets');
 const logger         = require('../utils/logger');
-const User           = require('../models/User');
 
 const PHASE_CONFIGS = [
   { type: 'idea_understanding',  agentName: 'IdeaAnalystAgent' },
@@ -137,17 +136,7 @@ async function _handleQuotaExhausted(projectId, phaseIndex, err) {
 }
 
 async function _getUserCtx(project) {
-  const [user, projectWithKey] = await Promise.all([
-    User.findById(project.ownerId).select('+settings.anthropicApiKey').lean(),
-    Project.findById(project._id).select('+settings.anthropicApiKey').lean(),
-  ]);
-
-  const projectKey = projectWithKey?.settings?.anthropicApiKey
-    ? decrypt(projectWithKey.settings.anthropicApiKey) : null;
-  const userKey = user?.settings?.anthropicApiKey
-    ? decrypt(user.settings.anthropicApiKey) : null;
-
-  return { plan: user?.plan || 'starter', apiKey: projectKey || userKey };
+  return resolveApiKey(project._id, project.ownerId);
 }
 
 async function _runSinglePhase(projectId, phaseIndex, refineFeedback = null) {

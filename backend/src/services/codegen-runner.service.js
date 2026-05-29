@@ -8,8 +8,7 @@ const { parseFiles }   = require('./file-parser.service');
 const { scan }         = require('./secret-scanner.service');
 const r2               = require('./r2.service');
 const queue            = require('./pipeline-queue.service');
-const { decrypt }      = require('./encryption.service');
-const User             = require('../models/User');
+const { resolveApiKey, resolveServiceEnv } = require('./pipeline-utils.service');
 const { emitToProject } = require('../sockets');
 const logger           = require('../utils/logger');
 
@@ -238,33 +237,11 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
 }
 
 async function _getUserCtx(project) {
-  const [user, projectWithKey] = await Promise.all([
-    User.findById(project.ownerId).select('+settings.anthropicApiKey').lean(),
-    Project.findById(project._id).select('+settings.anthropicApiKey').lean(),
+  const [keyCtx, serviceEnv] = await Promise.all([
+    resolveApiKey(project._id, project.ownerId),
+    resolveServiceEnv(project._id),
   ]);
-  let apiKey = null;
-  if (projectWithKey?.settings?.anthropicApiKey) {
-    try { apiKey = decrypt(projectWithKey.settings.anthropicApiKey); } catch { }
-  }
-  if (!apiKey && user?.settings?.anthropicApiKey) {
-    try { apiKey = decrypt(user.settings.anthropicApiKey); } catch { }
-  }
-  const serviceEnv = await _getServiceCredentials(project._id);
-  return { plan: user?.plan || 'starter', apiKey, serviceEnv };
-}
-
-async function _getServiceCredentials(projectId) {
-  const project = await Project.findById(projectId)
-    .select('+requiredServices.credentials')
-    .lean();
-  const env = {};
-  for (const svc of (project?.requiredServices || [])) {
-    if (!svc.credentials) continue;
-    for (const [key, encVal] of Object.entries(svc.credentials)) {
-      try { env[key] = decrypt(encVal); } catch { }
-    }
-  }
-  return env;
+  return { ...keyCtx, serviceEnv };
 }
 
 async function _getPlanningDocs(projectId, types) {
