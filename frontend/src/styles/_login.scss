@@ -4,17 +4,21 @@
 // ── Login ──────────────────────────────────────────────────────────────────
 
 .login-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(160deg, #7c3aed 0%, #06b6d4 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  animation: fade-in .4s ease;
-  position: relative;
+  justify-content: center;
   overflow: hidden;
+  position: relative;
+  animation: fade-in .4s ease;
+
+  // Mobile: bottom-sheet style
+  @media (max-width: 599px) {
+    justify-content: flex-end;
+  }
 
   &__lang {
     position: absolute;
@@ -30,57 +34,84 @@
     cursor: pointer;
     backdrop-filter: blur(8px);
     transition: background .15s;
+    z-index: 10;
 
     &:hover { background: rgba(255, 255, 255, .25); }
   }
 }
 
 .login-brand {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 32px;
+  gap: 4px;
+  margin-bottom: 24px;
   color: #fff;
   text-align: center;
   padding: 0 24px;
 
-  &__icon { font-size: 42px; line-height: 1; }
+  &__icon { font-size: 36px; line-height: 1; }
 
   &__name {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     letter-spacing: -.5px;
   }
 
   &__tagline {
-    font-size: 14px;
+    font-size: 13px;
     opacity: .75;
-    max-width: 280px;
+    max-width: 260px;
+  }
+
+  // Hidden on small mobile to save vertical space
+  @media (max-width: 599px) {
+    margin-bottom: 12px;
+    &__tagline { display: none; }
+    &__icon    { font-size: 28px; }
+    &__name    { font-size: 20px; }
   }
 }
 
 .login-card {
   width: 100%;
-  max-width: 480px;
   background: #fff;
-  border-radius: 24px 24px 0 0;
-  padding: 32px 28px max(28px, env(safe-area-inset-bottom, 28px));
   animation: modal-in .35s cubic-bezier(.22, 1, .36, 1) both;
-  box-shadow: 0 -4px 32px rgba(0, 0, 0, .18);
 
-  @media (min-width: 600px) {
-    border-radius: 24px;
+  // Mobile: bottom-sheet
+  @media (max-width: 599px) {
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px max(20px, env(safe-area-inset-bottom, 20px));
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, .18);
+  }
+
+  // Tablet
+  @media (min-width: 600px) and (max-width: 1023px) {
+    max-width: 440px;
+    border-radius: 20px;
+    padding: 28px 28px;
+    max-height: calc(100dvh - 160px);
+    overflow-y: auto;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, .22);
+  }
+
+  // Desktop
+  @media (min-width: 1024px) {
     max-width: 420px;
-    margin-bottom: 48px;
-    padding: 36px 32px;
+    border-radius: 24px;
+    padding: 32px;
+    max-height: calc(100dvh - 180px);
+    overflow-y: auto;
     box-shadow: 0 8px 48px rgba(0, 0, 0, .22);
   }
 
   &__title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    margin: 0 0 20px;
+    margin: 0 0 16px;
     color: #111827;
   }
 
@@ -112,6 +143,7 @@
 .google-btn-wrap {
   display: flex;
   justify-content: center;
+  min-height: 44px;
   margin-bottom: 4px;
 }
 
@@ -119,7 +151,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 16px 0;
+  margin: 12px 0;
   color: #9ca3af;
   font-size: 13px;
 
@@ -149,8 +181,8 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 10px;
+  padding: 11px;
   background: transparent;
   border: 1px solid #e5e7eb;
   border-radius: $radius;
@@ -178,7 +210,7 @@
 
 .login-switch {
   font-size: 13px;
-  margin-top: 16px;
+  margin-top: 14px;
   text-align: center;
   color: #6b7280;
 }

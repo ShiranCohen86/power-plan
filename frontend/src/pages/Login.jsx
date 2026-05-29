@@ -28,6 +28,7 @@ export default function Login() {
   const [passInput,        setPassInput]        = useState('');
   const [localError,       setLocalError]       = useState('');
   const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
+  const [googleReady,      setGoogleReady]      = useState(!!import.meta.env.VITE_GOOGLE_CLIENT_ID);
   const justRegisteredRef = useRef(false);
 
   useEffect(() => {
@@ -96,14 +97,17 @@ export default function Login() {
           {isRegister ? t('auth.register') : t('auth.signIn')}
         </h2>
 
-        <GoogleButton
-          onSuccess={handleGoogleSuccess}
-          onError={() => setLocalError('Google sign-in failed')}
-        />
-
-        <div className="login-divider">
-          <span>{t('auth.orEmail')}</span>
-        </div>
+        {googleReady && (
+          <>
+            <GoogleButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => setLocalError('Google sign-in failed')}
+            />
+            <div className="login-divider">
+              <span>{t('auth.orEmail')}</span>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} noValidate>
           {isRegister && (
