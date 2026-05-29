@@ -114,7 +114,7 @@ export default function Home() {
             {lang === 'he' ? 'EN' : 'עב'}
           </button>
           <Link to="/login" className="btn-ghost home-nav__login">{t('home.signIn')}</Link>
-          <Link to="/login?register=1" className="btn btn--primary home-nav__cta">{t('home.startFree')}</Link>
+          <Link to="/login" className="btn btn--primary home-nav__cta">{t('home.signIn')}</Link>
         </div>
       </nav>
 

@@ -84,7 +84,7 @@
     font-size: 54px; font-weight: 800; line-height: 1.08; margin: 0; color: var(--text);
   }
   &__accent {
-    background: linear-gradient(110deg, #fff 10%, var(--brand-primary) 55%, var(--brand-accent) 100%);
+    background: linear-gradient(110deg, var(--text) 10%, var(--brand-primary) 55%, var(--brand-accent) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
 
@@ -359,7 +359,6 @@
   .home-pipeline { padding: 28px 16px; }
 
   .home-nav { padding: 0 16px; }
-  .home-nav__lang  { display: none; }
   .home-nav__login { display: none; }
 
   .home-footer { padding: 16px; flex-wrap: wrap; gap: 8px; }
