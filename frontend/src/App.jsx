@@ -1,28 +1,31 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
-import DOMPurify from 'dompurify';
 import { Toaster } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
 import BottomSheet from './components/ui/BottomSheet.jsx';
+import {
+  InstallSheetContent, UpdateSheetContent, VersionSheetContent,
+  isStandalone, isIOS, INSTALL_DISMISSED_KEY,
+} from './components/ui/PWASheets.jsx';
 
-const Home              = lazy(() => import('./pages/Home.jsx'));
-const Login             = lazy(() => import('./pages/Login.jsx'));
-const Dashboard         = lazy(() => import('./pages/Dashboard.jsx'));
-const NewProject        = lazy(() => import('./pages/NewProject.jsx'));
-const ProjectWorkspace  = lazy(() => import('./pages/ProjectWorkspace.jsx'));
-const TaskManagement    = lazy(() => import('./pages/TaskManagement.jsx'));
-const Settings          = lazy(() => import('./pages/Settings.jsx'));
-const Admin             = lazy(() => import('./pages/Admin.jsx'));
-const Status            = lazy(() => import('./pages/Status.jsx'));
+const Home             = lazy(() => import('./pages/Home.jsx'));
+const Login            = lazy(() => import('./pages/Login.jsx'));
+const Dashboard        = lazy(() => import('./pages/Dashboard.jsx'));
+const NewProject       = lazy(() => import('./pages/NewProject.jsx'));
+const ProjectWorkspace = lazy(() => import('./pages/ProjectWorkspace.jsx'));
+const TaskManagement   = lazy(() => import('./pages/TaskManagement.jsx'));
+const Settings         = lazy(() => import('./pages/Settings.jsx'));
+const Admin            = lazy(() => import('./pages/Admin.jsx'));
+const Status           = lazy(() => import('./pages/Status.jsx'));
+
+const VERSION_KEY = 'pwa-version';
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
   componentDidCatch(error, info) {
-    // Log component stack to help diagnose production issues
     if (typeof console !== 'undefined') console.error('[ErrorBoundary]', error, info.componentStack);
   }
   render() {
@@ -49,24 +52,17 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function PageBoundary({ children }) {
-  return <ErrorBoundary page>{children}</ErrorBoundary>;
-}
+function PageBoundary({ children }) { return <ErrorBoundary page>{children}</ErrorBoundary>; }
 
 function PageFallback() {
-  return (
-    <div className="page-fallback">
-      <div className="pwa-spinner" />
-    </div>
-  );
+  return <div className="page-fallback"><div className="pwa-spinner" /></div>;
 }
 
-// Cold-start overlay — shown if auth bootstrap takes more than 2.5s
 function WakeUpOverlay() {
   const [dots, setDots] = useState('');
   useEffect(() => {
-    const t = setInterval(() => setDots((d) => (d.length >= 3 ? '' : d + '.')), 500);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setDots((d) => (d.length >= 3 ? '' : d + '.')), 500);
+    return () => clearInterval(timer);
   }, []);
   return (
     <div className="wakeup-overlay">
@@ -80,124 +76,12 @@ function WakeUpOverlay() {
   );
 }
 
-// ── Bottom sheet types ───────────────────────────────────────────────────────
-// 'install'  — show PWA install instructions (mobile browser, not installed)
-// 'update'   — new service worker took control mid-session
-// 'version'  — opened installed PWA after a version bump
-
-const INSTALL_DISMISSED_KEY = 'pwa-install-dismissed';
-const VERSION_KEY            = 'pwa-version';
-
-function isStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
-}
-
-function isIOS() {
-  return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
-function isMobileUA() {
-  return /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
-}
-
-// ── Install sheet content ────────────────────────────────────────────────────
-function InstallSheetContent({ deferredPrompt, onClose }) {
-  const { t } = useTranslation();
-
-  async function handleNativeInstall() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
-    onClose();
-  }
-
-  if (deferredPrompt) {
-    return (
-      <>
-        <div className="bsheet__title">{t('pwa.installTitle')}</div>
-        <div className="bsheet__body">{t('pwa.installBody')}</div>
-        <div className="bsheet__actions">
-          <button className="btn btn--primary" onClick={handleNativeInstall}>{t('pwa.installNow')}</button>
-          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.notNow')}</button>
-        </div>
-      </>
-    );
-  }
-
-  if (isIOS()) {
-    return (
-      <>
-        <div className="bsheet__title">{t('pwa.iosTitle')}</div>
-        <div className="bsheet__body">
-          <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('pwa.iosStep1')) }} />
-          <p style={{ marginTop: 8 }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('pwa.iosStep2')) }} />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>{t('pwa.iosHint')}</p>
-        </div>
-        <div className="bsheet__actions">
-          <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.iosGot')}</button>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className="bsheet__title">{t('pwa.genericTitle')}</div>
-      <div className="bsheet__body">
-        <p>{t('pwa.genericBody')}</p>
-        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-subtle)' }}>{t('pwa.genericHint')}</p>
-      </div>
-      <div className="bsheet__actions">
-        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.genericGot')}</button>
-      </div>
-    </>
-  );
-}
-
-// ── SW update sheet content ──────────────────────────────────────────────────
-function UpdateSheetContent({ onClose }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <div className="bsheet__title">{t('pwa.updateTitle')}</div>
-      <div className="bsheet__body">{t('pwa.updateBody')}</div>
-      <div className="bsheet__actions">
-        <button className="btn btn--primary" onClick={() => window.location.reload()}>{t('pwa.reload')}</button>
-        <button className="btn btn--secondary bsheet__dismiss" onClick={onClose}>{t('pwa.later')}</button>
-      </div>
-    </>
-  );
-}
-
-// ── Version changelog sheet content ─────────────────────────────────────────
-function VersionSheetContent({ prevVersion, currentVersion, onClose }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <div className="bsheet__title">{t('pwa.versionTitle')}</div>
-      <div className="bsheet__body">
-        {prevVersion
-          ? <span>{t('pwa.versionBody', { prev: prevVersion, next: currentVersion })}</span>
-          : <span>{t('pwa.versionBodyNew', { next: currentVersion })}</span>}
-        <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-subtle)' }}>
-          {t('pwa.versionNote')}
-        </p>
-      </div>
-      <div className="bsheet__actions">
-        <button className="btn btn--primary" onClick={onClose}>{t('pwa.great')}</button>
-      </div>
-    </>
-  );
-}
-
 export default function App() {
   const { loading } = useAuth();
-  const [showWakeUp, setShowWakeUp]     = useState(false);
-  const [sheet, setSheet]               = useState(null); // null | 'install' | 'update' | 'version'
-  const [deferredPrompt, setDeferred]   = useState(null);
-  const [prevVersion, setPrevVersion]   = useState(null);
+  const [showWakeUp,     setShowWakeUp]     = useState(false);
+  const [sheet,          setSheet]          = useState(null);
+  const [deferredPrompt, setDeferred]       = useState(null);
+  const [prevVersion,    setPrevVersion]    = useState(null);
 
   const closeSheet = useCallback(() => {
     if (sheet === 'install') localStorage.setItem(INSTALL_DISMISSED_KEY, '1');
@@ -205,29 +89,17 @@ export default function App() {
   }, [sheet]);
 
   useEffect(() => {
-    // ── Version check (only when running as installed PWA) ───────────────
     const current = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
     if (isStandalone() && current) {
       const stored = localStorage.getItem(VERSION_KEY);
-      if (stored && stored !== current) {
-        setPrevVersion(stored);
-        setSheet('version');
-      }
+      if (stored && stored !== current) { setPrevVersion(stored); setSheet('version'); }
       localStorage.setItem(VERSION_KEY, current);
     }
 
-    // ── SW update notification ───────────────────────────────────────────
-    // In a regular browser: reload silently. In installed PWA: show sheet.
     const onSwUpdated = () => {
-      if (isStandalone()) {
-        setSheet((s) => s === 'version' ? s : 'update');
-      } else {
-        window.location.reload();
-      }
+      if (isStandalone()) setSheet((s) => s === 'version' ? s : 'update');
+      else window.location.reload();
     };
-    window.addEventListener('sw-updated', onSwUpdated);
-
-    // ── PWA install prompt ───────────────────────────────────────────────
     const onBeforeInstall = (e) => {
       e.preventDefault();
       setDeferred(e);
@@ -235,14 +107,12 @@ export default function App() {
         setSheet((s) => s || 'install');
       }
     };
-    window.addEventListener('beforeinstallprompt', onBeforeInstall);
 
-    // iOS Safari cannot trigger beforeinstallprompt — show manual instructions immediately.
-    // Chrome/Edge/Android are handled by the beforeinstallprompt event above.
+    window.addEventListener('sw-updated', onSwUpdated);
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
     if (isIOS() && !isStandalone() && !localStorage.getItem(INSTALL_DISMISSED_KEY)) {
       setSheet((s) => s || 'install');
     }
-
     return () => {
       window.removeEventListener('sw-updated', onSwUpdated);
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);
@@ -251,11 +121,13 @@ export default function App() {
 
   useEffect(() => {
     if (!loading) { setShowWakeUp(false); return; }
-    const t = setTimeout(() => setShowWakeUp(true), 2500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShowWakeUp(true), 2500);
+    return () => clearTimeout(timer);
   }, [loading]);
 
   if (loading) return showWakeUp ? <WakeUpOverlay /> : <PageFallback />;
+
+  const currentVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
 
   return (
     <ErrorBoundary>
@@ -263,7 +135,7 @@ export default function App() {
         <BottomSheet onClose={closeSheet}>
           {sheet === 'install' && <InstallSheetContent deferredPrompt={deferredPrompt} onClose={closeSheet} />}
           {sheet === 'update'  && <UpdateSheetContent onClose={closeSheet} />}
-          {sheet === 'version' && <VersionSheetContent prevVersion={prevVersion} currentVersion={typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''} onClose={closeSheet} />}
+          {sheet === 'version' && <VersionSheetContent prevVersion={prevVersion} currentVersion={currentVersion} onClose={closeSheet} />}
         </BottomSheet>
       )}
       <Toaster
@@ -276,15 +148,15 @@ export default function App() {
       />
       <Suspense fallback={<PageFallback />}>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard"             element={<ProtectedRoute><AppShell><PageBoundary><Dashboard /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="/new-project"           element={<ProtectedRoute><AppShell><PageBoundary><NewProject /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/login"   element={<Login />} />
+          <Route path="/status"  element={<Status />} />
+          <Route path="/"        element={<PageBoundary><Home /></PageBoundary>} />
+          <Route path="/dashboard"              element={<ProtectedRoute><AppShell><PageBoundary><Dashboard /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/new-project"            element={<ProtectedRoute><AppShell><PageBoundary><NewProject /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><PageBoundary><ProjectWorkspace /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="/projects/:id/tasks"    element={<ProtectedRoute><AppShell><PageBoundary><TaskManagement /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="/settings"              element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="/admin"                 element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="/status" element={<Status />} />
-          <Route path="/" element={<PageBoundary><Home /></PageBoundary>} />
+          <Route path="/projects/:id/tasks"     element={<ProtectedRoute><AppShell><PageBoundary><TaskManagement /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/settings"               element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/admin"                  element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
