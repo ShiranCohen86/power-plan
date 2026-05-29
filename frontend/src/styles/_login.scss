@@ -216,3 +216,56 @@
   text-align: center;
   color: #6b7280;
 }
+
+// ── Biometric Enroll Prompt ────────────────────────────────────────────────
+.biometric-enroll-card {
+  text-align: center;
+}
+
+.biometric-enroll__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.biometric-enroll__icon {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.biometric-enroll__title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+}
+
+.biometric-enroll__sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  max-width: 280px;
+  line-height: 1.55;
+}
+
+.biometric-enroll__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.biometric-enroll__success-icon {
+  font-size: 44px;
+}
+
+.biometric-enroll__success-msg {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}

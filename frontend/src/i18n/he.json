@@ -78,7 +78,13 @@
     "hasAccount": "יש לך חשבון?",
     "orEmail": "או עם אימייל",
     "logout": "התנתקות",
-    "biometric": "טביעת אצבע / Face ID"
+    "biometric": "טביעת אצבע / Face ID",
+    "biometricEnrollTitle": "כניסה מהירה עם Face ID",
+    "biometricEnrollSub": "השתמש בטביעת אצבע או זיהוי פנים ולא תצטרך להזין סיסמה שוב.",
+    "biometricEnrollBtn": "🔐 הפעל כניסה ביומטרית",
+    "biometricEnrollSkip": "דלג — אפעיל מאוחר יותר בהגדרות",
+    "biometricEnrollOk": "הוגדר! בפעם הבאה תיכנס בלחיצה אחת.",
+    "biometricEnrollError": "ההרשמה נכשלה — נסה שוב"
   },
   "dashboard": {
     "title": "הפרויקטים שלי",

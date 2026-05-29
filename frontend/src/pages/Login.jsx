@@ -10,6 +10,7 @@ import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
 import ApiKeyPrompt from '../components/auth/ApiKeyPrompt.jsx';
 import GoogleButton from '../components/auth/GoogleButton.jsx';
 import BiometricButton from '../components/auth/BiometricButton.jsx';
+import BiometricEnrollPrompt from '../components/auth/BiometricEnrollPrompt.jsx';
 
 export default function Login() {
   const { t }           = useTranslation();
@@ -22,28 +23,51 @@ export default function Login() {
   const currentUser     = useSelector(selectCurrentUser);
   const lang            = useSelector(selectLanguage);
 
-  const [isRegister,       setIsRegister]       = useState(false);
-  const [nameInput,        setNameInput]        = useState('');
-  const [emailInput,       setEmailInput]       = useState('');
-  const [passInput,        setPassInput]        = useState('');
-  const [localError,       setLocalError]       = useState('');
-  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
-  const [googleReady,      setGoogleReady]      = useState(!!import.meta.env.VITE_GOOGLE_CLIENT_ID);
-  const justRegisteredRef = useRef(false);
+  const [isRegister,          setIsRegister]          = useState(false);
+  const [nameInput,           setNameInput]           = useState('');
+  const [emailInput,          setEmailInput]          = useState('');
+  const [passInput,           setPassInput]           = useState('');
+  const [localError,          setLocalError]          = useState('');
+  const [showApiKeyPrompt,    setShowApiKeyPrompt]    = useState(false);
+  const [showBiometricEnroll, setShowBiometricEnroll] = useState(false);
+  const [platformAvailable,   setPlatformAvailable]   = useState(false);
+  const [googleReady,         setGoogleReady]         = useState(!!import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  const justRegisteredRef  = useRef(false);
+  const afterBiometricRef  = useRef(null);
 
   useEffect(() => {
     if (searchParams.get('register') === '1') setIsRegister(true);
   }, [searchParams]);
 
   useEffect(() => {
+    if (!window.PublicKeyCredential) return;
+    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      .then((ok) => setPlatformAvailable(ok))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!currentUser) return;
-    if (justRegisteredRef.current) {
-      justRegisteredRef.current = false;
-      setShowApiKeyPrompt(true);
+
+    const proceed = () => {
+      if (justRegisteredRef.current) {
+        justRegisteredRef.current = false;
+        setShowApiKeyPrompt(true);
+      } else {
+        navigate(searchParams.get('redirect') || '/dashboard', { replace: true });
+      }
+    };
+
+    const shouldOfferBiometric =
+      platformAvailable && localStorage.getItem('pp-biometric') !== '1';
+
+    if (shouldOfferBiometric) {
+      afterBiometricRef.current = proceed;
+      setShowBiometricEnroll(true);
     } else {
-      navigate(searchParams.get('redirect') || '/dashboard', { replace: true });
+      proceed();
     }
-  }, [currentUser, navigate, searchParams]);
+  }, [currentUser, navigate, searchParams, platformAvailable]);
 
   useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line
 
@@ -73,6 +97,15 @@ export default function Login() {
     setLocalError('');
     dispatch(clearAuthError());
   }
+
+  if (showBiometricEnroll) return (
+    <div className="login-page">
+      <BiometricEnrollPrompt onDone={() => {
+        setShowBiometricEnroll(false);
+        afterBiometricRef.current?.();
+      }} />
+    </div>
+  );
 
   if (showApiKeyPrompt) return <ApiKeyPrompt />;
 

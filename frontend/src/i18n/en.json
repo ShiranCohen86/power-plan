@@ -78,7 +78,13 @@
     "hasAccount": "Already have an account?",
     "orEmail": "or with email",
     "logout": "Log out",
-    "biometric": "Touch ID / Face ID"
+    "biometric": "Touch ID / Face ID",
+    "biometricEnrollTitle": "Fast login with Face ID",
+    "biometricEnrollSub": "Use your fingerprint or face recognition — no password needed next time.",
+    "biometricEnrollBtn": "🔐 Enable Biometric Login",
+    "biometricEnrollSkip": "Skip — I'll set it up later in Settings",
+    "biometricEnrollOk": "Done! Next time you'll sign in with one tap.",
+    "biometricEnrollError": "Registration failed — please try again"
   },
   "dashboard": {
     "title": "My Projects",
