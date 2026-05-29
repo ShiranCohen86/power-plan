@@ -170,21 +170,35 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
   }
   &__step {
-    position: relative; padding: 32px;
+    position: relative; padding: 20px 20px 24px;
     background: var(--surface); border: 1px solid var(--border); border-radius: $radius-lg;
     overflow: hidden;
     transition: border-color var(--ease-base);
     &:hover { border-color: var(--border-subtle); }
   }
   &__num {
-    position: absolute; top: -4px; inset-inline-end: 12px;
+    // inset-inline-start = RIGHT in RTL
+    position: absolute; top: -4px; inset-inline-start: 12px;
     font-size: 88px; font-weight: 900; line-height: 1;
     color: var(--surface-3); pointer-events: none;
     font-variant-numeric: tabular-nums;
   }
-  &__icon  { font-size: 32px; margin-bottom: 14px; }
-  &__title { font-size: 18px; font-weight: 700; margin: 0 0 10px; word-break: break-word; overflow-wrap: break-word; }
-  &__sub   { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0; word-break: break-word; overflow-wrap: break-word; }
+  &__icon {
+    // inset-inline-end = LEFT in RTL
+    position: absolute; top: 16px; inset-inline-end: 16px;
+    font-size: 28px; line-height: 1;
+  }
+  &__title {
+    // margin-top places title over the lower part of the large number
+    position: relative; z-index: 1;
+    font-size: 18px; font-weight: 700; margin: 46px 0 8px;
+    word-break: break-word; overflow-wrap: break-word;
+  }
+  &__sub {
+    position: relative; z-index: 1;
+    font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0;
+    word-break: break-word; overflow-wrap: break-word;
+  }
 }
 
 // ── Features ─────────────────────────────────────────────────────────────────
@@ -350,7 +364,7 @@
   .home-features { padding: 56px 16px; }
   .home-features__grid { grid-template-columns: 1fr; gap: 16px; }
 
-  .home-how__step { padding: 24px; }
+  .home-how__step { padding: 18px 16px 20px; }
   .home-feat-card { padding: 16px 18px; }
 
   .home-section-title { font-size: 26px; }
