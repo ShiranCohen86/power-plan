@@ -99,14 +99,6 @@ export default function ProjectWorkspace() {
         onJoinMeeting={() => ws.setShowMeetingRoom(true)}
       />
 
-      {/* Fallback key hint */}
-      {ws.hasApiKey && ws.usingFallback && (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '5px 16px',
-                      background: 'rgba(124,58,237,0.08)', borderBottom: '1px solid var(--border)' }}>
-          💡 משתמש במפתח Anthropic הגלובלי שלך —{' '}
-          <a href="/settings" style={{ color: 'var(--brand-primary-light)' }}>הגדר מפתח פרויקט ייעודי</a>
-        </div>
-      )}
 
       {/* Missing API key */}
       {ws.hasApiKey === false && (
@@ -174,13 +166,22 @@ export default function ProjectWorkspace() {
             </div>
           )}
 
-          {ws.canResume && (
-            <div className="workspace-start-btn">
-              <button className="btn btn--primary btn--full" onClick={ws.isFailed ? ws.handleRetry : ws.handleStart}>
-                {ws.isPaused ? '▶️ המשך Pipeline' : '🔄 נסה שוב'}
-              </button>
-            </div>
-          )}
+          {ws.canResume && (() => {
+            const nextPhase = ws.phases.find((p) =>
+              p.status === 'pending' || p.status === 'interrupted' || p.status === 'failed'
+            );
+            const nextCfg = nextPhase ? ALL_PHASES.find((p) => p.index === nextPhase.index) : null;
+            const nextLabel = nextCfg ? (lang === 'he' ? nextCfg.nameHe : nextCfg.name) : null;
+            return (
+              <div className="workspace-start-btn">
+                <button className="btn btn--primary btn--full" onClick={ws.isFailed ? ws.handleRetry : ws.handleStart}>
+                  {ws.isPaused
+                    ? `▶️ המשך: ${nextLabel || 'שלב הבא'}`
+                    : '🔄 נסה שוב'}
+                </button>
+              </div>
+            );
+          })()}
         </aside>
 
         <div className="workspace-resize-handle" onMouseDown={(e) => ws.startResize(e, 'sidebar')} />
@@ -239,12 +240,7 @@ export default function ProjectWorkspace() {
                     <div style={{ fontSize: 48 }}>🚀</div>
                     <p>לחץ "התחל" בסרגל הצד כדי להתחיל את פייפליין התכנון</p>
                   </div>
-                ) : (
-                  <div className="workspace-empty">
-                    <div style={{ fontSize: 48 }}>{lang === 'he' ? '👉' : '👈'}</div>
-                    <p>בחר שלב מהרשימה כדי לצפות במסמך</p>
-                  </div>
-                )}
+                ) : null}
               </div>
             )}
           </main>

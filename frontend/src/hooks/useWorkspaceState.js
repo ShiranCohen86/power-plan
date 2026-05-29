@@ -134,6 +134,15 @@ export function useWorkspaceState(id) {
           setAwaiting(waitingPhase.index);
           setActive(waitingPhase.index);
           loadDocument(waitingPhase.index);
+        } else {
+          // Auto-select the last completed phase so the doc is shown immediately
+          const lastDone = (statusRes.phases || [])
+            .filter((p) => p.status === 'completed')
+            .sort((a, b) => b.index - a.index)[0];
+          if (lastDone) {
+            setActive(lastDone.index);
+            loadDocument(lastDone.index);
+          }
         }
 
         if (projRes.status === 'awaiting_credentials') {
