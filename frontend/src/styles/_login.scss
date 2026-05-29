@@ -172,10 +172,35 @@
   }
 }
 
+.google-custom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+  margin-bottom: 4px;
+
+  &:hover {
+    background: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+  }
+
+  &:active { background: #f1f3f4; }
+  &:disabled { opacity: .6; cursor: not-allowed; }
+}
+
 .google-btn-wrap {
   display: flex;
   justify-content: center;
-  min-height: 44px;
   margin-bottom: 4px;
 }
 

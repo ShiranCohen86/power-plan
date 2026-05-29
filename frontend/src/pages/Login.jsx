@@ -71,15 +71,6 @@ export default function Login() {
 
   useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line
 
-  // Hide Google section if the button never rendered (script blocked / network issue)
-  useEffect(() => {
-    if (!googleReady) return;
-    const timer = setTimeout(() => {
-      if (!document.querySelector('.google-btn-wrap iframe')) setGoogleReady(false);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [googleReady]);
-
   const isLoading = authStatus === 'loading';
   const error     = localError || authError;
 

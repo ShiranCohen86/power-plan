@@ -192,14 +192,23 @@ async function listUsers(query) {
 
 // ── Google OAuth ───────────────────────────────────────────────────────────
 
-async function loginWithGoogle(idToken, { ip, userAgent } = {}) {
+async function loginWithGoogle(token, { ip, userAgent } = {}) {
   if (!env.GOOGLE_CLIENT_ID) throw ApiError.badRequest('Google OAuth not configured');
 
-  const ticket = await googleClient.verifyIdToken({
-    idToken,
-    audience: env.GOOGLE_CLIENT_ID,
-  });
-  const { sub: googleId, email, name, picture: avatar } = ticket.getPayload();
+  let googleId, email, name, avatar;
+
+  if (token.split('.').length === 3) {
+    // id_token (JWT) — verify with Google's public keys
+    const ticket = await googleClient.verifyIdToken({ idToken: token, audience: env.GOOGLE_CLIENT_ID });
+    ({ sub: googleId, email, name, picture: avatar } = ticket.getPayload());
+  } else {
+    // access_token — fetch userinfo from Google
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw ApiError.unauthorized('Invalid Google access token');
+    ({ sub: googleId, email, name, picture: avatar } = await res.json());
+  }
   if (!email) throw ApiError.badRequest('Google account has no email');
 
   let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
