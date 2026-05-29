@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
 import BottomSheet from './components/ui/BottomSheet.jsx';
 
+const Home              = lazy(() => import('./pages/Home.jsx'));
 const Login             = lazy(() => import('./pages/Login.jsx'));
 const Dashboard         = lazy(() => import('./pages/Dashboard.jsx'));
 const NewProject        = lazy(() => import('./pages/NewProject.jsx'));
@@ -283,8 +284,8 @@ export default function App() {
           <Route path="/settings"              element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/admin"                 element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/status" element={<Status />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<PageBoundary><Home /></PageBoundary>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>
