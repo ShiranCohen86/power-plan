@@ -2783,7 +2783,7 @@ input, select, textarea {
     padding: 6px 12px; border-radius: $radius-full; flex-shrink: 0;
     background: var(--surface-2); border: 1px solid var(--border);
     font-size: 12px; white-space: nowrap;
-    transition: border-color $ease-base, background $ease-base;
+    transition: border-color var(--ease-base), background var(--ease-base);
     &:hover { border-color: var(--border-subtle); background: var(--brand-primary-alpha-10); }
   }
   &__chip-name { color: var(--text-muted); font-weight: 500; }
@@ -2800,7 +2800,7 @@ input, select, textarea {
     position: relative; padding: 32px;
     background: var(--surface); border: 1px solid var(--border); border-radius: $radius-lg;
     overflow: hidden;
-    transition: border-color $ease-base;
+    transition: border-color var(--ease-base);
     &:hover { border-color: var(--border-subtle); }
   }
   &__num {
@@ -2831,7 +2831,7 @@ input, select, textarea {
 .home-feat-card {
   padding: 32px;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius-lg;
-  transition: border-color $ease-base, box-shadow $ease-base;
+  transition: border-color var(--ease-base), box-shadow var(--ease-base);
   &:hover { border-color: var(--brand-primary-alpha-25); box-shadow: var(--shadow-brand); }
 
   &__icon  { font-size: 40px; margin-bottom: 16px; }
@@ -2875,7 +2875,7 @@ input, select, textarea {
     font-size: 16px; padding: 14px 36px; font-weight: 700;
     background: #fff; color: #0a0a0f; border-radius: $radius-lg; border: none;
     display: inline-block; text-decoration: none;
-    transition: opacity $ease-base;
+    transition: opacity var(--ease-base);
     &:hover { opacity: .9; }
   }
 }
@@ -2890,7 +2890,7 @@ input, select, textarea {
 
   &__item {
     background: var(--surface); border: 1px solid var(--border); border-radius: $radius-lg;
-    overflow: hidden; transition: border-color $ease-base;
+    overflow: hidden; transition: border-color var(--ease-base);
     &--open { border-color: var(--border-subtle); }
   }
   &__q {
