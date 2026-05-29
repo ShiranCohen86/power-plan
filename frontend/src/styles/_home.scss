@@ -170,7 +170,7 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
   }
   &__step {
-    position: relative; padding: 20px 20px 24px;
+    position: relative; padding: 20px 24px 26px;
     background: var(--surface); border: 1px solid var(--border); border-radius: $radius-lg;
     overflow: hidden;
     transition: border-color var(--ease-base);
@@ -191,7 +191,7 @@
   &__title {
     // margin-top places title over the lower part of the large number
     position: relative; z-index: 1;
-    font-size: 18px; font-weight: 700; margin: 46px 0 8px;
+    font-size: 18px; font-weight: 700; margin: 46px 0 10px;
     word-break: break-word; overflow-wrap: break-word;
   }
   &__sub {
@@ -216,7 +216,7 @@
 }
 
 .home-feat-card {
-  padding: 20px 24px;
+  padding: 24px;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius-lg;
   transition: border-color var(--ease-base), box-shadow var(--ease-base);
   &:hover { border-color: var(--brand-primary-alpha-25); box-shadow: var(--shadow-brand); }
@@ -224,12 +224,12 @@
   &__header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 6px;
+    gap: 14px;
+    margin-bottom: 10px;
     // RTL: title (first) → right, icon (last) → left
   }
 
-  &__icon  { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  &__icon  { font-size: 28px; line-height: 1; flex-shrink: 0; }
   &__title { font-size: 17px; font-weight: 700; margin: 0; flex: 1; word-break: break-word; }
   &__sub   { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; word-break: break-word; }
 }
@@ -364,8 +364,8 @@
   .home-features { padding: 56px 16px; }
   .home-features__grid { grid-template-columns: 1fr; gap: 16px; }
 
-  .home-how__step { padding: 18px 16px 20px; }
-  .home-feat-card { padding: 16px 18px; }
+  .home-how__step { padding: 20px 18px 24px; }
+  .home-feat-card { padding: 20px 18px; }
 
   .home-section-title { font-size: 26px; }
   .home-cta__title { font-size: 28px; }
