@@ -28,14 +28,28 @@
     &__row--desktop { display: none;  }
   }
 
-  // ── Mobile row internals ──────────────────────────────────────────────────
-  // RTL: first item = rightmost (hamburger), last item = leftmost (brand)
+  // ── Icon button token — all mobile action buttons share this size ─────────
+  // 40×40px touch target, 20px icon, consistent border-radius
+  &__icon-btn {
+    $s: 40px;
+    display: flex; align-items: center; justify-content: center;
+    width: $s; height: $s; min-width: $s; min-height: $s;
+    padding: 0; flex-shrink: 0;
+    background: transparent; border: 0; border-radius: $radius;
+    color: var(--text-muted); cursor: pointer;
+    font-size: 20px;
+    transition: background var(--ease-base), color var(--ease-base);
+    &:hover, &:active { background: var(--surface-3); color: var(--text); }
+    svg { font-size: 20px; }
+  }
+
+  // ── Mobile title (flex:1 center slot) ────────────────────────────────────
   &__title {
-    flex: 1;
+    flex: 1; min-width: 0;
     font-size: 15px; font-weight: 700; color: var(--text);
     text-align: center;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    padding: 0 4px;
+    padding: 0 6px;
   }
 
   // ── Brand ─────────────────────────────────────────────────────────────────
@@ -48,30 +62,22 @@
   &__brand-icon { font-size: 16px; line-height: 1; }
   &__brand-name { white-space: nowrap; }
 
-  // Stacked brand for mobile (icon + text below)
+  // Stacked brand for mobile — same 40px width as icon-btn, icon+label below
   &__brand--stacked {
-    flex-direction: column; gap: 1px;
-    padding: 4px 8px;
-    min-width: 44px; min-height: 44px;
-    justify-content: center;
-    .app-topbar__brand-icon { font-size: 18px; }
-    .app-topbar__brand-name { font-size: 9px; font-weight: 700; letter-spacing: .04em; opacity: .75; }
+    $s: 40px;
+    flex-direction: column; gap: 2px;
+    width: $s; height: $s; min-width: $s; min-height: $s;
+    padding: 0; justify-content: center; align-items: center;
+    border-radius: $radius;
+    .app-topbar__brand-icon { font-size: 20px; line-height: 1; }
+    .app-topbar__brand-name {
+      font-size: 8px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-muted); white-space: nowrap;
+    }
   }
 
-  // ── Back button ───────────────────────────────────────────────────────────
-  &__back {
-    display: flex; align-items: center; gap: 4px;
-    font-size: 13px; padding: 4px 8px; min-height: auto;
-    flex-shrink: 0;
-  }
-  &__back-label { @media (max-width: 380px) { display: none; } }
-
-  // ── Hamburger ─────────────────────────────────────────────────────────────
-  &__hamburger {
-    font-size: 18px; min-width: 44px; min-height: 44px; padding: 0; flex-shrink: 0;
-  }
-
-  // ── Search ────────────────────────────────────────────────────────────────
+  // ── Search row ─────────────────────────────────────────────────────────────
   &__search-row {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 16px 10px; border-top: 1px solid var(--border);
@@ -87,8 +93,9 @@
   &__search-close  { font-size: 16px; padding: 4px 8px; min-height: auto; }
 
   // ── Desktop-only items ─────────────────────────────────────────────────────
-  &__home { font-size: 13px; }
-  &__lang { font-size: 12px; padding: 4px 8px; min-height: auto; }
+  &__back  { display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 4px 8px; min-height: auto; flex-shrink: 0; }
+  &__home  { font-size: 13px; }
+  &__lang  { font-size: 12px; padding: 4px 8px; min-height: auto; }
   &__username {
     font-size: 12px; color: var(--text-muted);
     max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -100,6 +107,7 @@
   }
   &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
   &__admin  { font-size: 16px; padding: 4px 8px; min-height: auto; }
+  &__hamburger { font-size: 18px; min-width: 44px; min-height: 44px; padding: 0; flex-shrink: 0; }
 }
 
 // ── Hamburger menu (BottomSheet) ──────────────────────────────────────────────

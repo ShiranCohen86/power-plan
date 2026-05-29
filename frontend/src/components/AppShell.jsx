@@ -88,21 +88,20 @@ export default function AppShell({ children }) {
 
         {/* ── Mobile row (≤767px) ── RTL order: hamburger | back | title | search | bell | brand */}
         <div className="app-topbar__row app-topbar__row--mobile">
-          <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
+          <button className="app-topbar__icon-btn" onClick={openMenu} aria-label="תפריט">
             <MenuOutlined />
           </button>
           {showBack && (
-            <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
-              <ArrowForwardOutlined fontSize="small" />
-              <span className="app-topbar__back-label">חזור</span>
+            <button className="app-topbar__icon-btn" onClick={() => navigate(-1)} aria-label="חזור">
+              <ArrowForwardOutlined />
             </button>
           )}
           <span className="app-topbar__title">
-            {projectTitle || (isHome ? '' : '')}
+            {projectTitle}
           </span>
           {!isInProject && (
-            <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch}>
-              <SearchOutlined fontSize="small" />
+            <button className="app-topbar__icon-btn" onClick={openSearch} aria-label="חיפוש">
+              <SearchOutlined />
             </button>
           )}
           <NotificationBell />
