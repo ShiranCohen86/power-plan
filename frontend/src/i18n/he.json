@@ -77,7 +77,8 @@
     "noAccount": "אין לך חשבון?",
     "hasAccount": "יש לך חשבון?",
     "orEmail": "או עם אימייל",
-    "logout": "התנתקות"
+    "logout": "התנתקות",
+    "biometric": "טביעת אצבע / Face ID"
   },
   "dashboard": {
     "title": "הפרויקטים שלי",

@@ -61,10 +61,8 @@ const tasksSlice = createSlice({
         const { projectId, sprintIndex, items } = action.payload;
         state.sprintTasks[`${projectId}:${sprintIndex}`] = items;
       })
-      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState)
       .addCase(changeTaskStatus.fulfilled, (state, action) => {
         const { projectId, task } = action.payload;
-        // update in epicsByProject
         const epics = state.epicsByProject[projectId];
         if (epics) {
           for (const epic of epics) {
@@ -74,14 +72,14 @@ const tasksSlice = createSlice({
             }
           }
         }
-        // update in sprintTasks
         for (const key of Object.keys(state.sprintTasks)) {
           if (key.startsWith(projectId)) {
             const idx = state.sprintTasks[key].findIndex((t) => t._id === task._id);
             if (idx !== -1) state.sprintTasks[key][idx] = task;
           }
         }
-      });
+      })
+      .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState);
   },
 });
 

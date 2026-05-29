@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loginRequest, logoutRequest, fetchCurrentUser, signupRequest, silentRefresh } from '../../api/auth.api.js';
+import {
+  loginRequest, logoutRequest, fetchCurrentUser, signupRequest, silentRefresh,
+  googleLoginRequest, webAuthnLoginStart, webAuthnLoginFinish,
+} from '../../api/auth.api.js';
 import { logError, logInfo } from '../../api/logger.js';
 
 const initialState = {
@@ -39,6 +42,29 @@ export const signupUser = createAsyncThunk('auth/signup', async (formData, { rej
     return { user: result.user, accessToken: result.accessToken };
   } catch (err) {
     return rejectWithValue(err.message || 'Registration failed');
+  }
+});
+
+export const loginWithGoogle = createAsyncThunk('auth/loginWithGoogle', async (idToken, { rejectWithValue }) => {
+  try {
+    const result = await googleLoginRequest(idToken);
+    logInfo('auth', 'signed in with Google as', result.user.email);
+    return { user: result.user, accessToken: result.accessToken };
+  } catch (err) {
+    return rejectWithValue(err.message || 'Google sign-in failed');
+  }
+});
+
+export const loginWithBiometric = createAsyncThunk('auth/loginWithBiometric', async (email, { rejectWithValue }) => {
+  try {
+    const { startAuthentication } = await import('@simplewebauthn/browser');
+    const options  = await webAuthnLoginStart(email);
+    const response = await startAuthentication({ optionsJSON: options });
+    const result   = await webAuthnLoginFinish(email, response);
+    logInfo('auth', 'signed in with biometric as', result.user.email);
+    return { user: result.user, accessToken: result.accessToken };
+  } catch (err) {
+    return rejectWithValue(err.message || 'Biometric sign-in failed');
   }
 });
 
@@ -82,6 +108,12 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken;
       })
       .addCase(signupUser.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Signup failed'; })
+      .addCase(loginWithGoogle.pending,   (state) => { state.status = 'loading'; state.errorMessage = null; })
+      .addCase(loginWithGoogle.fulfilled, (state, action) => { state.status = 'succeeded'; state.currentUser = action.payload.user; state.accessToken = action.payload.accessToken; })
+      .addCase(loginWithGoogle.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Google sign-in failed'; })
+      .addCase(loginWithBiometric.pending,   (state) => { state.status = 'loading'; state.errorMessage = null; })
+      .addCase(loginWithBiometric.fulfilled, (state, action) => { state.status = 'succeeded'; state.currentUser = action.payload.user; state.accessToken = action.payload.accessToken; })
+      .addCase(loginWithBiometric.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Biometric sign-in failed'; })
       .addCase(logoutUser.fulfilled, (state) => {
         state.currentUser = null;
         state.accessToken = null;

@@ -77,7 +77,8 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "orEmail": "or with email",
-    "logout": "Log out"
+    "logout": "Log out",
+    "biometric": "Touch ID / Face ID"
   },
   "dashboard": {
     "title": "My Projects",

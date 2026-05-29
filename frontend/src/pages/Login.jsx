@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  loginUser, signupUser, clearAuthError,
+  loginUser, signupUser, clearAuthError, loginWithGoogle,
   selectAuthError, selectAuthStatus, selectCurrentUser,
 } from '../store/slices/authSlice.js';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
 import ApiKeyPrompt from '../components/auth/ApiKeyPrompt.jsx';
+import GoogleButton from '../components/auth/GoogleButton.jsx';
+import BiometricButton from '../components/auth/BiometricButton.jsx';
 
 export default function Login() {
   const { t }           = useTranslation();
@@ -18,15 +20,19 @@ export default function Login() {
   const authError       = useSelector(selectAuthError);
   const authStatus      = useSelector(selectAuthStatus);
   const currentUser     = useSelector(selectCurrentUser);
-  const currentLanguage = useSelector(selectLanguage);
+  const lang            = useSelector(selectLanguage);
 
-  const [isRegister,        setIsRegister]        = useState(false);
-  const [nameInput,         setNameInput]         = useState('');
-  const [emailInput,        setEmailInput]        = useState('');
-  const [passInput,         setPassInput]         = useState('');
-  const [localError,        setLocalError]        = useState('');
-  const [showApiKeyPrompt,  setShowApiKeyPrompt]  = useState(false);
+  const [isRegister,       setIsRegister]       = useState(false);
+  const [nameInput,        setNameInput]        = useState('');
+  const [emailInput,       setEmailInput]       = useState('');
+  const [passInput,        setPassInput]        = useState('');
+  const [localError,       setLocalError]       = useState('');
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
   const justRegisteredRef = useRef(false);
+
+  useEffect(() => {
+    if (searchParams.get('register') === '1') setIsRegister(true);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -38,7 +44,6 @@ export default function Login() {
     }
   }, [currentUser, navigate, searchParams]);
 
-  // Clear Redux error when credentials change
   useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line
 
   const isLoading = authStatus === 'loading';
@@ -47,7 +52,6 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setLocalError('');
-
     if (isRegister) {
       if (!nameInput.trim()) { setLocalError('נא להזין שם מלא'); return; }
       justRegisteredRef.current = true;
@@ -56,6 +60,11 @@ export default function Login() {
     } else {
       await dispatch(loginUser({ email: emailInput, password: passInput }));
     }
+  }
+
+  async function handleGoogleSuccess(idToken) {
+    setLocalError('');
+    await dispatch(loginWithGoogle(idToken));
   }
 
   function switchMode(toRegister) {
@@ -67,81 +76,98 @@ export default function Login() {
   if (showApiKeyPrompt) return <ApiKeyPrompt />;
 
   return (
-    <div className="login-shell">
-      <form className="login-card" onSubmit={handleSubmit} noValidate>
+    <div className="login-page">
+      <button
+        type="button"
+        className="login-page__lang"
+        onClick={() => dispatch(toggleLanguage())}
+      >
+        {lang === 'he' ? 'EN' : 'עב'}
+      </button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{t('app.name')}</h2>
-            <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-              {isRegister ? t('auth.register') : t('app.tagline')}
-            </p>
-          </div>
-          <button type="button" className="btn-ghost" onClick={() => dispatch(toggleLanguage())} style={{ fontSize: 13 }}>
-            {currentLanguage === 'he' ? 'EN' : 'עב'}
-          </button>
+      <div className="login-brand">
+        <span className="login-brand__icon">⚡</span>
+        <span className="login-brand__name">{t('app.name')}</span>
+        <span className="login-brand__tagline">{t('app.tagline')}</span>
+      </div>
+
+      <div className="login-card">
+        <h2 className="login-card__title">
+          {isRegister ? t('auth.register') : t('auth.signIn')}
+        </h2>
+
+        <GoogleButton
+          onSuccess={handleGoogleSuccess}
+          onError={() => setLocalError('Google sign-in failed')}
+        />
+
+        <div className="login-divider">
+          <span>{t('auth.orEmail')}</span>
         </div>
 
-        <div style={{ height: 1, background: 'var(--border)', margin: '16px 0' }} />
+        <form onSubmit={handleSubmit} noValidate>
+          {isRegister && (
+            <div className="form-group">
+              <label>{t('auth.fullName')}</label>
+              <input
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                type="text" required autoComplete="name" spellCheck={false}
+                placeholder="ישראל ישראלי"
+              />
+            </div>
+          )}
 
-        {isRegister && (
           <div className="form-group">
-            <label>{t('auth.fullName')}</label>
+            <label>{t('auth.email')}</label>
             <input
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              type="text" required autoComplete="off" spellCheck={false}
-              placeholder="ישראל ישראלי"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              type="email" required autoComplete="email" spellCheck={false}
+              placeholder="you@example.com"
             />
           </div>
-        )}
 
-        <div className="form-group">
-          <label>{t('auth.email')}</label>
-          <input
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-            type="email" required autoComplete="off" spellCheck={false}
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div className="form-group">
-          <label>{t('auth.password')}</label>
-          <input
-            value={passInput}
-            onChange={(e) => setPassInput(e.target.value)}
-            type="password" required autoComplete="off" spellCheck={false}
-            placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
-          />
-        </div>
-
-        {error && (
-          <div className="badge danger" style={{ marginBottom: 8, width: '100%', justifyContent: 'center' }}>
-            {error}
+          <div className="form-group">
+            <label>{t('auth.password')}</label>
+            <input
+              value={passInput}
+              onChange={(e) => setPassInput(e.target.value)}
+              type="password" required
+              autoComplete={isRegister ? 'new-password' : 'current-password'}
+              placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
+            />
           </div>
-        )}
 
-        <button type="submit" disabled={isLoading} style={{ width: '100%', marginTop: 4 }}>
-          {isLoading ? t('common.loading') : (isRegister ? t('auth.signUp') : t('auth.signIn'))}
-        </button>
+          {error && (
+            <div className="badge danger login-error">
+              {error}
+            </div>
+          )}
 
-        <p style={{ fontSize: 13, marginTop: 14, textAlign: 'center', color: 'var(--text-muted)' }}>
+          <button type="submit" className="btn btn--primary login-submit" disabled={isLoading}>
+            {isLoading ? t('common.loading') : (isRegister ? t('auth.signUp') : t('auth.signIn'))}
+          </button>
+        </form>
+
+        {!isRegister && <BiometricButton email={emailInput} />}
+
+        <p className="login-switch">
           {isRegister ? (
             <>{t('auth.hasAccount')}{' '}
-              <button type="button" className="btn-ghost" style={{ fontSize: 13, padding: '0 4px', textDecoration: 'underline' }} onClick={() => switchMode(false)}>
+              <button type="button" className="btn-link" onClick={() => switchMode(false)}>
                 {t('auth.signIn2')}
               </button>
             </>
           ) : (
             <>{t('auth.noAccount')}{' '}
-              <button type="button" className="btn-ghost" style={{ fontSize: 13, padding: '0 4px', textDecoration: 'underline' }} onClick={() => switchMode(true)}>
+              <button type="button" className="btn-link" onClick={() => switchMode(true)}>
                 {t('auth.signUp')}
               </button>
             </>
           )}
         </p>
-      </form>
+      </div>
     </div>
   );
 }

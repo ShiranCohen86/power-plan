@@ -15,6 +15,19 @@ const SessionSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const WebAuthnCredentialSchema = new mongoose.Schema(
+  {
+    credentialID: { type: String, required: true },  // base64url
+    publicKey:    { type: String, required: true },  // base64url encoded COSE key
+    counter:      { type: Number, default: 0 },
+    deviceType:   { type: String },                  // 'singleDevice' | 'multiDevice'
+    backedUp:     { type: Boolean, default: false },
+    transports:   { type: [String], default: [] },
+    createdAt:    { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
+
 const UserSchema = new mongoose.Schema(
   {
     name:                 { type: String, required: true, trim: true },
@@ -23,15 +36,26 @@ const UserSchema = new mongoose.Schema(
     role:                 { type: String, enum: ROLES, default: 'client', index: true },
     plan:                 { type: String, enum: PLANS, default: 'starter', index: true },
     isActive:             { type: Boolean, default: true },
+
+    // OAuth
+    googleId:     { type: String, sparse: true, index: true },
+    avatar:       { type: String },
+    authMethods:  { type: [String], default: ['password'] }, // ['password','google','webauthn']
+
     passwordResetToken:   { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
     lastLogin:            Date,
     sessions:             { type: [SessionSchema], default: [] },
     settings: {
-      anthropicApiKey: { type: String, select: false }, // encrypted AES-256
-      githubToken:     { type: String, select: false }, // encrypted AES-256
-      renderApiKey:    { type: String, select: false }, // encrypted AES-256
+      anthropicApiKey: { type: String, select: false },
+      githubToken:     { type: String, select: false },
+      renderApiKey:    { type: String, select: false },
     },
+
+    // WebAuthn / Passkeys
+    webAuthnCredentials: { type: [WebAuthnCredentialSchema], default: [] },
+    webAuthnChallenge:   { type: String, select: false },
+
     pipelineStarts: { type: [Date], select: false, default: [] },
     loginAttempts:  { type: Number, default: 0 },
     lockUntil:      { type: Date },

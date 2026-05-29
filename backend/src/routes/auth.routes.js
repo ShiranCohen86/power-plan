@@ -29,4 +29,15 @@ router.patch('/me',     authenticate, validate(authValidator.updateProfile), aut
 // Admin only
 router.get('/users',   authenticate, authorize('admin'), authController.listUsers);
 
+// Google OAuth
+router.post('/google', authLimiter, authController.googleLogin);
+
+// WebAuthn — registration (requires being logged in)
+router.post('/webauthn/register/start',  authenticate, authController.webAuthnRegisterStart);
+router.post('/webauthn/register/finish', authenticate, authController.webAuthnRegisterFinish);
+
+// WebAuthn — login (public, provides its own auth)
+router.post('/webauthn/login/start',  authLimiter, authController.webAuthnLoginStart);
+router.post('/webauthn/login/finish', authLimiter, authController.webAuthnLoginFinish);
+
 module.exports = router;

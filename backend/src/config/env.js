@@ -18,6 +18,13 @@ const env = {
   ENCRYPTION_KEY:         process.env.ENCRYPTION_KEY || '',
   MEETING_PRE_DELAY_MS:   parseInt(process.env.MEETING_PRE_DELAY_MS, 10) || 20000,
 
+  // Google OAuth
+  GOOGLE_CLIENT_ID:   process.env.GOOGLE_CLIENT_ID || '',
+
+  // WebAuthn / Passkeys
+  WEBAUTHN_RP_NAME:   process.env.WEBAUTHN_RP_NAME || 'Power Plan',
+  WEBAUTHN_RP_ID:     process.env.WEBAUTHN_RP_ID   || 'localhost',
+
   // MongoDB Atlas (Power Plan's shared cluster)
   ATLAS_PUBLIC_KEY:   process.env.ATLAS_PUBLIC_KEY  || '',
   ATLAS_PRIVATE_KEY:  process.env.ATLAS_PRIVATE_KEY || '',

@@ -4,6 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider as ReduxProvider } from 'react-redux';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx';
 import { store } from './store/index.js';
 import { AuthProvider } from './context/AuthContext.jsx';
@@ -53,20 +54,22 @@ document.documentElement.setAttribute('lang', savedLang);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ReduxProvider store={store}>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <LanguageProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <AppThemeProvider>
-                <AppMenuProvider>
-                  <App />
-                </AppMenuProvider>
-              </AppThemeProvider>
-            </SocketProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
-    </ReduxProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+      <ReduxProvider store={store}>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <LanguageProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <AppThemeProvider>
+                  <AppMenuProvider>
+                    <App />
+                  </AppMenuProvider>
+                </AppThemeProvider>
+              </SocketProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
+      </ReduxProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>,
 );

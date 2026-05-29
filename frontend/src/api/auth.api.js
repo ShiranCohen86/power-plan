@@ -36,3 +36,22 @@ export function requestPasswordReset(email) {
 export function resetPasswordWithToken(payload) {
   return safeRequest(httpClient.post('/auth/password/reset', payload));
 }
+
+// Google OAuth
+export function googleLoginRequest(idToken) {
+  return safeRequest(httpClient.post('/auth/google', { idToken }));
+}
+
+// WebAuthn / Passkeys
+export function webAuthnRegisterStart() {
+  return safeRequest(httpClient.post('/auth/webauthn/register/start'));
+}
+export function webAuthnRegisterFinish(response) {
+  return safeRequest(httpClient.post('/auth/webauthn/register/finish', response));
+}
+export function webAuthnLoginStart(email) {
+  return safeRequest(httpClient.post('/auth/webauthn/login/start', { email }));
+}
+export function webAuthnLoginFinish(email, response) {
+  return safeRequest(httpClient.post('/auth/webauthn/login/finish', { email, response }));
+}

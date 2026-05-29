@@ -1,10 +1,19 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} = require('@simplewebauthn/server');
 const env = require('../config/env');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
+
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 // ── Token helpers ──────────────────────────────────────────────────────────
 
@@ -181,4 +190,173 @@ async function listUsers(query) {
   return users.map((u) => u.toJSON());
 }
 
-module.exports = { signTokens, signup, login, refresh, requestPasswordReset, resetPassword, getProfile, updateProfile, logout, listUsers };
+// ── Google OAuth ───────────────────────────────────────────────────────────
+
+async function loginWithGoogle(idToken, { ip, userAgent } = {}) {
+  if (!env.GOOGLE_CLIENT_ID) throw ApiError.badRequest('Google OAuth not configured');
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: env.GOOGLE_CLIENT_ID,
+  });
+  const { sub: googleId, email, name, picture: avatar } = ticket.getPayload();
+  if (!email) throw ApiError.badRequest('Google account has no email');
+
+  let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
+
+  if (user) {
+    if (!user.googleId) {
+      user.googleId = googleId;
+      if (!user.authMethods.includes('google')) user.authMethods.push('google');
+    }
+    if (avatar && !user.avatar) user.avatar = avatar;
+  } else {
+    user = new User({
+      name:        name || email.split('@')[0],
+      email:       email.toLowerCase(),
+      googleId,
+      avatar,
+      authMethods: ['google'],
+    });
+  }
+
+  const { accessToken, refreshToken, jtiHash } = signTokens(user);
+  pushSession(user, { jtiHash, userAgent: userAgent || '', ip: ip || '' });
+  user.lastLogin = new Date();
+  await user.save();
+
+  AuditLog.create({ userId: user._id, action: 'auth.google', ip, userAgent, meta: { email } }).catch(() => {});
+  return { user: user.toJSON(), accessToken, refreshToken };
+}
+
+// ── WebAuthn: Registration ─────────────────────────────────────────────────
+
+async function generateWebAuthnRegistration(userId) {
+  const user = await User.findById(userId);
+  if (!user) throw ApiError.notFound('User not found');
+
+  const options = await generateRegistrationOptions({
+    rpName:       env.WEBAUTHN_RP_NAME,
+    rpID:         env.WEBAUTHN_RP_ID,
+    userName:     user.email,
+    userDisplayName: user.name,
+    attestationType: 'none',
+    authenticatorSelection: {
+      residentKey:             'preferred',
+      userVerification:        'preferred',
+      authenticatorAttachment: 'platform',
+    },
+    excludeCredentials: user.webAuthnCredentials.map((c) => ({
+      id:         c.credentialID,
+      type:       'public-key',
+      transports: c.transports,
+    })),
+  });
+
+  await User.findByIdAndUpdate(userId, { webAuthnChallenge: options.challenge });
+  return options;
+}
+
+async function verifyWebAuthnRegistration(userId, registrationResponse) {
+  const user = await User.findById(userId).select('+webAuthnChallenge');
+  if (!user || !user.webAuthnChallenge) throw ApiError.badRequest('No pending registration challenge');
+
+  const origin = env.NODE_ENV === 'production'
+    ? env.FRONTEND_URL
+    : 'http://localhost:5173';
+
+  const { verified, registrationInfo } = await verifyRegistrationResponse({
+    response:          registrationResponse,
+    expectedChallenge: user.webAuthnChallenge,
+    expectedOrigin:    origin,
+    expectedRPID:      env.WEBAUTHN_RP_ID,
+  });
+
+  if (!verified || !registrationInfo) throw ApiError.badRequest('Biometric registration failed');
+
+  const { credential } = registrationInfo;
+  const newCred = {
+    credentialID: credential.id,
+    publicKey:    Buffer.from(credential.publicKey).toString('base64url'),
+    counter:      credential.counter,
+    deviceType:   registrationInfo.credentialDeviceType,
+    backedUp:     registrationInfo.credentialBackedUp,
+    transports:   registrationResponse.response?.transports || [],
+  };
+
+  user.webAuthnCredentials.push(newCred);
+  if (!user.authMethods.includes('webauthn')) user.authMethods.push('webauthn');
+  user.webAuthnChallenge = undefined;
+  await user.save();
+
+  return { verified: true };
+}
+
+// ── WebAuthn: Authentication ───────────────────────────────────────────────
+
+async function generateWebAuthnAuthentication(email) {
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user || !user.webAuthnCredentials.length) {
+    throw ApiError.badRequest('No biometric credentials registered for this account');
+  }
+
+  const options = await generateAuthenticationOptions({
+    rpID:             env.WEBAUTHN_RP_ID,
+    userVerification: 'preferred',
+    allowCredentials: user.webAuthnCredentials.map((c) => ({
+      id:         c.credentialID,
+      type:       'public-key',
+      transports: c.transports,
+    })),
+  });
+
+  await User.findByIdAndUpdate(user._id, { webAuthnChallenge: options.challenge });
+  return options;
+}
+
+async function verifyWebAuthnAuthentication(email, authResponse) {
+  const user = await User.findOne({ email: email.toLowerCase() }).select('+webAuthnChallenge');
+  if (!user || !user.webAuthnChallenge) throw ApiError.badRequest('No pending authentication challenge');
+
+  const storedCred = user.webAuthnCredentials.find((c) => c.credentialID === authResponse.id);
+  if (!storedCred) throw ApiError.badRequest('Unknown credential');
+
+  const origin = env.NODE_ENV === 'production'
+    ? env.FRONTEND_URL
+    : 'http://localhost:5173';
+
+  const { verified, authenticationInfo } = await verifyAuthenticationResponse({
+    response:          authResponse,
+    expectedChallenge: user.webAuthnChallenge,
+    expectedOrigin:    origin,
+    expectedRPID:      env.WEBAUTHN_RP_ID,
+    credential: {
+      id:         storedCred.credentialID,
+      publicKey:  Buffer.from(storedCred.publicKey, 'base64url'),
+      counter:    storedCred.counter,
+      transports: storedCred.transports,
+    },
+  });
+
+  if (!verified) throw ApiError.unauthorized('Biometric verification failed');
+
+  storedCred.counter = authenticationInfo.newCounter;
+  user.webAuthnChallenge = undefined;
+  user.lastLogin = new Date();
+
+  const { accessToken, refreshToken, jtiHash } = signTokens(user);
+  pushSession(user, { jtiHash, userAgent: '', ip: '' });
+  await user.save();
+
+  AuditLog.create({ userId: user._id, action: 'auth.webauthn' }).catch(() => {});
+  return { user: user.toJSON(), accessToken, refreshToken };
+}
+
+module.exports = {
+  signTokens, signup, login, refresh,
+  requestPasswordReset, resetPassword,
+  getProfile, updateProfile, logout, listUsers,
+  loginWithGoogle,
+  generateWebAuthnRegistration, verifyWebAuthnRegistration,
+  generateWebAuthnAuthentication, verifyWebAuthnAuthentication,
+};

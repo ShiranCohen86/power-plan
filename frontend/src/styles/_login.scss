@@ -1,27 +1,184 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
-// â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Login ──────────────────────────────────────────────────────────────────
 
-.login-shell {
-  display: grid; place-items: center;
-  height: 100vh; height: 100dvh;
-  background: var(--login-bg);
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(160deg, #7c3aed 0%, #06b6d4 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   animation: fade-in .4s ease;
+  position: relative;
   overflow: hidden;
+
+  &__lang {
+    position: absolute;
+    top: 16px;
+    inset-inline-end: 16px;
+    color: rgba(255, 255, 255, .85);
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, .15);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: $radius;
+    padding: 6px 14px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background .15s;
+
+    &:hover { background: rgba(255, 255, 255, .25); }
+  }
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 32px;
+  color: #fff;
+  text-align: center;
+  padding: 0 24px;
+
+  &__icon { font-size: 42px; line-height: 1; }
+
+  &__name {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+  }
+
+  &__tagline {
+    font-size: 14px;
+    opacity: .75;
+    max-width: 280px;
+  }
 }
 
 .login-card {
-  position: relative;
-  border-radius: $radius-lg;
-  @include shimmer-line;
-  width: min(420px, 94vw);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
-  padding: 32px;
-  animation: modal-in .35s cubic-bezier(.22,1,.36,1) both;
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  padding: 32px 28px max(28px, env(safe-area-inset-bottom, 28px));
+  animation: modal-in .35s cubic-bezier(.22, 1, .36, 1) both;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, .18);
+
+  @media (min-width: 600px) {
+    border-radius: 24px;
+    max-width: 420px;
+    margin-bottom: 48px;
+    padding: 36px 32px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, .22);
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 20px;
+    color: #111827;
+  }
+
+  .form-group {
+    label { color: #374151; font-size: 13px; font-weight: 500; }
+
+    input {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      color: #111827;
+      border-radius: $radius;
+
+      &::placeholder { color: #9ca3af; }
+      &:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+      }
+    }
+  }
+
+  .badge.danger {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
 }
 
+.google-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: #9ca3af;
+  font-size: 13px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+}
+
+.login-error {
+  margin-bottom: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.btn-biometric {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: $radius;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #f9fafb; }
+  &:disabled { opacity: .4; cursor: not-allowed; }
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: inherit;
+  color: #7c3aed;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover { color: #6d28d9; }
+}
+
+.login-switch {
+  font-size: 13px;
+  margin-top: 16px;
+  text-align: center;
+  color: #6b7280;
+}

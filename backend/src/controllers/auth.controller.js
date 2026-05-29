@@ -84,3 +84,39 @@ exports.listUsers = asyncHandler(async (req, res) => {
   const users = await authService.listUsers(req.query);
   res.json({ items: users });
 });
+
+// ── Google OAuth ───────────────────────────────────────────────────────────
+
+exports.googleLogin = asyncHandler(async (req, res) => {
+  const result = await authService.loginWithGoogle(req.body.idToken, {
+    ip:        clientIp(req),
+    userAgent: req.headers['user-agent'] || '',
+  });
+  setRefreshCookie(res, result.refreshToken);
+  const { refreshToken: _rt, ...safeResult } = result;
+  res.json(safeResult);
+});
+
+// ── WebAuthn ───────────────────────────────────────────────────────────────
+
+exports.webAuthnRegisterStart = asyncHandler(async (req, res) => {
+  const options = await authService.generateWebAuthnRegistration(req.user.id);
+  res.json(options);
+});
+
+exports.webAuthnRegisterFinish = asyncHandler(async (req, res) => {
+  const result = await authService.verifyWebAuthnRegistration(req.user.id, req.body);
+  res.json(result);
+});
+
+exports.webAuthnLoginStart = asyncHandler(async (req, res) => {
+  const options = await authService.generateWebAuthnAuthentication(req.body.email);
+  res.json(options);
+});
+
+exports.webAuthnLoginFinish = asyncHandler(async (req, res) => {
+  const result = await authService.verifyWebAuthnAuthentication(req.body.email, req.body.response);
+  setRefreshCookie(res, result.refreshToken);
+  const { refreshToken: _rt, ...safeResult } = result;
+  res.json(safeResult);
+});
