@@ -80,65 +80,85 @@ export default function AppShell({ children }) {
     dispatch(logoutUser());
   }
 
+  const projectTitle = isInProject && currentProject?.title ? currentProject.title : '';
+
   return (
     <div className={`app-shell${!isInProject ? ' app-shell--has-footer' : ''}`}>
       <header className={`app-topbar${isInProject ? ' app-topbar--in-project' : ''}`}>
-        <div className="app-topbar__row">
-        <div className="app-topbar__start">
-          {/* Hamburger first in DOM = rightmost in RTL ✓ */}
+
+        {/* ── Mobile row (≤767px) ── RTL order: hamburger | back | title | search | bell | brand */}
+        <div className="app-topbar__row app-topbar__row--mobile">
           <button className="btn-ghost app-topbar__hamburger" onClick={openMenu} aria-label="תפריט">
             <MenuOutlined />
           </button>
-          <NotificationBell />
-          <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
-            <span className="app-topbar__brand-icon">⚡</span>
-            <span className="app-topbar__brand-name">{brandLabel}</span>
-          </button>
           {showBack && (
             <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
-              <ArrowForwardOutlined fontSize="small" /> חזור
+              <ArrowForwardOutlined fontSize="small" />
+              <span className="app-topbar__back-label">חזור</span>
             </button>
           )}
-        </div>
-
-        <div className="app-topbar__end">
-          <button className="btn-ghost app-topbar__lang" onClick={() => dispatch(toggleLanguage())}>
-            {lang === 'he' ? 'EN' : 'עב'}
-          </button>
-          <button className="btn-ghost app-topbar__theme" onClick={toggleTheme} title={mode === 'dark' ? 'מצב בהיר' : 'מצב כהה'}>
-            {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
-          </button>
-          {user?.name && (
-            <span className="app-topbar__username">{user.name}</span>
-          )}
-          <button
-            className={`btn-ghost app-topbar__settings${location.pathname === '/settings' ? ' app-topbar__settings--active' : ''}`}
-            onClick={() => navigate('/settings')}
-            title="הגדרות"
-          >
-            <SettingsOutlined fontSize="small" />
-          </button>
-          {user?.role === 'admin' && (
-            <button className="btn-ghost app-topbar__admin" onClick={() => navigate('/admin')} title="Admin">
-              <BuildOutlined fontSize="small" />
-            </button>
-          )}
-          <button className="btn-ghost app-topbar__help" onClick={() => setShowHelp(true)} title="עזרה">
-            <HelpOutlineOutlined fontSize="small" />
-          </button>
-          <button
-            className="btn btn--secondary app-topbar__logout"
-            onClick={() => dispatch(logoutUser())}
-          >
-            {t('auth.logout')}
-          </button>
+          <span className="app-topbar__title">
+            {projectTitle || (isHome ? '' : '')}
+          </span>
           {!isInProject && (
-            <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch} title={t('search.open')}>
+            <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch}>
               <SearchOutlined fontSize="small" />
             </button>
           )}
+          <NotificationBell />
+          <button className="app-topbar__brand app-topbar__brand--stacked btn-ghost" onClick={() => navigate('/dashboard')}>
+            <span className="app-topbar__brand-icon">⚡</span>
+            <span className="app-topbar__brand-name">Power Plan</span>
+          </button>
         </div>
+
+        {/* ── Desktop row (>767px) ── unchanged layout */}
+        <div className="app-topbar__row app-topbar__row--desktop">
+          <div className="app-topbar__start">
+            <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
+              <span className="app-topbar__brand-icon">⚡</span>
+              <span className="app-topbar__brand-name">{brandLabel}</span>
+            </button>
+            {showBack && (
+              <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
+                <ArrowForwardOutlined fontSize="small" /> חזור
+              </button>
+            )}
+          </div>
+          <div className="app-topbar__end">
+            <button className="btn-ghost app-topbar__lang" onClick={() => dispatch(toggleLanguage())}>
+              {lang === 'he' ? 'EN' : 'עב'}
+            </button>
+            <button className="btn-ghost app-topbar__theme" onClick={toggleTheme} title={mode === 'dark' ? 'מצב בהיר' : 'מצב כהה'}>
+              {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
+            </button>
+            {user?.name && <span className="app-topbar__username">{user.name}</span>}
+            <button
+              className={`btn-ghost app-topbar__settings${location.pathname === '/settings' ? ' app-topbar__settings--active' : ''}`}
+              onClick={() => navigate('/settings')} title="הגדרות"
+            >
+              <SettingsOutlined fontSize="small" />
+            </button>
+            {user?.role === 'admin' && (
+              <button className="btn-ghost app-topbar__admin" onClick={() => navigate('/admin')} title="Admin">
+                <BuildOutlined fontSize="small" />
+              </button>
+            )}
+            <button className="btn-ghost app-topbar__help" onClick={() => setShowHelp(true)} title="עזרה">
+              <HelpOutlineOutlined fontSize="small" />
+            </button>
+            <NotificationBell />
+            {!isInProject && (
+              <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch} title={t('search.open')}>
+                <SearchOutlined fontSize="small" />
+              </button>
+            )}
+            <button className="btn btn--secondary app-topbar__logout" onClick={() => dispatch(logoutUser())}>
+              {t('auth.logout')}
+            </button>
+          </div>
         </div>
+
         {showSearch && !isInProject && (
           <div className="app-topbar__search-row">
             <SearchOutlined className="app-topbar__search-icon" fontSize="small" />
