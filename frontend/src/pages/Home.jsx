@@ -19,6 +19,42 @@ const PIPELINE_STRIP = [
 
 const TECH_LOGOS = ['React', 'Node.js', 'MongoDB', 'GitHub', 'Render'];
 
+const CHECKLIST_COUNT = 10;
+
+function HomeChecklist() {
+  const { t } = useTranslation();
+  const items = Array.from({ length: CHECKLIST_COUNT }, (_, i) => ({
+    title: t(`home.check${i + 1}Title`),
+    sub:   t(`home.check${i + 1}Sub`),
+  }));
+  return (
+    <section className="home-checklist home-reveal" aria-label="mobile quality checklist">
+      <div className="home-checklist__inner">
+        <div className="home-section-hd">
+          <div className="home-tag">{t('home.checklistTag')}</div>
+          <h2 className="home-section-title">{t('home.checklistTitle')}</h2>
+          <p className="home-checklist__sub">{t('home.checklistSub')}</p>
+        </div>
+        <div className="home-checklist__grid">
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="home-checklist__item home-reveal"
+              style={{ transitionDelay: `${(i % 5) * 0.07}s` }}
+            >
+              <span className="home-checklist__check" aria-hidden="true">✅</span>
+              <div>
+                <div className="home-checklist__item-title">{item.title}</div>
+                <div className="home-checklist__item-sub">{item.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function useScrollReveal() {
   useEffect(() => {
     const els = document.querySelectorAll('.home-reveal');
@@ -204,6 +240,9 @@ export default function Home() {
             {t('home.ctaBtn')} →
           </Link>
         </section>
+
+        {/* ── Mobile Gotchas Checklist ────────────────────── */}
+        <HomeChecklist />
 
         {/* ── FAQ ─────────────────────────────────────────── */}
         <section className="home-faq home-reveal" aria-label="FAQ">
