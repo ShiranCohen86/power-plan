@@ -99,7 +99,7 @@ export default function WorkspaceTopbar({
         )}
         {isRunning && <span className="badge badge--pulse">{t('topbar.aiWorking')}</span>}
         {awaitingPhase != null && !isRunning && (
-          <span className="badge" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>
+          <span className="badge" style={{ background: 'var(--brand-primary-alpha-10)', color: 'var(--warning)' }}>
             {t('topbar.awaitingApproval')}
           </span>
         )}

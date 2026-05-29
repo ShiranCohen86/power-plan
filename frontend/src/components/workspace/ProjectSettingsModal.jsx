@@ -150,7 +150,7 @@ function ServiceRow({ projectId, service, onUpdated }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {service.credentialsProvided && !editing && (
             <>
-              <span style={{ fontSize: 11, color: '#34d399' }}>✓ מוגדר</span>
+              <span style={{ fontSize: 11, color: 'var(--success)' }}>✓ מוגדר</span>
               <button className="btn btn--secondary" style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => setEditing(true)}>
                 עדכן
               </button>

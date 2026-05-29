@@ -9,8 +9,8 @@ const AGENT_TYPES = [
 ];
 const CATEGORIES = ['spec_quality', 'code_quality', 'architecture', 'security', 'ux', 'planning'];
 const CATEGORY_COLOR = {
-  spec_quality: '#f472b6', code_quality: '#f97316', architecture: '#a78bfa',
-  security: '#ef4444',     ux: '#facc15',           planning: '#34d399',
+  spec_quality: 'var(--text-info)',    code_quality: 'var(--warning)',  architecture: '#a78bfa',
+  security: 'var(--danger)',           ux: '#facc15',                   planning: 'var(--success)',
 };
 
 const EMPTY_FORM = { agentType: '', category: '', mistake: '', lesson: '' };
@@ -127,7 +127,7 @@ export default function AdminLessons({ lessons, onSave, onToggleActive, onDelete
                 <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px' }} onClick={() => onToggleActive(l)}>
                   {l.isActive ? t('dashboard.status.paused') : t('dashboard.status.live')}
                 </button>
-                <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px', color: '#ef4444' }}
+                <button className="btn-ghost" style={{ fontSize: 12, minHeight: 'auto', padding: '3px 8px', color: 'var(--danger)' }}
                   onClick={() => onDelete(l._id)}>
                   {t('common.delete')}
                 </button>

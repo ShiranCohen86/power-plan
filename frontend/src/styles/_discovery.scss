@@ -98,7 +98,7 @@
   &__bubble {
     background: var(--surface-2, #171b1f);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: $radius-lg;
     padding: 10px 14px;
     font-size: 14px;
     line-height: 1.5;

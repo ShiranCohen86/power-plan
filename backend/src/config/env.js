@@ -1,20 +1,25 @@
+const {
+  TOKEN_EXPIRY_ACCESS, TOKEN_EXPIRY_REFRESH,
+  RATE_AUTH_WINDOW_MS, MAX_CONCURRENT_PIPELINES,
+} = require('./constants');
+
 const env = {
   NODE_ENV:               process.env.NODE_ENV || 'development',
   PORT:                   parseInt(process.env.PORT, 10) || 5000,
   MONGO_URI:              process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/power_plan',
   JWT_SECRET:             process.env.JWT_SECRET || 'dev_jwt_secret_change_me',
-  JWT_EXPIRES_IN:         process.env.JWT_EXPIRES_IN || '15m',
+  JWT_EXPIRES_IN:         process.env.JWT_EXPIRES_IN || TOKEN_EXPIRY_ACCESS,
   JWT_REFRESH_SECRET:     process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_me_DIFFERENT',
-  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || TOKEN_EXPIRY_REFRESH,
   BCRYPT_SALT_ROUNDS:     parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
   FRONTEND_URL:           process.env.FRONTEND_URL || 'http://localhost:5173',
-  RATE_LIMIT_WINDOW_MS:   parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
+  RATE_LIMIT_WINDOW_MS:   parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || RATE_AUTH_WINDOW_MS,
   RATE_LIMIT_MAX:         parseInt(process.env.RATE_LIMIT_MAX, 10) || 200,
   LOG_LEVEL:              process.env.LOG_LEVEL || 'info',
   ANTHROPIC_API_KEY:      process.env.ANTHROPIC_API_KEY || '',
   ANTHROPIC_MODEL:        process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
   ANTHROPIC_MODEL_STARTER: process.env.ANTHROPIC_MODEL_STARTER || 'claude-haiku-4-5-20251001',
-  PIPELINE_MAX_CONCURRENT: parseInt(process.env.PIPELINE_MAX_CONCURRENT, 10) || 5,
+  PIPELINE_MAX_CONCURRENT: parseInt(process.env.PIPELINE_MAX_CONCURRENT, 10) || MAX_CONCURRENT_PIPELINES,
   ENCRYPTION_KEY:         process.env.ENCRYPTION_KEY || '',
   MEETING_PRE_DELAY_MS:   parseInt(process.env.MEETING_PRE_DELAY_MS, 10) || 20000,
 

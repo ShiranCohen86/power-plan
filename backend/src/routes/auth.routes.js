@@ -5,10 +5,11 @@ const { authenticate } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 const authController = require('../controllers/auth.controller');
 const authValidator = require('../validators/auth.validator');
+const { RATE_AUTH_WINDOW_MS, RATE_AUTH_MAX } = require('../config/constants');
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
+  windowMs: RATE_AUTH_WINDOW_MS,
+  max: RATE_AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts — please try again later' },

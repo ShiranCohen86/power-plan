@@ -1,6 +1,14 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
+// Login card always renders on a white surface — fixed light-mode palette
+$card-text:   $card-text;
+$card-muted:  $card-muted;
+$card-label:  $card-label;
+$card-subtle: $card-subtle;
+$card-border: $card-border;
+$card-bg-input: $card-bg-input;
+
 // ── Login ──────────────────────────────────────────────────────────────────
 
 .login-page {
@@ -144,19 +152,19 @@
     font-size: 18px;
     font-weight: 700;
     margin: 0 0 16px;
-    color: #111827;
+    color: $card-text;
   }
 
   .form-group {
-    label { color: #374151; font-size: 13px; font-weight: 500; }
+    label { color: $card-label; font-size: 13px; font-weight: 500; }
 
     input {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      color: #111827;
+      background: $card-bg-input;
+      border: 1px solid $card-border;
+      color: $card-text;
       border-radius: $radius;
 
-      &::placeholder { color: #9ca3af; }
+      &::placeholder { color: $card-subtle; }
       &:focus {
         outline: none;
         border-color: #7c3aed;
@@ -209,7 +217,7 @@
   align-items: center;
   gap: 12px;
   margin: 12px 0;
-  color: #9ca3af;
+  color: $card-subtle;
   font-size: 13px;
 
   &::before,
@@ -217,7 +225,7 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: #e5e7eb;
+    background: $card-border;
   }
 }
 
@@ -241,15 +249,15 @@
   margin-top: 10px;
   padding: 11px;
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $card-border;
   border-radius: $radius;
-  color: #374151;
+  color: $card-label;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: background .15s;
 
-  &:hover { background: #f9fafb; }
+  &:hover { background: $card-bg-input; }
   &:disabled { opacity: .4; cursor: not-allowed; }
 }
 
@@ -269,7 +277,7 @@
   font-size: 13px;
   margin-top: 14px;
   text-align: center;
-  color: #6b7280;
+  color: $card-muted;
 }
 
 // ── Biometric Enroll Prompt ────────────────────────────────────────────────
@@ -294,13 +302,13 @@
 .biometric-enroll__title {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: $card-text;
   margin: 0;
 }
 
 .biometric-enroll__sub {
   font-size: 14px;
-  color: #6b7280;
+  color: $card-muted;
   margin: 0;
   max-width: 280px;
   line-height: 1.55;
@@ -321,6 +329,6 @@
 .biometric-enroll__success-msg {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: $card-text;
   margin: 0;
 }

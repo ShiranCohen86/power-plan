@@ -96,7 +96,7 @@ export default function PlatformSetup() {
   }
 
   if (loading) return <div style={{ padding: 24 }}><div className="pwa-spinner" /></div>;
-  if (!status)  return <div style={{ padding: 24, color: '#ef4444' }}>נכשל לטעון סטטוס</div>;
+  if (!status)  return <div style={{ padding: 24, color: 'var(--danger)' }}>נכשל לטעון סטטוס</div>;
 
   const s = status.services;
 

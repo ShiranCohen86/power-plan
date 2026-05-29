@@ -13,8 +13,7 @@ import { usePanelResize } from './usePanelResize';
 import { useApprovalScroll } from './useApprovalScroll';
 import { usePhaseActions } from './usePhaseActions';
 import { useWorkspaceSocket } from './useWorkspaceSocket';
-
-const TOTAL_PLANNING_PHASES = 12;
+import { TOTAL_PLANNING_PHASES } from '../config/constants';
 
 export function useWorkspaceState(id) {
   const { t }      = useTranslation();
