@@ -122,7 +122,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   return (
     <div className="discovery-chat">
       <div className="discovery-chat__header">
-        <span className="discovery-chat__icon">🤖</span>
+        <span className="discovery-chat__icon">💬</span>
         <div>
           <h2 className="discovery-chat__title">{t('discovery.title')}</h2>
           <p className="discovery-chat__subtitle">{t('discovery.subtitle')}</p>
@@ -135,7 +135,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
             {msg.role === 'assistant' && (
               <span className="discovery-msg__avatar">🤖</span>
             )}
-            <div className="discovery-msg__bubble">{msg.text}</div>
+            <div className="discovery-msg__bubble" dir="auto">{msg.text}</div>
             {msg.role === 'user' && (
               <span className="discovery-msg__avatar discovery-msg__avatar--user">👤</span>
             )}
@@ -146,7 +146,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
         {(streaming || currentQ) && (
           <div className="discovery-msg discovery-msg--assistant">
             <span className="discovery-msg__avatar">🤖</span>
-            <div className="discovery-msg__bubble discovery-msg__bubble--streaming">
+            <div className="discovery-msg__bubble discovery-msg__bubble--streaming" dir="auto">
               {currentQ || <span className="typing-dots"><span /><span /><span /></span>}
             </div>
           </div>
@@ -192,6 +192,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
             ref={inputRef}
             className="form-input discovery-chat__input"
             type="text"
+            dir="auto"
             placeholder={streaming ? t('discovery.claudeTyping') : t('discovery.answerPlaceholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}

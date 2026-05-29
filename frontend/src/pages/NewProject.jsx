@@ -78,7 +78,7 @@ export default function NewProject() {
   }
 
   return (
-    <div className="new-project-shell">
+    <div className={`new-project-shell${step === STEP_DISCOVERY ? ' new-project-shell--chat' : ''}`}>
       <div className="new-project-card">
         {error && <div className="alert alert--error">{error}</div>}
 
