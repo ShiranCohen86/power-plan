@@ -1,38 +1,47 @@
-const router = require('express').Router();
-const { authenticate } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const projectsController = require('../controllers/projects.controller');
-const projectValidator = require('../validators/project.validator');
+const router             = require('express').Router();
+const { authenticate }   = require('../middleware/auth');
+const validate           = require('../middleware/validate');
+const ctrl               = require('../controllers/projects.controller');
+const settingsCtrl       = require('../controllers/project-settings.controller');
+const servicesCtrl       = require('../controllers/project-services.controller');
+const projectValidator   = require('../validators/project.validator');
 
 router.use(authenticate);
 
-router.post  ('/',    validate(projectValidator.create),   projectsController.create);
-router.get   ('/',                                          projectsController.list);
-router.get   ('/:id', validate(projectValidator.objectId), projectsController.getOne);
-router.delete('/:id',         validate(projectValidator.objectId), projectsController.deleteProject);
-router.patch ('/:id/restore', validate(projectValidator.objectId), projectsController.restoreProject);
+// ── CRUD ──────────────────────────────────────────────────────────────────────
+router.post  ('/',    validate(projectValidator.create),   ctrl.create);
+router.get   ('/',                                          ctrl.list);
+router.get   ('/:id', validate(projectValidator.objectId), ctrl.getOne);
+router.delete('/:id', validate(projectValidator.objectId), ctrl.deleteProject);
+router.patch ('/:id/restore', validate(projectValidator.objectId), ctrl.restoreProject);
 
-// Discovery chat
-router.post ('/:id/discovery/next',     validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),     projectsController.discoveryNext);
-router.post ('/:id/discovery/complete', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryComplete);
-router.patch('/:id/discovery-progress', validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }), projectsController.discoveryProgress);
+// ── Discovery ─────────────────────────────────────────────────────────────────
+router.post ('/:id/discovery/next',
+  validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryNext.body }),
+  ctrl.discoveryNext);
+router.post ('/:id/discovery/complete',
+  validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }),
+  ctrl.discoveryComplete);
+router.patch('/:id/discovery-progress',
+  validate({ params: projectValidator.objectId.params, body: projectValidator.discoveryComplete.body }),
+  ctrl.discoveryProgress);
 
-// Meeting history
-router.get('/:id/meetings', validate(projectValidator.objectId), projectsController.getMeetings);
+// ── Meetings ──────────────────────────────────────────────────────────────────
+router.get('/:id/meetings', validate(projectValidator.objectId), ctrl.getMeetings);
 
-// Dynamic service credentials
-router.get  ('/:id/required-services',                                    projectsController.getRequiredServices);
-router.post ('/:id/required-services/:serviceId/credentials',             projectsController.saveServiceCredentials);
-router.patch('/:id/required-services/:serviceId/skip',                    projectsController.skipService);
-router.post ('/:id/required-services/:serviceId/consult',                 projectsController.consultService);
+// ── Per-project settings ──────────────────────────────────────────────────────
+router.get   ('/:id/settings',              settingsCtrl.getProjectSettings);
+router.put   ('/:id/settings/api-key',      settingsCtrl.setProjectApiKey);
+router.delete('/:id/settings/api-key',      settingsCtrl.deleteProjectApiKey);
+router.put   ('/:id/settings/github-token', settingsCtrl.setProjectGithubToken);
+router.delete('/:id/settings/github-token', settingsCtrl.deleteProjectGithubToken);
+router.put   ('/:id/settings/render-token', settingsCtrl.setProjectRenderToken);
+router.delete('/:id/settings/render-token', settingsCtrl.deleteProjectRenderToken);
 
-// Per-project settings
-router.get   ('/:id/settings',              projectsController.getProjectSettings);
-router.put   ('/:id/settings/api-key',      projectsController.setProjectApiKey);
-router.delete('/:id/settings/api-key',      projectsController.deleteProjectApiKey);
-router.put   ('/:id/settings/github-token', projectsController.setProjectGithubToken);
-router.delete('/:id/settings/github-token', projectsController.deleteProjectGithubToken);
-router.put   ('/:id/settings/render-token', projectsController.setProjectRenderToken);
-router.delete('/:id/settings/render-token', projectsController.deleteProjectRenderToken);
+// ── External service credentials ──────────────────────────────────────────────
+router.get  ('/:id/required-services',                            servicesCtrl.getRequiredServices);
+router.post ('/:id/required-services/:serviceId/credentials',     servicesCtrl.saveServiceCredentials);
+router.patch('/:id/required-services/:serviceId/skip',            servicesCtrl.skipService);
+router.post ('/:id/required-services/:serviceId/consult',         servicesCtrl.consultService);
 
 module.exports = router;

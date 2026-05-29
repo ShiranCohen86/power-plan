@@ -1,13 +1,15 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiError = require('../utils/ApiError');
-const projectService = require('../services/project.service');
-const discoveryService = require('../services/discovery.service');
-const Project = require('../models/Project');
-const User = require('../models/User');
-const Meeting = require('../models/Meeting');
-const MeetingMessage = require('../models/MeetingMessage');
-const mongoose = require('mongoose');
-const { encrypt, decrypt } = require('../services/encryption.service');
+const asyncHandler       = require('../utils/asyncHandler');
+const ApiError           = require('../utils/ApiError');
+const projectService     = require('../services/project.service');
+const discoveryService   = require('../services/discovery.service');
+const Project            = require('../models/Project');
+const User               = require('../models/User');
+const Meeting            = require('../models/Meeting');
+const MeetingMessage     = require('../models/MeetingMessage');
+const { decrypt }        = require('../services/encryption.service');
+
+const DISCOVERY_TIMEOUT_MS  = 5 * 60 * 1000;
+const MAX_DISCOVERY_ANSWERS = 20;
 
 function friendlyAIError(err) {
   const raw = err.message || '';
@@ -15,18 +17,20 @@ function friendlyAIError(err) {
     const jsonStart = raw.indexOf('{');
     if (jsonStart !== -1) {
       const parsed = JSON.parse(raw.slice(jsonStart));
-      const msg = parsed?.error?.message || '';
+      const msg    = parsed?.error?.message || '';
       if (msg.includes('credit balance') || msg.includes('too low')) {
         return 'אין מספיק קרדיט ב-API. הכנס מפתח Anthropic אישי בהגדרות (Starter Plan) או טען קרדיט לחשבון הפלטפורמה.';
       }
       if (msg) return msg;
     }
-  } catch { /* not JSON — return as-is */ }
+  } catch { /* not JSON */ }
   if (raw.includes('credit') || raw.includes('billing')) {
     return 'אין מספיק קרדיט ב-API. הכנס מפתח Anthropic אישי בהגדרות.';
   }
   return 'שגיאה בתקשורת עם ה-AI. אנא נסה שוב.';
 }
+
+// ── CRUD ──────────────────────────────────────────────────────────────────────
 
 exports.create = asyncHandler(async (req, res) => {
   const project = await projectService.create({ ...req.body, ownerId: req.user.id });
@@ -59,19 +63,17 @@ exports.getOne = asyncHandler(async (req, res) => {
   res.json(project);
 });
 
-// SSE: streams the next discovery question from Claude.
-// Body: { answers: [{question, answer}] }
-// Streams text chunks, then sends { done: true } or { done: true, finished: true } when all 7 answered.
+// ── Discovery ─────────────────────────────────────────────────────────────────
+
 exports.discoveryNext = asyncHandler(async (req, res) => {
   const project = await projectService.getById(req.params.id, req.user.id);
   if (project.status !== 'onboarding') {
     return res.status(400).json({ error: 'Discovery already completed' });
   }
 
-  // Validate answers array
   const answers = req.body.answers;
   if (answers !== undefined) {
-    if (!Array.isArray(answers) || answers.length > 20) {
+    if (!Array.isArray(answers) || answers.length > MAX_DISCOVERY_ANSWERS) {
       return res.status(400).json({ error: 'Invalid answers format' });
     }
     for (const a of answers) {
@@ -86,40 +88,23 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  // Abort controller so we can cancel the Claude stream when client disconnects
   const abortController = new AbortController();
-
-  // Close cleanly if client disconnects mid-stream
   req.on('close', () => abortController.abort());
 
-  // Safety timeout — 5 minutes max per discovery question
   const timeout = setTimeout(() => {
     abortController.abort();
     if (!res.writableEnded) res.end();
-  }, 5 * 60 * 1000);
+  }, DISCOVERY_TIMEOUT_MS);
 
-  const cleanup = () => clearTimeout(timeout);
-
-  // Resolve API key: project key → user global key; use real user plan
-  const [projectWithKey, reqUser] = await Promise.all([
-    Project.findById(req.params.id).select('+settings.anthropicApiKey'),
-    User.findById(req.user.id).select('+settings.anthropicApiKey +plan').lean(),
-  ]);
-
-  let apiKey = null;
-  if (projectWithKey?.settings?.anthropicApiKey) {
-    try { apiKey = decrypt(projectWithKey.settings.anthropicApiKey); } catch { /* invalid */ }
-  }
-  if (!apiKey && reqUser?.settings?.anthropicApiKey) {
-    try { apiKey = decrypt(reqUser.settings.anthropicApiKey); } catch { /* invalid */ }
-  }
-
-  if (!apiKey) {
-    cleanup();
+  const resolvedKey = await _resolveApiKey(req.params.id, req.user.id);
+  if (!resolvedKey) {
+    clearTimeout(timeout);
     res.write(`data: ${JSON.stringify({ error: 'לא הוגדר מפתח Anthropic. הכנס מפתח בהגדרות הפרויקט או בהגדרות הכלליות.' })}\n\n`);
     res.end();
     return;
   }
+
+  const reqUser = await User.findById(req.user.id).select('plan').lean();
 
   try {
     await discoveryService.streamNextQuestion(res, {
@@ -127,7 +112,7 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       title:      project.title,
       answers:    answers || [],
       userPlan:   reqUser?.plan || 'starter',
-      userApiKey: apiKey,
+      userApiKey: resolvedKey,
     }, abortController.signal);
   } catch (err) {
     if (!res.writableEnded) {
@@ -135,32 +120,26 @@ exports.discoveryNext = asyncHandler(async (req, res) => {
       res.end();
     }
   } finally {
-    cleanup();
+    clearTimeout(timeout);
   }
 });
 
-// Auto-saves discovery answers without transitioning status (for resume/draft)
 exports.discoveryProgress = asyncHandler(async (req, res) => {
   const project = await projectService.saveDiscoveryProgress(
-    req.params.id,
-    req.user.id,
-    req.body.answers,
+    req.params.id, req.user.id, req.body.answers,
   );
   res.json(project);
 });
 
-// Saves all discovery answers and transitions project to 'planning'
 exports.discoveryComplete = asyncHandler(async (req, res) => {
   const project = await projectService.saveDiscoveryAnswers(
-    req.params.id,
-    req.user.id,
-    req.body.answers,
+    req.params.id, req.user.id, req.body.answers,
   );
   res.json(project);
 });
 
-// Returns all meeting messages for a project grouped by phaseIndex, oldest first.
-// Used to replay meeting history when workspace is loaded after the fact.
+// ── Meetings ──────────────────────────────────────────────────────────────────
+
 exports.getMeetings = asyncHandler(async (req, res) => {
   const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
   if (!project) throw ApiError.notFound('Project not found');
@@ -171,274 +150,39 @@ exports.getMeetings = asyncHandler(async (req, res) => {
   const meetingIds = meetings.map((m) => m._id);
   const messages   = await MeetingMessage.find({ meetingId: { $in: meetingIds } }).sort('timestamp').lean();
 
-  const meetingById = new Map(meetings.map((m) => [String(m._id), m]));
   const grouped = meetings.map((m) => ({
-    phaseIndex: m.type,
-    meetingId:  String(m._id),
+    phaseIndex:   m.type,
+    meetingId:    String(m._id),
     participants: m.participants,
-    startedAt:  m.startedAt,
-    messages:   [],
+    startedAt:    m.startedAt,
+    messages:     [],
   }));
   const groupedById = new Map(grouped.map((g) => [g.meetingId, g]));
 
   for (const msg of messages) {
     const g = groupedById.get(String(msg.meetingId));
-    if (g) g.messages.push({ role: msg.role, displayName: msg.displayName, color: msg.color, message: msg.message, type: msg.type });
+    if (g) g.messages.push({
+      role: msg.role, displayName: msg.displayName,
+      color: msg.color, message: msg.message, type: msg.type,
+    });
   }
 
   res.json(grouped.filter((g) => g.messages.length > 0));
 });
 
-// ── Per-project settings ───────────────────────────────────────────────────
+// ── Private helpers ───────────────────────────────────────────────────────────
 
-exports.getProjectSettings = asyncHandler(async (req, res) => {
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id })
-    .select('+settings.anthropicApiKey +settings.githubToken +settings.renderApiKey');
-  if (!project) throw ApiError.notFound('Project not found');
-
-  // Check user fallback key as well
-  const user = await User.findById(req.user.id).select('+settings.anthropicApiKey').lean();
-
-  const s = project.settings || {};
-  const safeDecrypt = (val) => { try { return val ? _maskKey(decrypt(val)) : null; } catch { return null; } };
-
-  const hasProjectKey = !!(s.anthropicApiKey);
-  const hasUserKey    = !!(user?.settings?.anthropicApiKey);
-
-  res.json({
-    hasApiKey:        hasProjectKey || hasUserKey,   // true if either key is available
-    hasProjectApiKey: hasProjectKey,                  // true only if project has its own key
-    usingFallback:    !hasProjectKey && hasUserKey,   // true if using user global key
-    hasGithubToken:   !!(s.githubToken),
-    hasRenderToken:   !!(s.renderApiKey),
-    apiKeyHint:       safeDecrypt(s.anthropicApiKey),
-    githubTokenHint:  safeDecrypt(s.githubToken),
-    renderTokenHint:  safeDecrypt(s.renderApiKey),
-  });
-});
-
-exports.setProjectApiKey = asyncHandler(async (req, res) => {
-  const { apiKey } = req.body;
-  if (!apiKey?.startsWith('sk-ant-') || apiKey.length < 40) throw ApiError.badRequest('מפתח API לא תקין — חייב להתחיל עם "sk-ant-" ולהיות באורך מלא');
-  const project = await _ownedProject(req);
-  if (!project.settings) project.settings = {};
-  project.settings.anthropicApiKey = encrypt(apiKey);
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    await project.save({ session });
-    await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: { 'settings.anthropicApiKey': encrypt(apiKey) } },
-      { session },
-    );
-    await session.commitTransaction();
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
-  } finally {
-    session.endSession();
-  }
-  res.json({ hasApiKey: true, apiKeyHint: _maskKey(apiKey) });
-});
-
-exports.deleteProjectApiKey = asyncHandler(async (req, res) => {
-  const project = await _ownedProject(req);
-  if (project.settings) project.settings.anthropicApiKey = undefined;
-  await project.save();
-  res.json({ hasApiKey: false });
-});
-
-exports.setProjectGithubToken = asyncHandler(async (req, res) => {
-  const { token } = req.body;
-  if (!token?.startsWith('ghp_') && !token?.startsWith('github_pat_'))
-    throw ApiError.badRequest('קוד גישה GitHub לא תקין — חייב להתחיל עם "ghp_" או "github_pat_"');
-  const project = await _ownedProject(req);
-  if (!project.settings) project.settings = {};
-  project.settings.githubToken = encrypt(token);
-  await project.save();
-  res.json({ hasGithubToken: true, githubTokenHint: _maskKey(token) });
-});
-
-exports.deleteProjectGithubToken = asyncHandler(async (req, res) => {
-  const project = await _ownedProject(req);
-  if (project.settings) project.settings.githubToken = undefined;
-  await project.save();
-  res.json({ hasGithubToken: false });
-});
-
-exports.setProjectRenderToken = asyncHandler(async (req, res) => {
-  const { token } = req.body;
-  if (!token) throw ApiError.badRequest('token required');
-  const project = await _ownedProject(req);
-  if (!project.settings) project.settings = {};
-  project.settings.renderApiKey = encrypt(token);
-  await project.save();
-  res.json({ hasRenderToken: true, renderTokenHint: _maskKey(token) });
-});
-
-exports.deleteProjectRenderToken = asyncHandler(async (req, res) => {
-  const project = await _ownedProject(req);
-  if (project.settings) project.settings.renderApiKey = undefined;
-  await project.save();
-  res.json({ hasRenderToken: false });
-});
-
-// ── Dynamic service credentials ───────────────────────────────────────────────
-
-exports.getRequiredServices = asyncHandler(async (req, res) => {
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
-  if (!project) throw ApiError.notFound('Project not found');
-
-  const registry = require('../config/serviceRegistry');
-  const services = (project.requiredServices || []).map((s) => ({
-    id:                   s.serviceId,
-    name:                 registry[s.serviceId]?.name     || s.serviceId,
-    fields:               registry[s.serviceId]?.fields   || [],
-    howto:                registry[s.serviceId]?.howto    || '',
-    optional:             registry[s.serviceId]?.optional ?? true,
-    credentialsProvided:  s.credentialsProvided,
-    skipped:              s.skipped || false,
-  }));
-
-  res.json({ services });
-});
-
-exports.saveServiceCredentials = asyncHandler(async (req, res) => {
-  const { serviceId } = req.params;
-  const { credentials } = req.body;
-
-  if (!credentials || typeof credentials !== 'object') {
-    throw ApiError.badRequest('credentials must be an object');
-  }
-
-  const registry = require('../config/serviceRegistry');
-  if (!registry[serviceId]) throw ApiError.badRequest(`Unknown service: ${serviceId}`);
-
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id })
-    .select('+requiredServices.credentials');
-  if (!project) throw ApiError.notFound('Project not found');
-
-  // Upsert this service entry
-  let svc = project.requiredServices.find((s) => s.serviceId === serviceId);
-  if (!svc) {
-    project.requiredServices.push({ serviceId, credentialsProvided: false });
-    svc = project.requiredServices[project.requiredServices.length - 1];
-  }
-
-  if (!svc.credentials) svc.credentials = new Map();
-  for (const [key, val] of Object.entries(credentials)) {
-    if (typeof val === 'string' && val.trim()) {
-      svc.credentials.set(key, encrypt(val.trim()));
-    }
-  }
-  svc.credentialsProvided = true;
-  await project.save();
-
-  // If all required services now have credentials or are skipped → resume codegen
-  const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
-  if (allDone && project.status === 'awaiting_credentials') {
-    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
-    const { startCodegen } = require('../services/codegen-runner.service');
-    startCodegen(req.params.id).catch((err) =>
-      require('../utils/logger').error('projects.ctrl: codegen resume failed', { error: err.message }),
-    );
-  }
-
-  res.json({ ok: true, credentialsProvided: true, allDone });
-});
-
-exports.skipService = asyncHandler(async (req, res) => {
-  const { serviceId } = req.params;
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
-  if (!project) throw ApiError.notFound('Project not found');
-
-  let svc = project.requiredServices.find((s) => s.serviceId === serviceId);
-  if (!svc) {
-    project.requiredServices.push({ serviceId, credentialsProvided: false, skipped: true });
-  } else {
-    svc.skipped = true;
-  }
-  await project.save();
-
-  const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
-  if (allDone && project.status === 'awaiting_credentials') {
-    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
-    const { startCodegen } = require('../services/codegen-runner.service');
-    startCodegen(req.params.id).catch((err) =>
-      require('../utils/logger').error('projects.ctrl: codegen resume after skip failed', { error: err.message }),
-    );
-  }
-
-  res.json({ ok: true, skipped: true, allDone });
-});
-
-exports.consultService = asyncHandler(async (req, res) => {
-  const { serviceId } = req.params;
-  const registry = require('../config/serviceRegistry');
-  const serviceDef = registry[serviceId];
-  if (!serviceDef) throw ApiError.badRequest(`Unknown service: ${serviceId}`);
-
-  // Resolve project + user in parallel (same pattern as planning-runner)
-  const { decrypt } = require('../services/encryption.service');
-  const [project, projectWithKey, user] = await Promise.all([
-    Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean(),
-    Project.findById(req.params.id).select('+settings.anthropicApiKey').lean(),
-    User.findById(req.user.id).select('+settings.anthropicApiKey plan').lean(),
+async function _resolveApiKey(projectId, userId) {
+  const [projectWithKey, user] = await Promise.all([
+    Project.findById(projectId).select('+settings.anthropicApiKey'),
+    User.findById(userId).select('+settings.anthropicApiKey').lean(),
   ]);
-  if (!project) throw ApiError.notFound('Project not found');
 
-  const projectKey = projectWithKey?.settings?.anthropicApiKey
-    ? decrypt(projectWithKey.settings.anthropicApiKey) : null;
-  const userKey = user?.settings?.anthropicApiKey
-    ? decrypt(user.settings.anthropicApiKey) : null;
-  const resolvedKey = projectKey || userKey;
-
-  const { getClientForUser, getPlatformClient } = require('../services/ai/claude.client');
-  const env = require('../config/env');
-  const { client, model } = resolvedKey
-    ? getClientForUser(user?.plan || 'starter', resolvedKey)
-    : { client: getPlatformClient(), model: env.ANTHROPIC_MODEL };
-
-  const Document = require('../models/Document');
-  const docs = await Document.find({ projectId: req.params.id })
-    .sort({ createdAt: 1 }).limit(4).select('content type').lean();
-
-  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, 500)}`).join('\n\n---\n\n');
-
-  const prompt = `פרויקט: "${project.title}"
-רעיון: ${project.idea || '—'}
-
-תיעוד תכנון (קטעים נבחרים):
-${docSummary || 'אין מסמכים עדיין'}
-
-שירות חיצוני: ${serviceDef.name}
-${serviceDef.howto ? `(איך מקבלים: ${serviceDef.howto})` : ''}
-
-ענה בעברית ב-3 נקודות קצרות (משפט-שניים כל אחד):
-1. מה השירות הזה עושה באפליקציה הספציפית הזו
-2. מה יחסר אם הלקוח ידלג עליו
-3. המלצה: לדלג / לא לדלג (ולמה)`;
-
-  const response = await client.messages.create({
-    model,
-    max_tokens: 400,
-    messages:   [{ role: 'user', content: prompt }],
-  });
-
-  const explanation = response.content[0]?.text?.trim() || 'לא ניתן לייצר הסבר כרגע.';
-  res.json({ explanation });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function _ownedProject(req) {
-  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
-  if (!project) throw ApiError.notFound('Project not found');
-  return project;
-}
-
-function _maskKey(key) {
-  if (!key || key.length < 16) return '***';
-  return `${key.slice(0, 12)}...${key.slice(-4)}`;
+  if (projectWithKey?.settings?.anthropicApiKey) {
+    try { return decrypt(projectWithKey.settings.anthropicApiKey); } catch { /* invalid */ }
+  }
+  if (user?.settings?.anthropicApiKey) {
+    try { return decrypt(user.settings.anthropicApiKey); } catch { /* invalid */ }
+  }
+  return null;
 }
