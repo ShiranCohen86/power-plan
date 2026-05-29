@@ -2,7 +2,12 @@
 
 // ── Notification bell ────────────────────────────────────────────────────────
 
-.notif-bell-wrap { position: relative; }
+.notif-bell-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .notif-bell-btn {
   background: transparent; border: 0; cursor: pointer;

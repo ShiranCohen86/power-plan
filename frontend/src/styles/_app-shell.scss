@@ -11,48 +11,57 @@
   background: var(--surface-1); border-bottom: 1px solid var(--border);
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 
-  // ── Shared row base ───────────────────────────────────────────────────────
+  // ── Row base ───────────────────────────────────────────────────────────────
   &__row {
-    display: flex; align-items: center; justify-content: space-between;
-    height: 52px; padding: 0 16px;
-    padding-top: env(safe-area-inset-top, 0);
+    display: flex; align-items: center;
+    height: 52px; overflow: hidden;
+    padding: 0 12px;
   }
   &__start { display: flex; align-items: center; gap: 4px; }
-  &__end   { display: flex; align-items: center; gap: 4px; }
+  &__end   { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: flex-end; }
 
-  // ── Mobile / Desktop row visibility ──────────────────────────────────────
-  &__row--mobile  { display: none; }
-  &__row--desktop { display: flex; }
+  // ── Mobile / Desktop row visibility ───────────────────────────────────────
+  &__row--mobile  { display: none; gap: 0; }
+  &__row--desktop { display: flex; gap: 0; justify-content: space-between; }
   @media (max-width: 767px) {
     &__row--mobile  { display: flex; }
     &__row--desktop { display: none;  }
   }
 
-  // ── Icon button token — all mobile action buttons share this size ─────────
-  // 40×40px touch target, 20px icon, consistent border-radius
+  // ── Icon button token — single source of truth for all mobile action btns ─
+  // Exactly 40×40px. No padding override wars. No btn-ghost inheritance.
   &__icon-btn {
-    $s: 40px;
     display: flex; align-items: center; justify-content: center;
-    width: $s; height: $s; min-width: $s; min-height: $s;
-    padding: 0; flex-shrink: 0;
+    width: 40px; height: 40px; min-width: 40px;
+    padding: 0 !important; flex-shrink: 0;
     background: transparent; border: 0; border-radius: $radius;
-    color: var(--text-muted); cursor: pointer;
-    font-size: 20px;
+    color: var(--text-muted); cursor: pointer; font-size: 20px;
     transition: background var(--ease-base), color var(--ease-base);
     &:hover, &:active { background: var(--surface-3); color: var(--text); }
-    svg { font-size: 20px; }
+    svg { font-size: 20px; width: 20px; height: 20px; }
   }
 
-  // ── Mobile title (flex:1 center slot) ────────────────────────────────────
+  // ── Mobile brand — icon only, same 40×40 token, no btn-ghost inheritance ──
+  &__brand-mobile {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; min-width: 40px;
+    padding: 0 !important; flex-shrink: 0;
+    background: transparent; border: 0; border-radius: $radius;
+    cursor: pointer; font-size: 22px; line-height: 1;
+    transition: background var(--ease-base);
+    &:hover, &:active { background: var(--surface-3); }
+  }
+
+  // ── Mobile title (flex:1 — takes all remaining space between icons) ────────
   &__title {
     flex: 1; min-width: 0;
     font-size: 15px; font-weight: 700; color: var(--text);
     text-align: center;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    padding: 0 6px;
+    padding: 0 4px;
   }
 
-  // ── Brand ─────────────────────────────────────────────────────────────────
+  // ── Desktop brand ──────────────────────────────────────────────────────────
   &__brand {
     display: flex; align-items: center; gap: 6px;
     font-weight: 800; font-size: 14px; color: var(--text);
@@ -61,21 +70,6 @@
   }
   &__brand-icon { font-size: 16px; line-height: 1; }
   &__brand-name { white-space: nowrap; }
-
-  // Stacked brand for mobile — same 40px width as icon-btn, icon+label below
-  &__brand--stacked {
-    $s: 40px;
-    flex-direction: column; gap: 2px;
-    width: $s; height: $s; min-width: $s; min-height: $s;
-    padding: 0; justify-content: center; align-items: center;
-    border-radius: $radius;
-    .app-topbar__brand-icon { font-size: 20px; line-height: 1; }
-    .app-topbar__brand-name {
-      font-size: 8px; font-weight: 700;
-      letter-spacing: .06em; text-transform: uppercase;
-      color: var(--text-muted); white-space: nowrap;
-    }
-  }
 
   // ── Search row ─────────────────────────────────────────────────────────────
   &__search-row {

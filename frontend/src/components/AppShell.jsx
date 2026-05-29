@@ -105,9 +105,8 @@ export default function AppShell({ children }) {
             </button>
           )}
           <NotificationBell />
-          <button className="app-topbar__brand app-topbar__brand--stacked btn-ghost" onClick={() => navigate('/dashboard')}>
+          <button className="app-topbar__brand-mobile" onClick={() => navigate('/dashboard')} aria-label="Power Plan — לוח הבקרה">
             <span className="app-topbar__brand-icon">⚡</span>
-            <span className="app-topbar__brand-name">Power Plan</span>
           </button>
         </div>
 

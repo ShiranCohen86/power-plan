@@ -25,9 +25,8 @@ export default function WorkspaceTopbar({
   return (
     <header className="workspace-topbar">
       <button
-        className="btn-ghost"
+        className="workspace-topbar__action-btn btn-ghost"
         onClick={() => navigate('/dashboard')}
-        style={{ minHeight: 36, padding: '4px 12px' }}
         title={t('topbar.back')}
       >
         <ArrowForwardOutlined fontSize="small" />
@@ -35,17 +34,15 @@ export default function WorkspaceTopbar({
       </button>
 
       <button
-        className="btn-ghost"
+        className="workspace-topbar__action-btn btn-ghost"
         onClick={() => navigate(`/projects/${id}/tasks`)}
-        style={{ minHeight: 36, padding: '4px 12px' }}
       >
         📋 <span className="workspace-topbar__btn-label">{t('topbar.tasks')}</span>
       </button>
 
       <button
-        className="btn-ghost"
+        className="workspace-topbar__action-btn btn-ghost"
         onClick={onOpenSettings}
-        style={{ minHeight: 36, padding: '4px 12px' }}
         title={t('topbar.settings')}
       >
         ⚙️ <span className="workspace-topbar__btn-label">{t('topbar.settings')}</span>
@@ -53,10 +50,9 @@ export default function WorkspaceTopbar({
 
       {isRunning && (
         <button
-          className="btn-ghost"
+          className="workspace-topbar__action-btn btn-ghost workspace-topbar__action-btn--danger"
           onClick={onPause}
           title={t('topbar.pause')}
-          style={{ minHeight: 36, padding: '4px 10px', color: 'var(--danger)', fontSize: 13 }}
         >
           ⏸️ {t('topbar.pause')}
         </button>

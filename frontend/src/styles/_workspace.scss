@@ -42,8 +42,21 @@
   &__status { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   &__btn-label { /* hidden on mobile via media query */ }
   &__hamburger { display: none; }
-  // Join meeting button only visible when LiveFeed panel is hidden (mobile/tablet)
   &__join-meeting { display: none; }
+
+  // ── Unified action button token (matches app-topbar__icon-btn size) ────────
+  &__action-btn {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 10px !important; min-height: 36px !important;
+    font-size: 13px;
+    &--danger { color: var(--danger) !important; }
+  }
+
+  @media (max-width: 767px) {
+    &__btn-label { display: none; }
+    &__action-btn { width: 40px; padding: 0 !important; justify-content: center; gap: 0; }
+  }
 }
 
 @media (max-width: 1279px) {
