@@ -256,7 +256,16 @@
     "deleting": "Deleting...",
     "errorSave": "Error saving",
     "errorDelete": "Error deleting",
-    "errorNetwork": "Network error — try again"
+    "errorNetwork": "Network error — try again",
+    "biometricSection": "Biometric Security",
+    "biometricDesc": "Enable fast sign-in with fingerprint, Face ID, or a biometric reader.",
+    "biometricTitle": "🔐 Biometric Login",
+    "biometricSubtitle": "Once registered, a biometric button will appear on the login screen.",
+    "biometricEnabled": "✓ Enabled",
+    "biometricDisabled": "Not enabled",
+    "biometricRegister": "Enable Biometric Login",
+    "biometricReady": "Biometric login is set up — it will appear next time you sign in.",
+    "biometricError": "Biometric registration failed — please try again"
   },
   "tasks": {
     "back": "← Dashboard",

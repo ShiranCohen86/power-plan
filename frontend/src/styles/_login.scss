@@ -15,9 +15,11 @@
   position: relative;
   animation: fade-in .4s ease;
 
-  // Mobile: bottom-sheet style
+  // Mobile: centered layout
   @media (max-width: 599px) {
-    justify-content: flex-end;
+    justify-content: center;
+    padding: 24px 16px;
+    overflow-y: auto;
   }
 
   &__lang {
@@ -79,13 +81,13 @@
   background: #fff;
   animation: modal-in .35s cubic-bezier(.22, 1, .36, 1) both;
 
-  // Mobile: bottom-sheet
+  // Mobile: centered card
   @media (max-width: 599px) {
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px max(20px, env(safe-area-inset-bottom, 20px));
-    max-height: calc(100dvh - 90px);
+    border-radius: 20px;
+    padding: 24px 20px;
+    max-height: calc(100dvh - 180px);
     overflow-y: auto;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, .18);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, .28);
   }
 
   // Tablet

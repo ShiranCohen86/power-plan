@@ -32,11 +32,12 @@
   border-bottom: 1px solid var(--border);
 
   &__brand {
-    display: flex; align-items: center; gap: 8px;
-    font-weight: 800; font-size: 16px; text-decoration: none; color: var(--text);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    font-weight: 800; font-size: 16px; text-decoration: none; color: #fff;
     &:hover { color: var(--brand-primary-light); }
   }
-  &__logo { font-size: 20px; }
+  &__logo { font-size: 20px; flex-shrink: 0; }
+  &__name { white-space: nowrap; }
 
   &__actions { display: flex; align-items: center; gap: 8px; }
   &__lang  { font-size: 12px; padding: 4px 8px; min-height: auto; }
@@ -358,7 +359,8 @@
   .home-pipeline { padding: 28px 16px; }
 
   .home-nav { padding: 0 16px; }
-  .home-nav__lang { display: none; }
+  .home-nav__lang  { display: none; }
+  .home-nav__login { display: none; }
 
   .home-footer { padding: 16px; flex-wrap: wrap; gap: 8px; }
   .home-footer__links { margin-inline-start: 0; }

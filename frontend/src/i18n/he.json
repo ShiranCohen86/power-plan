@@ -256,7 +256,16 @@
     "deleting": "מוחק...",
     "errorSave": "שגיאה בשמירה",
     "errorDelete": "שגיאה במחיקה",
-    "errorNetwork": "שגיאת רשת — נסה שוב"
+    "errorNetwork": "שגיאת רשת — נסה שוב",
+    "biometricSection": "אבטחה ביומטרית",
+    "biometricDesc": "הפעל כניסה מהירה עם טביעת אצבע, Face ID או קורא ביומטרי.",
+    "biometricTitle": "🔐 כניסה ביומטרית",
+    "biometricSubtitle": "לאחר ההרשמה, כפתור הכניסה הביומטרית יופיע בדף ההתחברות.",
+    "biometricEnabled": "✓ פעיל",
+    "biometricDisabled": "לא פעיל",
+    "biometricRegister": "הפעל כניסה ביומטרית",
+    "biometricReady": "כניסה ביומטרית מוגדרת — תופיע בדף ההתחברות בפעם הבאה.",
+    "biometricError": "ההרשמה הביומטרית נכשלה — נסה שוב"
   },
   "tasks": {
     "back": "← לוח הבקרה",

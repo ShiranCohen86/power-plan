@@ -73,6 +73,12 @@ export const logoutUser = createAsyncThunk('auth/logout', async () => {
   // No localStorage cleanup needed — token was never stored there
 });
 
+function syncBiometricFlag(user) {
+  if (user?.authMethods?.includes('webauthn')) {
+    localStorage.setItem('pp-biometric', '1');
+  }
+}
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -87,6 +93,7 @@ const authSlice = createSlice({
         state.accessToken    = action.payload.accessToken;
         state.isBootstrapped = true;
         state.status         = 'succeeded';
+        syncBiometricFlag(action.payload.user);
       })
       .addCase(bootstrapAuth.rejected, (state) => {
         state.currentUser    = null;
@@ -99,6 +106,7 @@ const authSlice = createSlice({
         state.status = 'succeeded';
         state.currentUser = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        syncBiometricFlag(action.payload.user);
       })
       .addCase(loginUser.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Login failed'; })
       .addCase(signupUser.pending,   (state) => { state.status = 'loading'; state.errorMessage = null; })
@@ -106,10 +114,11 @@ const authSlice = createSlice({
         state.status = 'succeeded';
         state.currentUser = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        syncBiometricFlag(action.payload.user);
       })
       .addCase(signupUser.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Signup failed'; })
       .addCase(loginWithGoogle.pending,   (state) => { state.status = 'loading'; state.errorMessage = null; })
-      .addCase(loginWithGoogle.fulfilled, (state, action) => { state.status = 'succeeded'; state.currentUser = action.payload.user; state.accessToken = action.payload.accessToken; })
+      .addCase(loginWithGoogle.fulfilled, (state, action) => { state.status = 'succeeded'; state.currentUser = action.payload.user; state.accessToken = action.payload.accessToken; syncBiometricFlag(action.payload.user); })
       .addCase(loginWithGoogle.rejected,  (state, action) => { state.status = 'failed'; state.errorMessage = action.payload || 'Google sign-in failed'; })
       .addCase(loginWithBiometric.pending,   (state) => { state.status = 'loading'; state.errorMessage = null; })
       .addCase(loginWithBiometric.fulfilled, (state, action) => { state.status = 'succeeded'; state.currentUser = action.payload.user; state.accessToken = action.payload.accessToken; })

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
 } from '../api/settings.api';
+import { webAuthnRegisterStart, webAuthnRegisterFinish } from '../api/auth.api.js';
 
 function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, inputProps, onValidate }) {
   const { t } = useTranslation();
@@ -139,6 +140,71 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, input
   );
 }
 
+function BiometricSection() {
+  const { t } = useTranslation();
+  const [platformAvailable, setPlatformAvailable] = useState(false);
+  const [registered, setRegistered] = useState(localStorage.getItem('pp-biometric') === '1');
+  const [status, setStatus] = useState('idle'); // idle | loading | success | error
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!window.PublicKeyCredential) return;
+    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      .then((ok) => setPlatformAvailable(ok))
+      .catch(() => {});
+  }, []);
+
+  if (!platformAvailable) return null;
+
+  async function handleRegister() {
+    setStatus('loading'); setError('');
+    try {
+      const { startRegistration } = await import('@simplewebauthn/browser');
+      const options  = await webAuthnRegisterStart();
+      const response = await startRegistration({ optionsJSON: options });
+      await webAuthnRegisterFinish(response);
+      localStorage.setItem('pp-biometric', '1');
+      setRegistered(true);
+      setStatus('success');
+    } catch (e) {
+      setStatus('error');
+      setError(e.message || t('settings.biometricError'));
+    }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.biometricSection')}</h2>
+      <p className="settings-section__desc">{t('settings.biometricDesc')}</p>
+      <div className="settings-apikey">
+        <div className="settings-apikey__header">
+          <div>
+            <h3 className="settings-apikey__title">{t('settings.biometricTitle')}</h3>
+            <p className="settings-apikey__subtitle">{t('settings.biometricSubtitle')}</p>
+          </div>
+          <div className={`settings-apikey__status${registered ? ' settings-apikey__status--ok' : ''}`}>
+            {registered ? t('settings.biometricEnabled') : t('settings.biometricDisabled')}
+          </div>
+        </div>
+        {registered ? (
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+            {t('settings.biometricReady')}
+          </p>
+        ) : (
+          <button
+            className="btn btn--primary"
+            onClick={handleRegister}
+            disabled={status === 'loading'}
+          >
+            {status === 'loading' ? t('common.loading') : t('settings.biometricRegister')}
+          </button>
+        )}
+        {error && <p style={{ fontSize: 13, color: 'var(--danger)', marginTop: 8 }}>{error}</p>}
+      </div>
+    </section>
+  );
+}
+
 export default function Settings() {
   const { t } = useTranslation();
   const [settings,  setSettings]  = useState(null);
@@ -181,6 +247,7 @@ export default function Settings() {
 
       {settings && (
         <div className="settings-page__body">
+          <BiometricSection />
           <section className="settings-section">
             <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
             <p className="settings-section__desc">{t('settings.apiDesc')}</p>
