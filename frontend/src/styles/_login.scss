@@ -2,12 +2,12 @@
 @use 'mixins' as *;
 
 // Login card always renders on a white surface — fixed light-mode palette
-$card-text:   $card-text;
-$card-muted:  $card-muted;
-$card-label:  $card-label;
-$card-subtle: $card-subtle;
-$card-border: $card-border;
-$card-bg-input: $card-bg-input;
+$card-text:     #111827;
+$card-muted:    #6b7280;
+$card-label:    #374151;
+$card-subtle:   #9ca3af;
+$card-border:   #e5e7eb;
+$card-bg-input: #f9fafb;
 
 // ── Login ──────────────────────────────────────────────────────────────────
 
