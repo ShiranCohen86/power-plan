@@ -202,14 +202,22 @@
 }
 
 .home-feat-card {
-  padding: 32px;
+  padding: 20px 24px;
   background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius-lg;
   transition: border-color var(--ease-base), box-shadow var(--ease-base);
   &:hover { border-color: var(--brand-primary-alpha-25); box-shadow: var(--shadow-brand); }
 
-  &__icon  { font-size: 40px; margin-bottom: 16px; }
-  &__title { font-size: 20px; font-weight: 700; margin: 0 0 10px; word-break: break-word; overflow-wrap: break-word; }
-  &__sub   { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0; word-break: break-word; overflow-wrap: break-word; }
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    // RTL: title (first) → right, icon (last) → left
+  }
+
+  &__icon  { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  &__title { font-size: 17px; font-weight: 700; margin: 0; flex: 1; word-break: break-word; }
+  &__sub   { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; word-break: break-word; }
 }
 
 // ── Trust ─────────────────────────────────────────────────────────────────────
@@ -342,7 +350,8 @@
   .home-features { padding: 56px 16px; }
   .home-features__grid { grid-template-columns: 1fr; gap: 16px; }
 
-  .home-how__step, .home-feat-card { padding: 24px; }
+  .home-how__step { padding: 24px; }
+  .home-feat-card { padding: 16px 18px; }
 
   .home-section-title { font-size: 26px; }
   .home-cta__title { font-size: 28px; }

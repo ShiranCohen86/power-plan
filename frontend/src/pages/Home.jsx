@@ -211,8 +211,10 @@ export default function Home() {
           <div className="home-features__grid">
             {features.map((f, i) => (
               <div key={i} className="home-feat-card home-reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-                <div className="home-feat-card__icon">{f.icon}</div>
-                <h3 className="home-feat-card__title">{f.title}</h3>
+                <div className="home-feat-card__header">
+                  <h3 className="home-feat-card__title">{f.title}</h3>
+                  <span className="home-feat-card__icon" aria-hidden="true">{f.icon}</span>
+                </div>
                 <p className="home-feat-card__sub">{f.sub}</p>
               </div>
             ))}
