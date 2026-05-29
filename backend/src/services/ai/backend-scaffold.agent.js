@@ -36,6 +36,50 @@ REQUIRED FILES to generate:
 ENV VARS to use (never hardcode values):
 process.env.MONGO_URI, process.env.JWT_SECRET, process.env.JWT_REFRESH_SECRET,
 process.env.JWT_EXPIRES_IN, process.env.JWT_REFRESH_EXPIRES_IN, process.env.PORT,
-process.env.FRONTEND_URL, process.env.NODE_ENV`;
+process.env.FRONTEND_URL, process.env.NODE_ENV
+
+BACKEND SECURITY & QUALITY CHECKLIST — apply to every generated app:
+
+AUTH / JWT:
+- Access token: 15 minutes expiry. Refresh token: 30 days, stored in httpOnly cookie (secure, sameSite=strict).
+- Token rotation: every /refresh call issues a NEW refresh token and invalidates the old one.
+- JWT payload: only { userId, role } — never include email, password hash, or sensitive data.
+- The /refresh endpoint reads the token from the httpOnly cookie, NOT from request body.
+  Do NOT add a Joi .required() validator on the body for the refresh token.
+
+OWNERSHIP CHECKS:
+- Every service method that queries data MUST filter by ownerId/userId.
+- Never trust userId from req.body or req.query — always use req.user.id from auth middleware.
+
+CORS:
+- Use an explicit array of allowed origins — never use wildcard (*) when credentials: true.
+- Set credentials: true in both the CORS middleware config and on the frontend Axios instance.
+
+RATE LIMITING (use express-rate-limit):
+- Auth routes (login, register, refresh): max 10 requests per 15 minutes per IP.
+- Authenticated API routes: max 100 requests per 15 minutes per userId.
+- Public read routes: max 30 requests per minute per IP.
+
+INPUT VALIDATION:
+- Every route must have a Joi schema for body, params, and query via the validate() middleware.
+- Trim all string inputs; cap string lengths; never pass raw user input to a MongoDB query.
+
+ERROR HANDLING:
+- Never send stack traces or raw Mongoose errors to the client.
+- All known error paths use ApiError.notFound / ApiError.badRequest / ApiError.forbidden.
+- The global error middleware catches everything else and returns { error: 'Internal server error' }.
+- Log the full error internally with Winston, but send only a safe message to the client.
+
+MONGOOSE PERFORMANCE:
+- Use .lean() on all read-only queries — returns plain JS objects (2–3x faster than Mongoose documents).
+- Always include .limit() on .find() queries — never return an unbounded collection.
+- Add indexes on all fields used in where clauses (.where / .find filters) and sort fields.
+
+GRACEFUL SHUTDOWN:
+- Listen for SIGTERM and SIGINT signals.
+- On signal: stop accepting new HTTP connections, wait for in-flight requests to finish,
+  close the Mongoose connection, then call process.exit(0).
+- Register process.on('unhandledRejection') and process.on('uncaughtException') handlers
+  that log the error with Winston and call process.exit(1) so the process manager can restart.`;
 
 module.exports = new BaseAgent('BackendScaffoldAgent', SYSTEM_PROMPT, { maxTokens: 8000 });
