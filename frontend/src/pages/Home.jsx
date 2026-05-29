@@ -193,8 +193,10 @@ export default function Home() {
           <div className="home-how__steps">
             {steps.map((s, i) => (
               <div key={i} className="home-how__step home-reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-                <div className="home-how__num" aria-hidden="true">{s.num}</div>
-                <div className="home-how__icon">{s.icon}</div>
+                <div className="home-how__header">
+                  <span className="home-how__num" aria-hidden="true">{s.num}</span>
+                  <span className="home-how__icon" aria-hidden="true">{s.icon}</span>
+                </div>
                 <h3 className="home-how__title">{s.title}</h3>
                 <p className="home-how__sub">{s.sub}</p>
               </div>

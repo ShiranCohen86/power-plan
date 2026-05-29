@@ -167,38 +167,27 @@
   max-width: 1100px; margin: 0 auto; padding: 80px 24px;
 
   &__steps {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   }
   &__step {
-    position: relative; padding: 20px 24px 26px;
+    padding: 24px;
     background: var(--surface); border: 1px solid var(--border); border-radius: $radius-lg;
-    overflow: hidden;
     transition: border-color var(--ease-base);
     &:hover { border-color: var(--border-subtle); }
   }
+  &__header {
+    // RTL: num (first) → right, icon (last) → left
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
   &__num {
-    // inset-inline-start = RIGHT in RTL
-    position: absolute; top: -4px; inset-inline-start: 12px;
-    font-size: 88px; font-weight: 900; line-height: 1;
-    color: var(--surface-3); pointer-events: none;
+    font-size: 40px; font-weight: 900; line-height: 1;
+    color: var(--surface-4);
     font-variant-numeric: tabular-nums;
   }
-  &__icon {
-    // inset-inline-end = LEFT in RTL
-    position: absolute; top: 16px; inset-inline-end: 16px;
-    font-size: 28px; line-height: 1;
-  }
-  &__title {
-    // margin-top places title over the lower part of the large number
-    position: relative; z-index: 1;
-    font-size: 18px; font-weight: 700; margin: 46px 0 10px;
-    word-break: break-word; overflow-wrap: break-word;
-  }
-  &__sub {
-    position: relative; z-index: 1;
-    font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0;
-    word-break: break-word; overflow-wrap: break-word;
-  }
+  &__icon  { font-size: 28px; line-height: 1; }
+  &__title { font-size: 18px; font-weight: 700; margin: 0 0 8px; word-break: break-word; }
+  &__sub   { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0; word-break: break-word; }
 }
 
 // ── Features ─────────────────────────────────────────────────────────────────
@@ -211,7 +200,7 @@
 
   &__grid {
     max-width: 1100px; margin: 0 auto;
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   }
 }
 
@@ -222,16 +211,14 @@
   &:hover { border-color: var(--brand-primary-alpha-25); box-shadow: var(--shadow-brand); }
 
   &__header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    // RTL: title (first) → right, icon (last) → left — mirrors step card header
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 10px;
-    // RTL: title (first) → right, icon (last) → left
   }
 
   &__icon  { font-size: 28px; line-height: 1; flex-shrink: 0; }
-  &__title { font-size: 17px; font-weight: 700; margin: 0; flex: 1; word-break: break-word; }
-  &__sub   { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; word-break: break-word; }
+  &__title { font-size: 18px; font-weight: 700; margin: 0; word-break: break-word; }
+  &__sub   { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin: 0; word-break: break-word; }
 }
 
 // ── Trust ─────────────────────────────────────────────────────────────────────
@@ -353,37 +340,42 @@
 }
 
 @media (max-width: 767px) {
-  .home-hero__headline { font-size: 36px; }
-  .home-hero__sub { font-size: 16px; }
-  .home-hero { padding: 48px 16px 40px; }
-  .home-hero__ctas { flex-direction: column; align-items: stretch; }
+  // ── Hero
+  .home-hero         { padding: 48px 16px 40px; }
+  .home-hero__headline { font-size: 34px; }
+  .home-hero__sub    { font-size: 15px; }
+  .home-hero__ctas   { flex-direction: column; align-items: stretch; }
 
-  .home-how__steps { grid-template-columns: 1fr; }
-  .home-how { padding: 56px 16px; }
+  // ── Sections — unified 56px vertical, 16px horizontal
+  .home-how          { padding: 56px 16px; }
+  .home-features     { padding: 56px 16px; }
+  .home-trust        { padding: 56px 16px; }
+  .home-checklist    { padding: 56px 16px; }
+  .home-faq          { padding: 56px 16px; }
+  .home-cta          { padding: 56px 16px; }
+  .home-pipeline     { padding: 28px 16px; }
 
-  .home-features { padding: 56px 16px; }
-  .home-features__grid { grid-template-columns: 1fr; gap: 16px; }
+  // ── Cards — unified 20px padding, single column
+  .home-how__steps          { grid-template-columns: 1fr; gap: 14px; }
+  .home-how__step           { padding: 20px; }
+  .home-how__num            { font-size: 32px; }
+  .home-features__grid      { grid-template-columns: 1fr; gap: 14px; }
+  .home-feat-card           { padding: 20px; }
 
-  .home-how__step { padding: 20px 18px 24px; }
-  .home-feat-card { padding: 20px 18px; }
+  // ── Typography
+  .home-section-title { font-size: 24px; }
+  .home-cta__title    { font-size: 26px; }
+  .home-trust__tagline { font-size: 17px; }
 
-  .home-section-title { font-size: 26px; }
-  .home-cta__title { font-size: 28px; }
-  .home-cta { padding: 60px 16px; }
-
-  .home-trust { padding: 48px 16px; }
-  .home-trust__tagline { font-size: 18px; }
-
-  .home-checklist { padding: 56px 16px; }
+  // ── Checklist
   .home-checklist__grid { grid-template-columns: 1fr; }
-  .home-faq { padding: 56px 16px; }
 
+  // ── Pipeline
   .home-pipeline__track { justify-content: flex-start; flex-wrap: nowrap; }
-  .home-pipeline { padding: 28px 16px; }
 
-  .home-nav { padding: 0 16px; }
-  .home-nav__login { display: none; }
-
-  .home-footer { padding: 16px; flex-wrap: wrap; gap: 8px; }
+  // ── Nav / Footer
+  .home-nav          { padding: 0 16px; }
+  .home-nav__login   { display: none; }
+  .home-footer       { padding: 16px; flex-wrap: wrap; gap: 8px; }
   .home-footer__links { margin-inline-start: 0; }
 }
