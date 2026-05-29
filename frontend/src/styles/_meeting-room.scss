@@ -1,0 +1,213 @@
+@use 'variables' as *;
+
+// ── Meeting Room Overlay ────────────────────────────────────────────────────
+
+.meeting-room-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(5, 5, 15, 0.95);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+
+.meeting-room__close {
+  position: absolute; top: 16px; right: 20px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 50%; width: 36px; height: 36px;
+  font-size: 16px; cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  &:hover { background: var(--surface-3); color: var(--text); }
+}
+
+.meeting-room__ended-badge {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--text-muted); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px;
+}
+
+.meeting-room__scene {
+  position: relative;
+  width: 500px; height: 340px;
+}
+
+.meeting-room__table {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px; height: 160px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.1);
+}
+
+.meeting-room__avatar {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: transform 0.2s;
+
+  &-emoji {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--surface-2); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; transition: box-shadow 0.2s;
+  }
+  &-name {
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  &--speaking {
+    .meeting-room__avatar-emoji {
+      animation: speakPulse 1s ease-out infinite;
+      border-color: #fbbf24;
+      background: rgba(251,191,36,0.1);
+    }
+  }
+}
+
+@keyframes speakPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(251,191,36,0.7); }
+  70%  { box-shadow: 0 0 0 14px rgba(251,191,36,0); }
+  100% { box-shadow: 0 0 0 0   rgba(251,191,36,0); }
+}
+
+.meeting-room__subtitles {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 16px 40px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+  min-height: 80px; display: flex; flex-direction: column; gap: 4px;
+  align-items: center; text-align: center;
+}
+
+.meeting-room__subtitle-name {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+}
+
+.meeting-room__subtitle-text {
+  font-size: 15px; color: #fff; line-height: 1.5; margin: 0;
+  max-width: 700px; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+// ── Live Company Experience ─────────────────────────────────────────────────
+
+// Team status strip (grid 4×2 above LiveFeed tabs)
+.team-status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+// Team member avatar
+.team-avatar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: $radius-sm;
+  cursor: default;
+  transition: background 0.15s;
+
+  &:hover { background: var(--surface-2); }
+
+  &__emoji {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  &__name {
+    font-size: 9px; color: var(--text-muted); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  &__dot {
+    position: absolute; top: 4px; right: 4px;
+    width: 7px; height: 7px; border-radius: 50%;
+    border: 1.5px solid var(--surface-1);
+    background: #6b7280; // idle = gray
+  }
+  &--working &__dot    { background: #2563eb; animation: pulse 1.5s ease-in-out infinite; }
+  &--in-meeting &__dot { background: #22c55e; animation: pulse 1s ease-in-out infinite; }
+  &--just-finished &__dot { background: #f59e0b; }
+}
+
+// Meeting countdown / live join banner
+.meeting-countdown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(135deg, #1e1e3f 0%, #2d1b69 100%);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: $radius;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin: 6px 0 2px;
+
+  &--live {
+    border-color: rgba(34, 197, 94, 0.4);
+    background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 1.5s ease-in-out infinite;
+    margin-left: 6px; margin-bottom: -1px;
+  }
+}
+
+// Missed meeting banner (inside meeting tab)
+.missed-meeting-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #1e1b4b;
+  border: 1px solid rgba(67, 56, 202, 0.4);
+  border-radius: $radius;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+
+  button {
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    font-size: 14px; padding: 0 2px; line-height: 1;
+    &:hover { color: var(--text); }
+  }
+}
+
+// ── Responsive: Meeting Room Overlay ────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .meeting-room__scene { width: min(340px, 90vw); height: 230px; }
+  .meeting-room__table { width: 185px; height: 105px; }
+  .meeting-room__avatar-emoji { width: 36px; height: 36px; font-size: 16px; }
+  .meeting-room__avatar-name { font-size: 9px; }
+  .meeting-room__subtitles { padding: 10px 16px 20px; }
+  .meeting-room__subtitle-text { font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .meeting-room__scene { width: min(280px, 88vw); height: 190px; }
+  .meeting-room__table { width: 145px; height: 82px; }
+  .meeting-room__avatar-emoji { width: 28px; height: 28px; font-size: 13px; }
+  .meeting-room__avatar-name { font-size: 8px; }
+  .meeting-room__subtitle-text { font-size: 12px; }
+  .meeting-room__subtitles { padding: 8px 12px 16px; }
+}
+
+// ── Responsive: Team Status Strip ───────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .team-status-strip { grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px 6px 4px; }
+  .team-avatar__emoji { width: 26px; height: 26px; font-size: 12px; }
+  .team-avatar__name { font-size: 8px; }
+}
+

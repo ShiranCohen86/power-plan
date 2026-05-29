@@ -1,0 +1,27 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.login-shell {
+  display: grid; place-items: center;
+  height: 100vh; height: 100dvh;
+  background: var(--login-bg);
+  animation: fade-in .4s ease;
+  overflow: hidden;
+}
+
+.login-card {
+  position: relative;
+  border-radius: $radius-lg;
+  @include shimmer-line;
+  width: min(420px, 94vw);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
+  padding: 32px;
+  animation: modal-in .35s cubic-bezier(.22,1,.36,1) both;
+}
+

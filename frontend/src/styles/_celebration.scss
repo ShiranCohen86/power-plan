@@ -1,0 +1,90 @@
+@use 'variables' as *;
+
+// ── Celebration overlay ──────────────────────────────────────────────────────
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(var(--rotate, 360deg)); opacity: 0; }
+}
+
+.celebration-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+  direction: rtl;
+}
+
+.confetti-piece {
+  position: absolute; top: -60px;
+  animation: confetti-fall linear both;
+  pointer-events: none;
+}
+
+.celebration-card {
+  position: relative;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 20px; padding: 40px 48px 36px;
+  max-width: 480px; width: 90%; text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(6,182,212,.2);
+}
+
+.celebration-close {
+  position: absolute; top: 14px; right: 14px;
+  background: var(--surface-3); border: 0; color: var(--text-muted);
+  border-radius: 50%; width: 28px; height: 28px; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  &:hover { background: var(--surface-3-hover); color: var(--text); }
+}
+
+.celebration-icon { font-size: 56px; line-height: 1; margin-bottom: 16px; }
+
+.celebration-title {
+  font-size: 26px; font-weight: 800; margin: 0 0 6px;
+  background: linear-gradient(135deg, #22d3ee, #38bdf8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.celebration-project {
+  font-size: 14px; color: var(--text-muted); margin: 0 0 24px;
+}
+
+.celebration-url-box {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: $radius; padding: 12px 16px; text-align: start; margin-bottom: 20px;
+}
+.celebration-url-label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.celebration-url { color: var(--brand-primary-light); font-size: 13px; word-break: break-all; text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.celebration-actions {
+  display: flex; gap: 10px; justify-content: center; margin-bottom: 16px;
+  .celebration-btn-primary {
+    background: linear-gradient(135deg, var(--brand-primary-dark), var(--brand-primary));
+    color: #fff; font-weight: 700; text-decoration: none;
+    &:hover { background: linear-gradient(135deg, #06839a, var(--brand-primary-dark)); color: #fff; }
+  }
+}
+
+.celebration-secondary {
+  display: flex; gap: 16px; justify-content: center; margin-bottom: 16px;
+}
+.celebration-link {
+  background: none; border: 0; color: var(--text-muted); font-size: 13px;
+  cursor: pointer; padding: 0; text-decoration: none;
+  &:hover { color: var(--text); text-decoration: underline; }
+}
+
+.celebration-sub {
+  font-size: 12px; color: var(--text-muted); margin: 0;
+}
+
+// Live badge in topbar
+.badge--live {
+  background: rgba(52,211,153,0.15); color: #34d399;
+  animation: pulse 2s ease-in-out infinite;
+  font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600;
+}
+

@@ -1,0 +1,161 @@
+@use 'variables' as *;
+
+// â”€â”€ New Project / Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.new-project-shell {
+  flex: 1; overflow-y: auto; min-height: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.new-project-card {
+  width: 100%;
+  max-width: 620px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: $radius-lg;
+  padding: 40px;
+}
+
+.idea-input {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__header { text-align: center; }
+  &__icon   { font-size: 40px; }
+  &__title  { margin: 12px 0 4px; font-size: 22px; font-weight: 700; }
+  &__subtitle { margin: 0; color: var(--text-muted); font-size: 14px; }
+
+  &__textarea { resize: vertical; min-height: 110px; }
+  &__count    { font-size: 12px; color: var(--text-muted); text-align: end; }
+}
+
+// â”€â”€ Discovery Chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.discovery-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 16px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  &__icon  { font-size: 28px; }
+  &__title { margin: 0; font-size: 18px; font-weight: 700; }
+  &__subtitle { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
+
+  &__messages {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 240px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  &__input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__input { flex: 1; }
+
+  &__finish {
+    text-align: center;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--border);
+  }
+  &__finish-text { color: var(--text-muted); margin-bottom: 12px; font-size: 14px; }
+}
+
+.discovery-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+
+  &--user {
+    flex-direction: row-reverse;
+  }
+  &--error .discovery-msg__bubble {
+    background: rgba(220, 38, 38, 0.1);
+    color: #f87171;
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+
+  &__avatar { font-size: 18px; flex-shrink: 0; }
+
+  &__bubble {
+    background: var(--surface-2, #171b1f);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 80%;
+    white-space: pre-wrap;
+
+    &--streaming { opacity: 0.85; }
+  }
+
+  &--user .discovery-msg__bubble {
+    background: rgba(6, 182, 212, 0.12);
+    border-color: rgba(6, 182, 212, 0.25);
+  }
+}
+
+.discovery-error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: $radius-lg;
+  text-align: center;
+
+  &__icon { font-size: 28px; }
+  &__msg  { font-size: 14px; line-height: 1.6; color: var(--text-muted); max-width: 400px; }
+  &__actions { margin-top: 4px; }
+}
+
+// Typing dots animation
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 16px;
+
+  span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: dot-bounce 1.2s infinite ease-in-out;
+
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%            { transform: translateY(-5px); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+

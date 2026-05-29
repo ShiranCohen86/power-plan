@@ -1,0 +1,146 @@
+@use 'variables' as *;
+
+// â”€â”€ Live Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.live-feed {
+  border-inline-start: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  overflow: hidden;
+
+  &__tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  &__tab {
+    flex: 1; padding: 10px 8px; background: none; border: 0;
+    color: var(--text-muted); font-size: 12px; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.15s; position: relative;
+    &--active { color: var(--brand-primary-light); border-bottom-color: var(--brand-primary); }
+    &:hover:not(&--active) { color: var(--text); }
+  }
+  &__badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; background: var(--brand-primary);
+    color: #fff; font-size: 10px; margin-inline-start: 4px;
+  }
+  &__content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
+  &__text { font-size: 12px; line-height: 1.6; color: var(--text-muted); white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 0; }
+  &__empty { padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+}
+
+// â”€â”€ Meeting messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.meeting-phase-sep {
+  display: flex; align-items: center; gap: 8px; margin: 16px 0 8px;
+
+  &::before, &::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  &__label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    white-space: nowrap; padding: 2px 8px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: $radius-sm;
+  }
+}
+
+.meeting-msg {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: $radius;
+  font-size: 13px;
+
+  &--decision {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  &__avatar { font-size: 14px; }
+  &__name   { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
+  &__role   { font-size: var(--text-xs); color: var(--text-muted); }
+  &__type   { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; margin-inline-start: auto; }
+  &__body   { margin: 0; color: var(--text); line-height: 1.5; direction: rtl; text-align: right; }
+}
+
+// â”€â”€ Approval Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.approval-bar {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: $radius-lg;
+
+  &__label { font-weight: 600; font-size: 14px; color: #fbbf24; }
+  &__info  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  &__refine-count { font-size: 12px; color: var(--text-muted); }
+  &__actions { display: flex; gap: 10px; justify-content: flex-end; }
+  &__refine  { display: flex; flex-direction: column; gap: 10px; }
+  &__refine-actions { display: flex; gap: 8px; justify-content: flex-end; }
+}
+
+// Badge pulse variant
+.badge--pulse {
+  background: rgba(6, 182, 212, 0.14);
+  color: var(--brand-primary-light);
+  animation: pulse-glow 2s infinite;
+}
+
+// â”€â”€ Tech Log Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.live-feed {
+  &__agent-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border); font-size: 12px;
+    color: var(--brand-primary-light); font-weight: 600;
+  }
+  &__agent-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--brand-primary); animation: pulse-glow 1s infinite;
+    flex-shrink: 0;
+  }
+  &__tech { padding: 8px; }
+  &__meeting { padding: 8px; }
+}
+
+.tech-log {
+  padding: 5px 10px; margin-bottom: 2px;
+  font-size: 12px; border-left: 2px solid transparent;
+
+  &--completed   { border-left-color: #34d399; }
+  &--error       { border-left-color: #f87171; background: rgba(220,38,38,0.04); }
+  &--started     { border-left-color: rgba(6,182,212,0.4); }
+  &--file_written { border-left-color: rgba(59,130,246,0.4); }
+
+  &__line   { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+  &__icon   { flex-shrink: 0; }
+  &__agent  { font-weight: 600; color: var(--text-primary); }
+  &__sep    { color: var(--text-subtle); }
+  &__event  { color: var(--text-muted); }
+  &__tokens { color: var(--text-subtle); font-size: 11px; }
+  &__time   { margin-inline-start: auto; color: var(--text-subtle); font-size: 11px; white-space: nowrap; }
+  &__msg    { margin: 2px 0 0 18px; color: var(--text-muted); font-size: 11px; font-style: italic; }
+}
+
+// â”€â”€ Meeting type badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.meeting-msg__type-badge {
+  font-size: 9px; text-transform: uppercase; padding: 1px 5px;
+  border-radius: $radius-sm; margin-inline-start: auto;
+  background: var(--surface-3); color: var(--text-muted);
+
+  &--correction { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  &--concern    { background: rgba(248,113,113,0.15); color: #f87171; }
+  &--approval   { background: rgba(52,211,153,0.15);  color: #34d399; }
+  &--decision   { background: rgba(6,182,212,0.12);   color: var(--brand-primary-light); }
+}
+

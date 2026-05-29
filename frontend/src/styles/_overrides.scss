@@ -1,0 +1,165 @@
+@use 'variables' as *;
+
+// ── Bottom sheet ─────────────────────────────────────────────────────────────
+
+@keyframes slide-up-sheet {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes slide-down-banner {
+  from { transform: translateY(-110%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.bsheet-overlay {
+  position: fixed; inset: 0; z-index: 8500;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fade-in .2s ease;
+  padding: 0 12px 16px;
+}
+
+.bsheet {
+  width: 100%; max-width: 440px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-lg;
+  padding: 12px 20px 24px;
+  box-shadow: var(--shadow-lg);
+  animation: slide-up-sheet .32s cubic-bezier(.34,1.2,.64,1);
+  display: flex; flex-direction: column; gap: 0;
+  position: relative;
+
+  &__handle {
+    width: 36px; height: 4px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+    flex-shrink: 0;
+  }
+
+  &__close {
+    display: none;
+    position: absolute; top: 12px; inset-inline-end: 14px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 15px;
+    min-height: auto; padding: 4px 7px;
+    border-radius: $radius-sm; line-height: 1;
+    &:hover { background: var(--surface-3); color: var(--text); transform: none; box-shadow: none; }
+  }
+
+  &__title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    text-align: center; margin-bottom: 10px;
+  }
+
+  &__body {
+    font-size: 13.5px; color: var(--text-muted);
+    text-align: center; line-height: 1.7;
+    margin-bottom: 18px;
+
+    p { margin: 0; }
+    strong { color: var(--text); }
+  }
+
+  &__actions {
+    display: flex; flex-direction: column; gap: 8px;
+
+    .btn { width: 100%; }
+  }
+
+  &__dismiss {
+    font-size: 12.5px; color: var(--text-subtle);
+    background: transparent; border: none; box-shadow: none; min-height: auto;
+    padding: 6px;
+    &:hover { background: var(--surface-3); color: var(--text-muted); transform: none; box-shadow: none; }
+  }
+}
+
+@media (min-width: 1024px) {
+  .bsheet-overlay {
+    align-items: flex-start; justify-content: flex-end;
+    padding: 12px 24px 0; background: transparent;
+  }
+  .bsheet {
+    max-width: 360px; padding: 14px 20px 18px;
+    animation: slide-down-banner .3s cubic-bezier(.34,1.2,.64,1);
+    &__handle { display: none; }
+    &__close  { display: flex; }
+  }
+}
+
+// ── Touch device hover neutralization ───────────────────────────────────────
+// Prevents hover styles (translateY, box-shadow) from getting stuck after tap
+
+@media (hover: none) {
+  .btn:hover, button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .project-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// ── Landscape phones (e.g. iPhone SE/12 rotated) ─────────────────────────────
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .workspace-topbar { height: 40px; }
+  .workspace-sidebar { max-height: 100px; }
+  .workspace-main { padding: 8px 12px; }
+  .meeting-room__scene { height: 140px; width: min(220px, 70vw); }
+  .meeting-room__table { width: 110px; height: 60px; }
+  .meeting-room__subtitles { padding: 6px 12px 10px; }
+}
+
+// ── Light theme component overrides ──────────────────────────────────────────
+
+[data-theme="light"] {
+  .dashboard-topbar { background: rgba(240,245,248,.95); }
+  .pwa-spinner { border-color: rgba(2,132,199,.2); border-top-color: #0284c7; }
+  input, select, textarea { background: var(--surface-1); }
+
+  .badge.success { background: rgba(22,163,74,.10);  color: #15803d; border-color: rgba(22,163,74,.25); }
+  .badge.warning { background: rgba(217,119,6,.10);  color: #b45309; border-color: rgba(217,119,6,.25); }
+  .badge.danger  { background: rgba(185,28,28,.10);  color: #991b1b; border-color: rgba(185,28,28,.22); }
+  .badge.info    { background: rgba(2,132,199,.10);  color: #0369a1; border-color: rgba(2,132,199,.22); }
+
+  .project-status--onboarding       { background: rgba(2,132,199,.10);  color: #0369a1; border-color: rgba(2,132,199,.22); }
+  .project-status--planning         { background: rgba(37,99,235,.10);  color: #1d4ed8; border-color: rgba(37,99,235,.22); }
+  .project-status--coding           { background: rgba(5,150,105,.10);  color: #047857; border-color: rgba(5,150,105,.22); }
+  .project-status--deploying        { background: rgba(180,83,9,.10);   color: #92400e; border-color: rgba(180,83,9,.22); }
+  .project-status--live             { background: rgba(22,163,74,.10);  color: #15803d; border-color: rgba(22,163,74,.22); }
+  .project-status--failed           { background: rgba(185,28,28,.10);  color: #991b1b; border-color: rgba(185,28,28,.20); }
+  .project-status--paused           { background: rgba(75,85,99,.10);   color: #374151; border-color: rgba(75,85,99,.20); }
+  .project-status--awaiting_credentials { background: rgba(180,83,9,.10); color: #92400e; border-color: rgba(180,83,9,.22); }
+
+  .phase-item--active { background: rgba(2,132,199,.10) !important; border-color: rgba(2,132,199,.28); }
+  .meeting-msg--external { border-image: linear-gradient(180deg, transparent, #0ea5e9, transparent) 1; }
+  .discovery-msg--user .discovery-msg__bubble { background: rgba(2,132,199,.12); }
+  .tech-log--started { color: #0369a1; }
+  .workspace-doc__content { background: var(--surface); border-color: var(--border); }
+}
+
+// ── Accessibility — reduced motion ────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ── Accessibility — touch targets ≥ 44px (WCAG 2.5.5) ────────────────────────
+.btn-icon {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+

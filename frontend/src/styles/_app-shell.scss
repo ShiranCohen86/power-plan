@@ -1,0 +1,134 @@
+@use 'variables' as *;
+
+// ── AppShell global top bar ───────────────────────────────────────────────────
+.app-shell {
+  display: flex; flex-direction: column; min-height: 100vh;
+  &__content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+}
+
+.app-topbar {
+  display: flex; flex-direction: column;
+  background: var(--surface-1); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; z-index: 100; position: sticky; top: 0;
+
+  &__row {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 44px; padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  &__start { display: flex; align-items: center; gap: 4px; }
+  &__end   { display: flex; align-items: center; gap: 4px; }
+
+  &__search-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px 10px; border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  &__search-icon { color: var(--text-muted); flex-shrink: 0; font-size: 18px; }
+  &__search-input {
+    flex: 1; background: none; border: none; outline: none;
+    font-size: 15px; color: var(--text); padding: 4px 0;
+    &::placeholder { color: var(--text-muted); }
+  }
+  &__search-toggle { font-size: 18px; padding: 4px 8px; min-height: auto; }
+  &__search-close  { font-size: 16px; padding: 4px 8px; min-height: auto; }
+
+  &__brand {
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 800; font-size: 14px; color: var(--text);
+    padding: 4px 10px; border-radius: $radius;
+    &:hover { background: var(--surface-3); }
+  }
+  &__brand-icon { font-size: 16px; }
+  &__brand-name { @media (max-width: 480px) { display: none; } }
+
+  &__home { font-size: 13px; }
+  &__lang { font-size: 12px; padding: 4px 8px; min-height: auto; }
+  &__username {
+    font-size: 12px; color: var(--text-muted);
+    max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    @media (max-width: 640px) { display: none; }
+  }
+  &__settings { font-size: 16px; padding: 4px 8px; min-height: auto;
+    &--active { color: var(--brand-primary-light); }
+  }
+  &__logout { font-size: 12px; padding: 4px 10px; min-height: auto; }
+  &__admin { font-size: 16px; padding: 4px 8px; min-height: auto; }
+  &__hamburger {
+    display: none; font-size: 18px; min-width: 44px; min-height: 44px; padding: 0;
+    @media (max-width: 767px) { display: flex; }
+  }
+}
+
+// ── Hamburger menu (BottomSheet) ──────────────────────────────────────────────
+
+.app-menu {
+  display: flex; flex-direction: column; gap: 4px; padding: 8px 0;
+
+  &__item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: $radius;
+    font-size: 15px; color: var(--text); text-decoration: none;
+    background: none; border: none; cursor: pointer; width: 100%; text-align: start;
+    &:hover, &:active { background: var(--surface-3); }
+    &--danger { color: var(--danger); }
+  }
+}
+
+// ── Feature Error Boundary ───────────────────────────────────────────────────
+
+.feature-error {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-radius: $radius;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  color: var(--text-muted); font-size: 13px;
+}
+
+// ── Bottom nav footer (mobile only) ─────────────────────────────────────────
+
+.app-footer {
+  display: none;
+
+  @media (max-width: 767px) {
+    display: flex;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: calc(60px + env(safe-area-inset-bottom, 0));
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    background: var(--surface-1); border-top: 1px solid var(--border);
+    z-index: 100;
+
+    &__tab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); padding: 8px; min-height: auto;
+      font-size: 22px; border-radius: 0;
+      &:hover, &:active { background: var(--surface-3); }
+      &--active { color: var(--brand-primary); }
+    }
+
+    &__tab-label { font-size: 11px; font-weight: 500; }
+  }
+}
+
+// ── Help Panel ──────────────────────────────────────────────────────────────
+
+.help-panel {
+  padding: 4px 0 8px;
+
+  &__title { font-size: 17px; font-weight: 700; margin: 0 0 16px; }
+
+  &__section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    &:last-child { border-bottom: none; margin-bottom: 0; }
+
+    h4 { font-size: 13px; font-weight: 600; color: var(--brand-primary); margin: 0 0 6px; }
+    p, li { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+    ul { padding-right: 18px; margin: 0; }
+    li { margin-bottom: 4px; }
+    strong { color: var(--text); }
+  }
+}
+

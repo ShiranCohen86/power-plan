@@ -1,0 +1,259 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// â”€â”€ Progress bar in topbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.workspace-progress {
+  height: 2px; background: var(--border); position: relative; flex: 1; max-width: 120px; border-radius: 2px;
+  &__fill { height: 100%; background: var(--brand-primary); border-radius: 2px; transition: width 0.5s ease; }
+}
+
+// ── Thin custom scrollbars ────────────────────────────────────────────────
+
+.workspace-main,
+.workspace-sidebar,
+.live-feed__content,
+.discovery-chat__messages,
+.proj-settings-modal,
+.creds-modal__body,
+.admin-main,
+.settings-page__body {
+  @include thin-scrollbar;
+}
+
+// ── Typography utilities ──────────────────────────────────────────────────
+
+.text-xs   { font-size: var(--text-xs); }
+.text-sm   { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-md   { font-size: var(--text-md); }
+.text-lg   { font-size: var(--text-lg); }
+.text-xl   { font-size: var(--text-xl); }
+.text-2xl  { font-size: var(--text-2xl); }
+
+.font-medium    { font-weight: var(--weight-medium); }
+.font-semibold  { font-weight: var(--weight-semibold); }
+.font-bold      { font-weight: var(--weight-bold); }
+.font-extrabold { font-weight: var(--weight-extrabold); }
+
+.text-muted  { color: var(--text-muted) !important; }
+.text-subtle { color: var(--text-subtle) !important; }
+.text-brand  { color: var(--brand-primary-light); }
+.text-success { color: var(--text-success); }
+.text-warning { color: var(--text-warning); }
+.text-danger  { color: var(--text-danger); }
+
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+// ── Spacing utilities ─────────────────────────────────────────────────────
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+
+// â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+// Tablet (2-panel: sidebar + main, no live feed)
+@media (max-width: 1279px) and (min-width: 768px) {
+  .workspace-sidebar { width: 220px !important; }
+  .workspace-feed-wrapper,
+  .workspace-resize-handle { display: none; }
+  .live-feed { display: none; }
+  .workspace-main { padding: 16px; }
+  .workspace-doc__content { padding: 20px; }
+}
+
+// Mobile (tabs â€” sidebar collapses, main full width)
+@media (max-width: 767px) {
+  .workspace-body { flex-direction: column; }
+  .workspace-sidebar { width: 100% !important; max-height: 180px; overflow-x: auto; overflow-y: hidden; border-inline-end: none; border-bottom: 1px solid var(--border); }
+  .workspace-feed-wrapper, .workspace-resize-handle { display: none; }
+  .phase-list { flex-direction: row; padding: 8px; overflow-x: auto; gap: 6px; }
+  .phase-list__group { display: flex; flex-direction: row; gap: 4px; margin-bottom: 0; }
+  .phase-list__group-label { display: none; }
+  .phase-item { white-space: nowrap; min-width: auto; }
+  .phase-item__name, .phase-item__status, .phase-item__icon { display: none; }
+  .phase-item__num { display: block; }
+  .phase-item__tokens, .phase-item__error { display: none; }
+  .live-feed { display: none; }
+  .workspace-mobile-phase-title {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; background: var(--surface-1);
+  }
+
+  // Workspace content padding
+  .workspace-topbar { padding: 0 12px; gap: 8px; height: 46px; }
+  .workspace-topbar__title { font-size: 13px; }
+  .workspace-topbar__project-name { font-size: 13px; }
+  .workspace-topbar__btn-label { display: none; }
+
+  // AppShell in workspace — same height (44px), hide non-essential items
+  .app-topbar--in-project .app-topbar__logout,
+  .app-topbar--in-project .app-topbar__username,
+  .app-topbar--in-project .app-topbar__theme,
+  .app-topbar--in-project .app-topbar__lang,
+  .app-topbar--in-project .app-topbar__admin,
+  .app-topbar--in-project .app-topbar__settings,
+  .app-topbar--in-project .app-topbar__help,
+  .app-topbar--in-project .app-topbar__back { display: none; }
+  // Always show brand-name in workspace (it shows project name, not "Power Plan")
+  .app-topbar--in-project .app-topbar__brand-name { display: block; font-size: 13px; }
+
+  // Footer padding — content not hidden behind bottom nav
+  .app-shell--has-footer .app-shell__content {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0) + 4px);
+  }
+
+  // On all pages: hamburger visible, brand+bell grouped together
+  .app-topbar__row { height: 52px; }
+  .app-topbar__start { flex: 1; }
+  .notif-bell-wrap { margin-inline-start: auto; }
+  .app-topbar__brand { margin-inline-start: 0; }
+  .app-topbar__hamburger { font-size: 22px; min-width: 48px; min-height: 48px; }
+  .app-topbar__brand-icon { font-size: 20px; }
+  .notif-bell-btn { font-size: 22px; padding: 8px 10px; }
+  .app-topbar__theme,
+  .app-topbar__help { display: none; }
+  .app-topbar__lang,
+  .app-topbar__settings,
+  .app-topbar__logout,
+  .app-topbar__admin { display: none; }
+  .workspace-main { padding: 12px; }
+  .workspace-doc__content { padding: 16px; font-size: 13px; }
+
+  // Approval footer — stack on mobile
+  .workspace-approval-footer__bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+  .workspace-approval-footer__info { flex-direction: column; gap: 4px; }
+  .workspace-approval-footer__actions { flex-direction: row; justify-content: flex-end; }
+  .workspace-approval-footer__refine { padding: 10px 12px 0; }
+
+  // Dashboard
+  .dashboard-main { padding: 16px 12px; }
+  .dashboard-header { flex-direction: column; align-items: stretch; }
+  .btn-new-project { text-align: center; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .dashboard-toolbar { gap: 8px; }
+  .dashboard-toolbar__search { max-width: 100%; }
+  .dashboard-toolbar__count { margin-inline-start: 0; }
+
+  // New project / discovery
+  .new-project-card { padding: 20px 16px; }
+  .discovery-msg__bubble { max-width: 88%; }
+  .discovery-chat__messages { max-height: 280px; }
+
+  // Discovery fullscreen on mobile — header+footer stick, messages fill remaining height
+  .new-project-shell--chat {
+    padding: 0;
+    align-items: stretch;
+  }
+  .new-project-shell--chat .new-project-card {
+    border-radius: 0;
+    border: none;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+  }
+  .new-project-shell--chat .discovery-chat {
+    flex: 1;
+    min-height: 0;
+  }
+  .new-project-shell--chat .discovery-chat__messages {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+
+  // iOS momentum scrolling + overscroll containment
+  .workspace-main,
+  .live-feed__content,
+  .discovery-chat__messages,
+  .proj-settings-modal,
+  .creds-modal__body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  // Auth
+  .login-card { padding: 20px 16px; }
+
+  // Celebration modal
+  .celebration-card { padding: 24px 16px 20px; }
+  .celebration-title { font-size: 20px; }
+  .celebration-actions { flex-direction: column; }
+
+  // Credentials modal
+  .creds-modal { max-height: 95vh; border-radius: $radius; }
+  .creds-modal__header { padding: 16px 16px 12px; }
+  .creds-modal__body { padding: 12px 16px; }
+  .creds-card { padding: 12px; }
+  .creds-card__actions { flex-wrap: wrap; }
+
+  // Project settings panel (slide-in)
+  .proj-settings-modal { width: 100vw; }
+
+  // Admin
+  .admin-main { padding: 16px 12px; }
+  .admin-topbar { padding: 10px 16px; }
+
+  // Settings
+  .settings-page__body { padding: 16px 12px 32px; }
+  .settings-page__heading { padding: 16px 12px 0; }
+
+  // Task management
+  .task-management__header { grid-template-columns: auto 1fr; grid-template-rows: auto auto; padding: 10px 16px; }
+  .task-management__back-wrap { grid-column: 1; grid-row: 1; }
+  .task-management__title { grid-column: 2; grid-row: 1; justify-self: start; font-size: 14px; max-width: none; }
+  .task-management__stats { grid-column: 1 / -1; grid-row: 2; justify-self: start; gap: 12px; }
+  .task-management__stats { flex-wrap: wrap; gap: 8px; }
+  .task-management__tabs { padding: 0 12px; }
+  .task-management__body { padding: 12px; }
+
+  // Notification panel — fixed below header, above footer, full width (explicit L/R — no direction ambiguity)
+  .notif-panel {
+    position: fixed;
+    top: calc(52px + env(safe-area-inset-top, 0) + 8px); /* __row height + safe area */
+    bottom: calc(60px + env(safe-area-inset-bottom, 0) + 8px);
+    left: 8px; right: 8px;
+    width: auto; min-width: 0; max-height: none;
+    overflow: auto;
+  }
+
+  // iOS Safari auto-zoom prevention — inputs <16px trigger full-page zoom on focus
+  input, textarea, select { font-size: 16px; }
+
+  .form-input { max-width: 100% !important; }
+}
+
+@media (min-width: 1280px) {
+  .workspace-resize-handle { display: block; }
+}
+
+// Small phones (≤ 480px)
+@media (max-width: 480px) {
+  .workspace-doc__content { padding: 12px; }
+  .new-project-card { padding: 16px 12px; }
+  .celebration-card { padding: 20px 12px 16px; }
+  .celebration-icon { font-size: 40px; }
+  .creds-modal__header { padding: 12px 12px 10px; }
+  .creds-modal__body { padding: 10px 12px; }
+  .dashboard-topbar { padding: 0 12px; gap: 8px; }
+
+  // Hide secondary topbar labels on very small screens
+  .workspace-topbar .workspace-progress { display: none; }
+  .workspace-topbar > span { display: none; } // hide % and step counter
+
+  // Ensure approval footer buttons are full-touch-target height
+  .workspace-approval-footer .btn { min-height: 44px; }
+}
+
+// Touch target minimums for all interactive elements on mobile
+@media (max-width: 767px) {
+  .btn, button { min-height: 40px; }
+  .phase-item { min-height: 40px; }
+  .live-feed__tab { min-height: 44px; padding: 0 12px; }
+}
+

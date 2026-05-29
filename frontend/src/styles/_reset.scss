@@ -1,0 +1,107 @@
+@use 'variables' as *;
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+html, body, #root { height: 100%; margin: 0; overflow-x: hidden; }
+#root { width: 100%; }
+
+body {
+  font-family: $font-sans;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--brand-primary-light); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button, .btn {
+  font: inherit; cursor: pointer; border: 0;
+  border-radius: $radius; padding: 8px 16px; min-height: 36px;
+  background: var(--brand-primary); color: #fff;
+  font-weight: 600; font-size: 13.5px;
+  transition: background var(--ease-base), transform var(--ease-spring), box-shadow var(--ease-base);
+  display: inline-flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
+
+  &:hover { background: var(--brand-primary-dark); box-shadow: var(--shadow-brand); transform: translateY(-1px); }
+  &:active { transform: scale(.96) translateY(0); box-shadow: none; }
+  &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+  &.btn-secondary, &.btn--secondary {
+    background: var(--surface-3); color: var(--text);
+    border: 1.5px solid var(--border); box-shadow: none;
+    &:hover { background: var(--surface-3-hover); border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  }
+  &.btn-ghost, &.btn--ghost {
+    background: transparent; color: var(--text-muted); box-shadow: none; font-weight: 500;
+    &:hover { background: var(--surface-3); color: var(--text); transform: none; box-shadow: none; }
+  }
+  &.btn--primary {
+    background: var(--brand-primary);
+    &:hover { background: var(--brand-primary-dark); box-shadow: var(--shadow-brand-lg); }
+  }
+  &.btn--full { width: 100%; }
+  &:disabled { opacity: .35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+}
+
+input, select, textarea {
+  font: inherit; padding: 9px 13px;
+  border: 1.5px solid var(--border); border-radius: $radius;
+  background: var(--surface-2); color: var(--text); outline: none;
+  transition: border-color var(--ease-base), box-shadow var(--ease-base), background var(--ease-base);
+
+  &::placeholder { color: var(--text-subtle); opacity: .8; }
+  &:hover { border-color: var(--border-strong); }
+  &:focus {
+    border-color: var(--brand-primary);
+    background: var(--surface-3);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+// â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-up  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes pwa-spin { to { transform: rotate(360deg); } }
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6,182,212,.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(6,182,212,0); }
+}
+
+.pwa-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(6,182,212,.2);
+  border-top-color: #06b6d4;
+  border-radius: 50%;
+  animation: pwa-spin .8s linear infinite;
+  margin: 0 auto;
+}
+
+// â”€â”€ Wake-up overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.wakeup-overlay {
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  direction: rtl; animation: fade-in .4s ease;
+
+  &__inner { text-align: center; padding: 40px 24px; }
+  &__icon  { font-size: 56px; margin-bottom: 24px; display: block; }
+  &__title { font-size: 18px; font-weight: 700; color: var(--text); margin: 20px 0 8px; }
+  &__sub   { font-size: 13px; color: var(--text-muted); }
+}
+
+.page-fallback {
+  display: flex; align-items: center; justify-content: center;
+  height: 100vh; background: var(--bg);
+}
+
