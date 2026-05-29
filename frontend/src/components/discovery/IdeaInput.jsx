@@ -29,6 +29,8 @@ export default function IdeaInput({ onSubmit, loading }) {
           id="project-title"
           className="form-input"
           type="text"
+          autoComplete="off"
+          spellCheck={false}
           placeholder={t('newProject.namePlaceholder')}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -45,6 +47,8 @@ export default function IdeaInput({ onSubmit, loading }) {
         <textarea
           id="project-idea"
           className="form-input idea-input__textarea"
+          autoComplete="off"
+          spellCheck={false}
           placeholder={t('newProject.ideaPlaceholder')}
           value={idea}
           onChange={(e) => setIdea(e.target.value)}

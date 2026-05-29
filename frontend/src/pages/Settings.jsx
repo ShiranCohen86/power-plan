@@ -93,6 +93,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, input
             value={value}
             onChange={(e) => { setValue(e.target.value); setValidResult(null); }}
             autoComplete="off"
+            spellCheck={false}
             dir="ltr"
           />
           {err && <p className="settings-apikey__error">{err}</p>}

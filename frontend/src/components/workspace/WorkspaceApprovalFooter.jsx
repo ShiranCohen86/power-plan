@@ -35,6 +35,8 @@ export default function WorkspaceApprovalFooter({ phaseIndex, canApprove, refine
           <textarea
             className="form-input"
             rows={3}
+            autoComplete="off"
+            spellCheck={false}
             placeholder={t('workspace.approval.placeholder')}
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}

@@ -82,6 +82,8 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             disabled={saving}
+            autoComplete="off"
+            spellCheck={false}
             autoFocus
             dir="ltr"
           />

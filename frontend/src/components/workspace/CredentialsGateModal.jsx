@@ -96,6 +96,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
               value={values[field.key]}
               onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
               autoComplete="off"
+              spellCheck={false}
               dir="ltr"
               style={{ fontSize: 13 }}
             />

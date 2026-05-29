@@ -193,6 +193,8 @@ export default function DiscoveryChat({ projectId, onComplete }) {
             className="form-input discovery-chat__input"
             type="text"
             dir="auto"
+            autoComplete="off"
+            spellCheck={false}
             placeholder={streaming ? t('discovery.claudeTyping') : t('discovery.answerPlaceholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}

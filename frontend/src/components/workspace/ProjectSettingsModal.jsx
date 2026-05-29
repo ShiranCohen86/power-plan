@@ -72,6 +72,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
             value={value}
             onChange={(e) => setValue(e.target.value)}
             autoComplete="off"
+            spellCheck={false}
             dir="ltr"
             style={{ fontSize: 13 }}
           />
@@ -183,6 +184,7 @@ function ServiceRow({ projectId, service, onUpdated }) {
                 value={values[field.key] || ''}
                 onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
                 autoComplete="off"
+                spellCheck={false}
                 dir="ltr"
               />
             </div>

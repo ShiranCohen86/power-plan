@@ -115,6 +115,7 @@ export default function Login() {
               onChange={(e) => { setApiKeyInput(e.target.value); setApiKeyValid(null); }}
               placeholder="sk-ant-api03-..."
               autoComplete="off"
+              spellCheck={false}
               dir="ltr"
               style={{ fontSize: 13 }}
             />
@@ -188,7 +189,7 @@ export default function Login() {
             <input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              type="text" required autoComplete="name"
+              type="text" required autoComplete="off" spellCheck={false}
               placeholder="ישראל ישראלי"
             />
           </div>
@@ -199,7 +200,7 @@ export default function Login() {
           <input
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
-            type="email" required autoComplete="email"
+            type="email" required autoComplete="off" spellCheck={false}
             placeholder="you@example.com"
           />
         </div>
@@ -210,7 +211,7 @@ export default function Login() {
             value={passInput}
             onChange={(e) => setPassInput(e.target.value)}
             type="password" required
-            autoComplete={isRegister ? 'new-password' : 'current-password'}
+            autoComplete="off" spellCheck={false}
             placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
           />
         </div>
