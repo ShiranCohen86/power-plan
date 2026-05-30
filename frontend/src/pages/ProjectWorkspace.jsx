@@ -199,10 +199,7 @@ export default function ProjectWorkspace() {
 
           {ws.activeDoc && (
             <div className="workspace-doc-bar">
-              <button className="btn-ghost workspace-doc-bar__export" onClick={ws.handleExportDoc} title="הורד כקובץ Markdown">
-                ⬇️ ייצוא
-              </button>
-              {ws.awaitingPhase !== null && ws.awaitingPhase === ws.activePhaseIndex && (
+{ws.awaitingPhase !== null && ws.awaitingPhase === ws.activePhaseIndex && (
                 <button
                   className={`btn btn--primary workspace-doc-bar__approve${ws.hasScrolledToBottom ? ' workspace-approval-footer__approve--unlocked' : ''}`}
                   onClick={ws.handleApprove}

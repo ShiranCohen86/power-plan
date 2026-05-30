@@ -97,19 +97,8 @@ export function usePhaseActions(projectId, {
     }
   }
 
-  function handleExportDoc() {
-    if (!activeDoc?.content) return;
-    const blob = new Blob([activeDoc.content], { type: 'text/markdown;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `${project?.title || 'phase'}-${activePhaseIndex}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   return {
     handleStart, handleRetry, handlePause,
-    handleApprove, handleRollback, handleRefine, handleExportDoc,
+    handleApprove, handleRollback, handleRefine,
   };
 }
