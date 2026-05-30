@@ -93,12 +93,12 @@ export default function AppShell({ children }) {
 
         {/* ── Mobile row (≤767px) ── RTL order: hamburger | back | title | search | bell | brand */}
         <div className="app-topbar__row app-topbar__row--mobile">
-          <button className="app-topbar__icon-btn" onClick={openMenu} aria-label="תפריט">
+          <button className="app-topbar__icon-btn" onClick={openMenu} aria-label="תפריט" aria-expanded={menuOpen} aria-controls="app-mobile-menu">
             <MenuOutlined />
           </button>
           {showBack && (
             <button className="app-topbar__icon-btn" onClick={() => navigate(-1)} aria-label="חזור">
-              <ArrowForwardOutlined />
+              <ArrowForwardOutlined className="icon-directional" />
             </button>
           )}
           <span className="app-topbar__title">
@@ -124,35 +124,45 @@ export default function AppShell({ children }) {
             </button>
             {showBack && (
               <button className="btn-ghost app-topbar__back" onClick={() => navigate(-1)}>
-                <ArrowForwardOutlined fontSize="small" /> חזור
+                <ArrowForwardOutlined fontSize="small" className="icon-directional" /> חזור
               </button>
             )}
           </div>
           <div className="app-topbar__end">
-            <button className="btn-ghost app-topbar__lang" onClick={() => dispatch(toggleLanguage())}>
+            <button
+              className="btn-ghost app-topbar__lang"
+              onClick={() => dispatch(toggleLanguage())}
+              aria-label={lang === 'he' ? 'Switch to English' : 'החלף לעברית'}
+            >
               {lang === 'he' ? 'EN' : 'עב'}
             </button>
-            <button className="btn-ghost app-topbar__theme" onClick={toggleTheme} title={mode === 'dark' ? 'מצב בהיר' : 'מצב כהה'}>
+            <button
+              className="btn-ghost app-topbar__theme"
+              onClick={toggleTheme}
+              aria-label={mode === 'dark' ? 'עבור למצב בהיר' : 'עבור למצב כהה'}
+              aria-pressed={mode === 'dark'}
+            >
               {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
             </button>
             {user?.name && <span className="app-topbar__username">{user.name}</span>}
             <button
               className={`btn-ghost app-topbar__settings${location.pathname === '/settings' ? ' app-topbar__settings--active' : ''}`}
-              onClick={() => navigate('/settings')} title="הגדרות"
+              onClick={() => navigate('/settings')}
+              aria-label="הגדרות"
             >
               <SettingsOutlined fontSize="small" />
             </button>
             {user?.role === 'admin' && (
-              <button className="btn-ghost app-topbar__admin" onClick={() => navigate('/admin')} title="Admin">
+              <button className="btn-ghost app-topbar__admin" onClick={() => navigate('/admin')} aria-label="ממשק ניהול">
                 <BuildOutlined fontSize="small" />
               </button>
             )}
-            <button className="btn-ghost app-topbar__help" onClick={() => setShowHelp(true)} title="עזרה">
+            <button className="btn-ghost app-topbar__help" onClick={() => setShowHelp(true)} aria-label="עזרה" aria-expanded={showHelp}>
               <HelpOutlineOutlined fontSize="small" />
             </button>
             <NotificationBell />
             {!isInProject && (
-              <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch} title={t('search.open')}>
+              <button className="btn-ghost app-topbar__search-toggle" onClick={openSearch} aria-label={t('search.open')}>
                 <SearchOutlined fontSize="small" />
               </button>
             )}
@@ -184,7 +194,7 @@ export default function AppShell({ children }) {
 
       {menuOpen && (
         <BottomSheet onClose={closeMenu}>
-          <div className="app-menu">
+          <div className="app-menu" id="app-mobile-menu">
             <button className="app-menu__item" onClick={() => { dispatch(toggleLanguage()); closeMenu(); }}>
               🌐 {lang === 'he' ? 'English' : 'עברית'}
             </button>

@@ -1,4 +1,4 @@
-import toast from 'react-hot-toast';
+import { toastSuccess } from '../../utils/announce';
 import CelebrationOverlay  from './CelebrationOverlay';
 import ProjectSettingsModal from './ProjectSettingsModal';
 import CredentialsGateModal from './CredentialsGateModal';
@@ -27,7 +27,7 @@ export default function WorkspaceModals({
     onServicesClose();
     try {
       await startPipeline(projectId);
-      toast.success('המפתחות נשמרו — הפייפליין ממשיך');
+      toastSuccess('המפתחות נשמרו — הפייפליין ממשיך');
     } catch {
       // pipeline may already be resuming server-side
     }

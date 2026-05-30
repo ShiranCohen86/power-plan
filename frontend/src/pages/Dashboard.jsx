@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Skeleton from '@mui/material/Skeleton';
 import toast from 'react-hot-toast';
+import { toastError } from '../utils/announce.js';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
 import { friendlyError } from '../utils/errorMessages.js';
 import { DASHBOARD_AUTO_REFRESH_MS, DASHBOARD_PAGE_SIZE } from '../config/constants.js';
@@ -36,6 +37,8 @@ function ProjectCard({ project, dispatch }) {
     const projectTitle = project.title;
     try {
       await dispatch(deleteProjectThunk(projectId)).unwrap();
+      const announcer = document.getElementById('toast-announcer');
+      if (announcer) { announcer.textContent = ''; requestAnimationFrame(() => { announcer.textContent = `"${projectTitle}" נמחק`; }); }
       toast((toastInstance) => (
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {`"${projectTitle}" נמחק`}
@@ -47,7 +50,7 @@ function ProjectCard({ project, dispatch }) {
                 dispatch(fetchProjects({ page: 1 }));
                 toast.dismiss(toastInstance.id);
               } catch {
-                toast.error('לא ניתן לשחזר');
+                toastError('לא ניתן לשחזר');
               }
             }}
           >
@@ -56,7 +59,7 @@ function ProjectCard({ project, dispatch }) {
         </span>
       ), { duration: UNDO_TOAST_DURATION_MS });
     } catch (err) {
-      toast.error(friendlyError(err));
+      toastError(friendlyError(err));
     }
   }
 
@@ -75,7 +78,11 @@ function ProjectCard({ project, dispatch }) {
           <div className="project-card__progress-bar" style={{ width: `${project.completionPercent || 0}%` }} />
         </div>
         <span className="project-card__percent">{project.completionPercent || 0}%</span>
-        <button className="project-card__delete" onClick={handleDelete} title="מחק פרויקט">
+        <button
+          className="project-card__delete"
+          onClick={handleDelete}
+          aria-label={`מחק פרויקט: ${project.title}`}
+        >
           🗑️
         </button>
       </div>

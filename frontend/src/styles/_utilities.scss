@@ -257,3 +257,19 @@
   .live-feed__tab { min-height: 44px; padding: 0 12px; }
 }
 
+// RTL — mirror directional icons (chevrons, arrows, send) in Hebrew layout
+[dir="rtl"] .icon-directional { transform: scaleX(-1); }
+
+// xsmall-phone — iPhone SE (375px and below)
+@media (max-width: 375px) {
+  // Topbar: tighter gaps so 5 icons fit on 320px
+  .app-topbar__row--mobile { padding: 0 6px; }
+  .app-topbar__icon-btn, .notif-bell-btn, .app-topbar__brand-mobile {
+    width: 36px; min-width: 36px; height: 36px;
+  }
+  // Modal widths must not overflow
+  .creds-modal, .proj-settings-modal { width: calc(100vw - 16px); max-width: 100%; }
+  // Font size bump for very small screens
+  .phase-item__label { font-size: 11px; }
+}
+

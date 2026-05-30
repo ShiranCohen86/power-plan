@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext.jsx';
@@ -19,6 +19,7 @@ const TaskManagement   = lazy(() => import('./pages/TaskManagement.jsx'));
 const Settings         = lazy(() => import('./pages/Settings.jsx'));
 const Admin            = lazy(() => import('./pages/Admin.jsx'));
 const Status           = lazy(() => import('./pages/Status.jsx'));
+const NotFound         = lazy(() => import('./pages/NotFound.jsx'));
 
 const VERSION_KEY = 'pwa-version';
 
@@ -138,8 +139,11 @@ export default function App() {
           {sheet === 'version' && <VersionSheetContent prevVersion={prevVersion} currentVersion={currentVersion} onClose={closeSheet} />}
         </BottomSheet>
       )}
+      {/* Screen-reader live region — mirrors toast messages for assistive technology */}
+      <div id="toast-announcer" aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }} />
       <Toaster
         position="bottom-left"
+        containerAriaLabel="הודעות מערכת"
         toastOptions={{
           style: { background: '#1e1e2e', color: '#e2e8f0', border: '1px solid #2d2d44', direction: 'rtl' },
           error:   { iconTheme: { primary: '#ef4444', secondary: '#1e1e2e' } },
@@ -157,7 +161,7 @@ export default function App() {
           <Route path="/projects/:id/tasks"     element={<ProtectedRoute><AppShell><PageBoundary><TaskManagement /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/settings"               element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/admin"                  element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>

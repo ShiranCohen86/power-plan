@@ -63,6 +63,8 @@ export default function NotificationBell() {
         className="notif-bell-btn"
         onClick={() => setOpen((o) => !o)}
         aria-label="התראות"
+        aria-expanded={open}
+        aria-controls="notif-panel"
       >
         🔔
         {unreadCount > 0 && (
@@ -71,7 +73,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="notif-panel">
+        <div className="notif-panel" id="notif-panel" role="region" aria-label="התראות">
           <div className="notif-panel__header">
             <span className="notif-panel__title">התראות</span>
             <div className="notif-panel__actions">
@@ -92,18 +94,21 @@ export default function NotificationBell() {
           ) : (
             <ul className="notif-list">
               {notifications.map((n) => (
-                <li
-                  key={n._id}
-                  className={`notif-item${n.read ? '' : ' notif-item--unread'}`}
-                  onClick={() => handleClick(n)}
-                >
-                  <span className="notif-item__icon">{TYPE_ICON[n.type] || 'ℹ️'}</span>
-                  <div className="notif-item__body">
-                    <div className="notif-item__title">{n.title}</div>
-                    {n.message && <div className="notif-item__msg">{n.message}</div>}
-                    <div className="notif-item__time">{timeAgo(n.createdAt)}</div>
-                  </div>
-                  {!n.read && <span className="notif-item__dot" />}
+                <li key={n._id} className={`notif-item${n.read ? '' : ' notif-item--unread'}`}>
+                  <button
+                    className="notif-item__btn"
+                    onClick={() => handleClick(n)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleClick(n)}
+                    aria-label={`${n.title}${n.message ? ` — ${n.message}` : ''}, ${timeAgo(n.createdAt)}${!n.read ? ', לא נקרא' : ''}`}
+                  >
+                    <span className="notif-item__icon">{TYPE_ICON[n.type] || 'ℹ️'}</span>
+                    <div className="notif-item__body">
+                      <div className="notif-item__title">{n.title}</div>
+                      {n.message && <div className="notif-item__msg">{n.message}</div>}
+                      <div className="notif-item__time">{timeAgo(n.createdAt)}</div>
+                    </div>
+                    {!n.read && <span className="notif-item__dot" aria-hidden="true" />}
+                  </button>
                 </li>
               ))}
             </ul>

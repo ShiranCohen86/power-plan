@@ -12,6 +12,8 @@ import { BIOMETRIC_STORAGE_KEY } from '../config/constants.js';
 import GoogleButton from '../components/auth/GoogleButton.jsx';
 import BiometricButton from '../components/auth/BiometricButton.jsx';
 import BiometricEnrollPrompt from '../components/auth/BiometricEnrollPrompt.jsx';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function Login() {
   const { t }           = useTranslation();
@@ -28,6 +30,8 @@ export default function Login() {
   const [nameInput,           setNameInput]           = useState('');
   const [emailInput,          setEmailInput]          = useState('');
   const [passInput,           setPassInput]           = useState('');
+  const [showPassword,        setShowPassword]        = useState(false);
+  const [emailBlurError,      setEmailBlurError]      = useState('');
   const [localError,          setLocalError]          = useState('');
   const [showApiKeyPrompt,    setShowApiKeyPrompt]    = useState(false);
   const [showBiometricEnroll, setShowBiometricEnroll] = useState(false);
@@ -75,6 +79,12 @@ export default function Login() {
 
   // intentional: clear auth error whenever the user edits email or password
   useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleEmailBlur(e) {
+    const val = e.target.value.trim();
+    if (val && !val.includes('@')) setEmailBlurError('כתובת אימייל לא תקינה');
+    else setEmailBlurError('');
+  }
 
   const isLoading = authStatus === 'loading';
   const error     = localError || authError;
@@ -169,24 +179,45 @@ export default function Login() {
           )}
 
           <div className="form-group">
-            <label>{t('auth.email')}</label>
+            <label htmlFor="login-email">{t('auth.email')}</label>
             <input
+              id="login-email"
               value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
+              onChange={(e) => { setEmailInput(e.target.value); setEmailBlurError(''); }}
+              onBlur={handleEmailBlur}
               type="email" required autoComplete="email" spellCheck={false}
               placeholder="you@example.com"
+              aria-describedby={emailBlurError ? 'email-error' : undefined}
+              aria-invalid={!!emailBlurError}
             />
+            {emailBlurError && (
+              <span id="email-error" role="alert" className="login-field-error">{emailBlurError}</span>
+            )}
           </div>
 
           <div className="form-group">
-            <label>{t('auth.password')}</label>
-            <input
-              value={passInput}
-              onChange={(e) => setPassInput(e.target.value)}
-              type="password" required
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
-            />
+            <label htmlFor="login-password">{t('auth.password')}</label>
+            <div className="login-password-wrap">
+              <input
+                id="login-password"
+                value={passInput}
+                onChange={(e) => setPassInput(e.target.value)}
+                type={showPassword ? 'text' : 'password'} required
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}
+                tabIndex={0}
+              >
+                {showPassword
+                  ? <VisibilityOff style={{ fontSize: 18 }} />
+                  : <Visibility style={{ fontSize: 18 }} />}
+              </button>
+            </div>
           </div>
 
           {error && (

@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { saveServiceCredentials, skipServiceCredentials, consultService } from '../../api/projects.api';
+
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 const DONE_DELAY_MS = 800;
 const ERR_STYLE     = { margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' };
@@ -154,6 +156,27 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
   const { t } = useTranslation();
   const [savedCount, setSavedCount]   = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const prev = document.activeElement;
+    const first = modalRef.current?.querySelector(FOCUSABLE);
+    first?.focus();
+    return () => prev?.focus();
+  }, []);
+
+  function handleKeyDown(e) {
+    if (e.key === 'Escape' && onClose) { onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const els = Array.from(modalRef.current?.querySelectorAll(FOCUSABLE) || []);
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
 
   const requiredServices  = services.filter((s) => !s.optional);
   const optionalServices  = services.filter((s) => s.optional);
@@ -186,14 +209,21 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
 
   return (
     <div className="creds-overlay">
-      <div className="creds-modal">
+      <div
+        className="creds-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="creds-modal-title"
+        ref={modalRef}
+        onKeyDown={handleKeyDown}
+      >
         <div className="creds-modal__header">
           <div>
-            <div className="creds-modal__title">{t('workspace.creds.title')}</div>
+            <div className="creds-modal__title" id="creds-modal-title">{t('workspace.creds.title')}</div>
             <div className="creds-modal__subtitle">{t('workspace.creds.subtitle')}</div>
           </div>
           {onClose && (
-            <button className="creds-modal__close" onClick={onClose} title={t('workspace.creds.close')}>✕</button>
+            <button className="creds-modal__close" onClick={onClose} aria-label={t('workspace.creds.close')}>✕</button>
           )}
         </div>
 

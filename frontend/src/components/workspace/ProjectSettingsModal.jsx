@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 import { useTranslation } from 'react-i18next';
 import {
   getProjectSettings,
@@ -227,6 +229,27 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
   const [services, setServices] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [loadErr, setLoadErr]   = useState('');
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const prev = document.activeElement;
+    const first = modalRef.current?.querySelector(FOCUSABLE);
+    first?.focus();
+    return () => prev?.focus();
+  }, []);
+
+  function handleKeyDown(e) {
+    if (e.key === 'Escape') { onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const els = Array.from(modalRef.current?.querySelectorAll(FOCUSABLE) || []);
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -258,15 +281,22 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
 
   return (
     <div className="proj-settings-overlay" onClick={handleOverlayClick}>
-      <div className="proj-settings-modal">
+      <div
+        className="proj-settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="proj-settings-title"
+        ref={modalRef}
+        onKeyDown={handleKeyDown}
+      >
         <div className="proj-settings-modal__header">
           <div>
-            <div className="proj-settings-modal__title">{t('workspace.projSettings.title')}</div>
+            <div className="proj-settings-modal__title" id="proj-settings-title">{t('workspace.projSettings.title')}</div>
             {projectTitle && (
               <div className="proj-settings-modal__subtitle">{projectTitle}</div>
             )}
           </div>
-          <button className="proj-settings-modal__close" onClick={onClose}>✕</button>
+          <button className="proj-settings-modal__close" onClick={onClose} aria-label={t('common.close')}>✕</button>
         </div>
 
         <div className="proj-settings-modal__body">

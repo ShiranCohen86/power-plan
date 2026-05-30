@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toastSuccess, toastError } from '../utils/announce';
 import { fetchEpicTree, selectEpicTree, selectTasksStatus } from '../store/slices/tasksSlice';
 import { fetchSprints } from '../store/slices/sprintsSlice';
 import { selectProjectById } from '../store/slices/projectsSlice';
@@ -25,9 +25,9 @@ export default function TaskManagement() {
     setExtracting(true);
     try {
       await triggerExtract(projectId);
-      toast.success(t('tasks.extractStarted'));
+      toastSuccess(t('tasks.extractStarted'));
     } catch (err) {
-      toast.error(err.message || t('tasks.extractError'));
+      toastError(err.message || t('tasks.extractError'));
       setExtracting(false);
     }
   }
@@ -108,16 +108,31 @@ export default function TaskManagement() {
         {status !== 'loading' && view === 'epics' && (
           <div className="task-management__epics">
             {epics.length === 0 ? (
-              <div className="task-management__empty">
-                <p>{t('tasks.empty')}</p>
-                <button
-                  className="btn btn--primary task-management__extract-btn"
-                  onClick={handleExtract}
-                  disabled={extracting}
-                >
-                  {extracting ? t('tasks.extracting') : t('tasks.extractBtn')}
-                </button>
-              </div>
+              (() => {
+                const notReady = project && ['onboarding', 'planning'].includes(project.status);
+                return notReady ? (
+                  <div className="task-management__empty">
+                    <p>{t('tasks.emptyNotReady')}</p>
+                    <Link
+                      to={`/projects/${projectId}/workspace`}
+                      className="btn btn--primary task-management__extract-btn"
+                    >
+                      {t('tasks.goToWorkspace')}
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="task-management__empty">
+                    <p>{t('tasks.empty')}</p>
+                    <button
+                      className="btn btn--primary task-management__extract-btn"
+                      onClick={handleExtract}
+                      disabled={extracting}
+                    >
+                      {extracting ? t('tasks.extracting') : t('tasks.extractBtn')}
+                    </button>
+                  </div>
+                );
+              })()
             ) : (
               epics.map((epic) => (
                 <EpicGroup key={epic.title} epic={epic} projectId={projectId} />

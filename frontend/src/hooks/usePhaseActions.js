@@ -1,4 +1,4 @@
-import toast from 'react-hot-toast';
+import { toastSuccess } from '../utils/announce';
 import { useTranslation } from 'react-i18next';
 import { friendlyError } from '../utils/errorMessages';
 import { analytics } from '../utils/analytics';
@@ -38,7 +38,7 @@ export function usePhaseActions(projectId, {
     try {
       await startPipeline(projectId);
       setActionError('');
-      toast.success('הפייפליין התחיל!');
+      toastSuccess('הפייפליין התחיל!');
       analytics.pipelineStarted(projectId);
       getRateLimit().then(setRateLimit).catch(() => {}); // non-fatal — rate limit display is best-effort
     } catch (err) { handleActionError(err); }
@@ -48,7 +48,7 @@ export function usePhaseActions(projectId, {
     try {
       await retryPipeline(projectId);
       setActionError('');
-      toast.success('מנסה שוב מהשלב שנכשל...');
+      toastSuccess('מנסה שוב מהשלב שנכשל...');
       getRateLimit().then(setRateLimit).catch(() => {}); // non-fatal — rate limit display is best-effort
     } catch (err) { handleActionError(err); }
   }
@@ -57,7 +57,7 @@ export function usePhaseActions(projectId, {
     try {
       await pausePipeline(projectId);
       setProject((p) => p ? { ...p, status: 'paused' } : p);
-      toast.success('הפייפליין הופסק');
+      toastSuccess('הפייפליין הופסק');
     } catch (err) { handleActionError(err); }
   }
 
@@ -67,7 +67,7 @@ export function usePhaseActions(projectId, {
       await approvePhase(projectId, awaitingPhase);
       setAwaiting(null);
       setActionError('');
-      toast.success('השלב אושר — ממשיך לשלב הבא');
+      toastSuccess('השלב אושר — ממשיך לשלב הבא');
       analytics.phaseApproved(projectId, awaitingPhase);
     } catch (err) { handleActionError(err); }
   }
@@ -81,7 +81,7 @@ export function usePhaseActions(projectId, {
       setProject((p) => p ? { ...p, status: 'planning', currentPhaseIndex: toPhaseIndex } : p);
       setAwaiting(null);
       setActionError('');
-      toast.success(`חזרנו לשלב ${toPhaseIndex + 1}`);
+      toastSuccess(`חזרנו לשלב ${toPhaseIndex + 1}`);
     } catch (err) { handleActionError(err); }
   }
 
@@ -90,7 +90,7 @@ export function usePhaseActions(projectId, {
     try {
       await refinePhase(projectId, awaitingPhase, feedback);
       setActionError('');
-      toast.success('בקשת התיקון נשלחה — Claude מעדכן...');
+      toastSuccess('בקשת התיקון נשלחה — Claude מעדכן...');
     } catch (err) {
       handleActionError(err);
       throw err;

@@ -126,9 +126,9 @@
   &__sprint-name   { font-size: 15px; font-weight: 600; margin: 0; flex: 1; }
   &__sprint-status {
     font-size: 11px; padding: 2px 8px; border-radius: 20px;
-    &--planned   { background: rgba(107,114,128,0.15); color: #9ca3af; }
+    &--planned   { background: rgba(107,114,128,0.15); color: var(--text-muted); }
     &--active    { background: rgba(6,182,212,0.12);   color: var(--brand-primary-light); }
-    &--completed { background: rgba(52,211,153,0.15);  color: #34d399; }
+    &--completed { background: rgba(52,211,153,0.15);  color: var(--success); }
   }
   &__sprint-tasks { font-size: 12px; color: var(--text-muted); }
   &__ceremony { margin: 0; padding: 8px 18px; font-size: 12px; color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); }
