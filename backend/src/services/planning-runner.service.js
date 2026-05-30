@@ -92,6 +92,11 @@ async function startPlanning(projectId) {
       { new: true },
     ).lean();
 
+    if (!updated) {
+      logger.error('planning-runner: project missing after phase update', { projectId, phaseIndex: i });
+      break;
+    }
+
     if (updated.approvalGates !== false) {
       emitToProject(projectId, 'phase:awaiting_approval', { phaseIndex: i });
       logger.info('planning-runner: waiting for approval', { projectId, phaseIndex: i });

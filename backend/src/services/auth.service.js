@@ -42,10 +42,11 @@ function pushSession(user, { jtiHash, userAgent, ip }) {
   if (user.sessions.length > MAX_SESSIONS) user.sessions = user.sessions.slice(-MAX_SESSIONS);
 }
 
-// Shared finalizer for all successful auth paths — saves session + lastLogin
-async function _finalizeLogin(user, { jtiHash, userAgent = '', ip = '' }) {
+// Shared finalizer for all successful auth paths.
+// updateLastLogin=false for token refresh — lastLogin should only reflect real logins.
+async function _finalizeLogin(user, { jtiHash, userAgent = '', ip = '' }, updateLastLogin = true) {
   pushSession(user, { jtiHash, userAgent, ip });
-  user.lastLogin = new Date();
+  if (updateLastLogin) user.lastLogin = new Date();
   await user.save();
 }
 
@@ -138,7 +139,7 @@ async function refresh(refreshToken) {
   user.sessions.splice(sessionIdx, 1);
 
   const { accessToken, refreshToken: newRefresh, jtiHash: newJtiHash } = signTokens(user);
-  await _finalizeLogin(user, { jtiHash: newJtiHash, userAgent: oldSession.userAgent, ip: oldSession.ip });
+  await _finalizeLogin(user, { jtiHash: newJtiHash, userAgent: oldSession.userAgent, ip: oldSession.ip }, false);
 
   return { accessToken, refreshToken: newRefresh };
 }
@@ -362,6 +363,8 @@ async function verifyWebAuthnAuthentication(email, authResponse) {
 
   storedCred.counter = authenticationInfo.newCounter;
   user.webAuthnChallenge = undefined;
+  // Mongoose doesn't auto-detect mutations to nested array sub-documents
+  user.markModified('webAuthnCredentials');
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
   await _finalizeLogin(user, { jtiHash });

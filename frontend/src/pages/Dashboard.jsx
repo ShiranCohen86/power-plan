@@ -6,7 +6,7 @@ import Skeleton from '@mui/material/Skeleton';
 import toast from 'react-hot-toast';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
 import { friendlyError } from '../utils/errorMessages.js';
-import { DASHBOARD_AUTO_REFRESH_MS } from '../config/constants.js';
+import { DASHBOARD_AUTO_REFRESH_MS, DASHBOARD_PAGE_SIZE } from '../config/constants.js';
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectLoadingMore,
@@ -116,7 +116,7 @@ export default function Dashboard() {
   }, [hasActive, dispatch, storeSearch]);
 
   const handleLoadMore = useCallback(() => {
-    const nextPage = Math.floor(projects.length / 12) + 1;
+    const nextPage = Math.floor(projects.length / DASHBOARD_PAGE_SIZE) + 1;
     dispatch(loadMoreProjects({ page: nextPage, search: storeSearch, sort: storeSort }));
   }, [dispatch, projects.length, storeSearch, storeSort]);
 
