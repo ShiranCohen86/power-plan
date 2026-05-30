@@ -6,6 +6,8 @@ import {
   getRequiredServices, saveServiceCredentials, skipServiceCredentials,
 } from '../../api/projects.api';
 
+const ERR_STYLE = { margin: 0, fontSize: 12, color: 'var(--danger)' };
+
 function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placeholder }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState('idle');
@@ -76,7 +78,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
             dir="ltr"
             style={{ fontSize: 13 }}
           />
-          {err && <p style={{ margin: 0, fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
+          {err && <p style={ERR_STYLE}>{err}</p>}
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn--primary" style={{ fontSize: 12 }} onClick={handleSave} disabled={busy || !value.trim()}>
               {busy ? t('workspace.projSettings.saving') : t('workspace.projSettings.save')}
@@ -91,7 +93,7 @@ function TokenRow({ title, subtitle, hint, hasToken, onSave, onDelete, placehold
       {mode === 'deleting' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>{t('workspace.projSettings.confirmDeleteMsg')}</p>
-          {err && <p style={{ margin: 0, fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
+          {err && <p style={ERR_STYLE}>{err}</p>}
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" style={{ fontSize: 12, color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={handleDelete} disabled={busy}>
               {busy ? t('workspace.projSettings.deleting') : t('workspace.projSettings.confirmDelete')}
@@ -227,26 +229,31 @@ export default function ProjectSettingsModal({ projectId, projectTitle, onClose 
   const [loadErr, setLoadErr]   = useState('');
 
   useEffect(() => {
-    Promise.all([
-      getProjectSettings(projectId),
-      getRequiredServices(projectId).catch(() => null),
-    ])
-      .then(([settingsRes, svcRes]) => {
+    (async () => {
+      try {
+        const [settingsRes, svcRes] = await Promise.all([
+          getProjectSettings(projectId),
+          getRequiredServices(projectId).catch(() => null),
+        ]);
         setSettings(settingsRes);
         setServices(svcRes?.services || []);
-      })
-      .catch(() => setLoadErr(t('workspace.projSettings.loadError')))
-      .finally(() => setLoading(false));
+      } catch {
+        setLoadErr(t('workspace.projSettings.loadError'));
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [projectId]);
 
   function handleOverlayClick(e) {
     if (e.target === e.currentTarget) onClose();
   }
 
-  function refreshServices() {
-    getRequiredServices(projectId)
-      .then((r) => setServices(r?.services || []))
-      .catch(() => {});
+  async function refreshServices() {
+    try {
+      const r = await getRequiredServices(projectId);
+      setServices(r?.services || []);
+    } catch { /* non-fatal — list stays stale until next open */ }
   }
 
   return (

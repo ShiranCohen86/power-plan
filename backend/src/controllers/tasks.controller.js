@@ -5,6 +5,7 @@ const ApiError        = require('../utils/ApiError');
 const Phase           = require('../models/Phase');
 const Document        = require('../models/Document');
 const { extractTasks } = require('../services/ai/task-extractor.service');
+const logger           = require('../utils/logger');
 
 exports.epicTree = asyncHandler(async (req, res) => {
   await projectService.getById(req.params.projectId, req.user.id);
@@ -35,7 +36,9 @@ exports.extract = asyncHandler(async (req, res) => {
   if (!doc?.content) throw ApiError.badRequest('dev_planning document not found');
 
   // Run extraction in background — respond immediately
-  extractTasks(projectId, phase._id, doc.content).catch(() => {});
+  extractTasks(projectId, phase._id, doc.content).catch((err) =>
+    logger.warn('tasks.controller: extractTasks failed', { projectId, error: err.message }),
+  );
   res.status(202).json({ message: 'extraction started' });
 });
 

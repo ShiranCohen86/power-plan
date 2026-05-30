@@ -3,6 +3,10 @@ const ApiError     = require('../utils/ApiError');
 const User         = require('../models/User');
 const { encrypt, decrypt } = require('../services/encryption.service');
 const Anthropic    = require('@anthropic-ai/sdk');
+const env          = require('../config/env');
+const { RATE_LIMIT_STARTS_PER_HOUR } = require('../config/constants');
+
+const HOUR_MS = 60 * 60 * 1000;
 
 // GET /api/settings
 exports.getSettings = asyncHandler(async (req, res) => {
@@ -114,19 +118,17 @@ exports.deleteRenderToken = asyncHandler(async (req, res) => {
 // GET /api/settings/rate-limit
 // Returns how many pipeline starts the user has used this hour and how many remain.
 exports.getRateLimit = asyncHandler(async (req, res) => {
-  const HOUR_MS    = 60 * 60 * 1000;
-  const MAX_STARTS = 3;
-  const now        = Date.now();
-  const cutoff     = new Date(now - HOUR_MS);
+  const now    = Date.now();
+  const cutoff = new Date(now - HOUR_MS);
 
   const user   = await User.findById(req.user.id).select('+pipelineStarts').lean();
   const recent = (user?.pipelineStarts || []).filter((t) => new Date(t) > cutoff).sort((a, b) => a - b);
 
   const used      = recent.length;
-  const remaining = Math.max(0, MAX_STARTS - used);
+  const remaining = Math.max(0, RATE_LIMIT_STARTS_PER_HOUR - used);
   const resetsAt  = recent[0] ? new Date(new Date(recent[0]).getTime() + HOUR_MS) : null;
 
-  res.json({ used, remaining, maxPerHour: MAX_STARTS, resetsAt });
+  res.json({ used, remaining, maxPerHour: RATE_LIMIT_STARTS_PER_HOUR, resetsAt });
 });
 
 // POST /api/settings/validate-key
@@ -141,7 +143,7 @@ exports.validateApiKey = asyncHandler(async (req, res) => {
     const client = new Anthropic({ apiKey });
     // Cheapest possible call: 1 input token, 1 output token
     await client.messages.create({
-      model:      'claude-haiku-4-5-20251001',
+      model:      env.ANTHROPIC_MODEL_STARTER,
       max_tokens: 1,
       messages:   [{ role: 'user', content: 'hi' }],
     });

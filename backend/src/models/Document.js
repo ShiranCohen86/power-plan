@@ -11,4 +11,6 @@ const DocumentSchema = new Schema({
   isApproved: { type: Boolean, default: false },
 }, { timestamps: true });
 
+DocumentSchema.index({ projectId: 1, type: 1 });
+
 module.exports = mongoose.model('Document', DocumentSchema);

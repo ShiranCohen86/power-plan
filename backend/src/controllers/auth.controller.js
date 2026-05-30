@@ -6,6 +6,15 @@ function clientIp(req) {
   return (req.ip || '').replace(/^::ffff:/, '');
 }
 
+function getRequestMeta(req) {
+  return { userAgent: req.headers['user-agent'] || '', ip: clientIp(req) };
+}
+
+function stripRefreshToken(result) {
+  const { refreshToken: _, ...safe } = result;
+  return safe;
+}
+
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
@@ -27,23 +36,16 @@ exports.signup = asyncHandler(async (req, res) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
-    userAgent: req.headers['user-agent'] || '',
-    ip: clientIp(req),
+    ...getRequestMeta(req),
   });
   setRefreshCookie(res, result.refreshToken);
-  const { refreshToken: _rt, ...safeResult } = result;
-  res.status(201).json(safeResult);
+  res.status(201).json(stripRefreshToken(result));
 });
 
 exports.login = asyncHandler(async (req, res) => {
-  const result = await authService.login({
-    ...req.body,
-    userAgent: req.headers['user-agent'] || '',
-    ip: clientIp(req),
-  });
+  const result = await authService.login({ ...req.body, ...getRequestMeta(req) });
   setRefreshCookie(res, result.refreshToken);
-  const { refreshToken: _rt, ...safeResult } = result;
-  res.json(safeResult);
+  res.json(stripRefreshToken(result));
 });
 
 exports.refresh = asyncHandler(async (req, res) => {
@@ -88,13 +90,9 @@ exports.listUsers = asyncHandler(async (req, res) => {
 // ── Google OAuth ───────────────────────────────────────────────────────────
 
 exports.googleLogin = asyncHandler(async (req, res) => {
-  const result = await authService.loginWithGoogle(req.body.idToken, {
-    ip:        clientIp(req),
-    userAgent: req.headers['user-agent'] || '',
-  });
+  const result = await authService.loginWithGoogle(req.body.idToken, getRequestMeta(req));
   setRefreshCookie(res, result.refreshToken);
-  const { refreshToken: _rt, ...safeResult } = result;
-  res.json(safeResult);
+  res.json(stripRefreshToken(result));
 });
 
 // ── WebAuthn ───────────────────────────────────────────────────────────────
@@ -117,6 +115,5 @@ exports.webAuthnLoginStart = asyncHandler(async (req, res) => {
 exports.webAuthnLoginFinish = asyncHandler(async (req, res) => {
   const result = await authService.verifyWebAuthnAuthentication(req.body.email, req.body.response);
   setRefreshCookie(res, result.refreshToken);
-  const { refreshToken: _rt, ...safeResult } = result;
-  res.json(safeResult);
+  res.json(stripRefreshToken(result));
 });

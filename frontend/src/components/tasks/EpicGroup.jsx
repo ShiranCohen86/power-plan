@@ -3,11 +3,10 @@ import FeatureGroup from './FeatureGroup';
 
 export default function EpicGroup({ epic, projectId }) {
   const [open, setOpen] = useState(true);
+  const features = epic.features || [];
 
-  const totalTasks = (epic.features || []).reduce(
-    (sum, f) => sum + (f.tasks || []).length, 0,
-  );
-  const doneTasks = (epic.features || []).reduce(
+  const totalTasks = features.reduce((sum, f) => sum + (f.tasks || []).length, 0);
+  const doneTasks  = features.reduce(
     (sum, f) => sum + (f.tasks || []).filter((t) => t.status === 'deployed').length, 0,
   );
   const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
@@ -26,8 +25,8 @@ export default function EpicGroup({ epic, projectId }) {
 
       {open && (
         <div className="epic-group__features">
-          {(epic.features || []).map((feat, i) => (
-            <FeatureGroup key={i} feature={feat} projectId={projectId} />
+          {features.map((feat) => (
+            <FeatureGroup key={feat.title} feature={feat} projectId={projectId} />
           ))}
         </div>
       )}

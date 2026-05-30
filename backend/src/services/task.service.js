@@ -37,13 +37,16 @@ async function updateStatus(taskId, projectId, status) {
   task.status = status;
   await task.save();
 
-  // Update sprint task counts
+  // Update sprint task counts — parallel countDocuments avoids loading all tasks into memory
   if (task.sprintIndex != null) {
-    const allTasks  = await Task.find({ projectId, sprintIndex: task.sprintIndex }).lean();
-    const completed = allTasks.filter((t) => ['deployed', 'testing'].includes(t.status)).length;
+    const sprintFilter = { projectId, sprintIndex: task.sprintIndex };
+    const [taskCount, completedTaskCount] = await Promise.all([
+      Task.countDocuments(sprintFilter),
+      Task.countDocuments({ ...sprintFilter, status: { $in: ['deployed', 'testing'] } }),
+    ]);
     await Sprint.findOneAndUpdate(
       { projectId, index: task.sprintIndex },
-      { taskCount: allTasks.length, completedTaskCount: completed },
+      { taskCount, completedTaskCount },
     );
   }
 

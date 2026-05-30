@@ -27,6 +27,14 @@ jobs:
           JWT_REFRESH_SECRET: ci_refresh_secret_different_!!!!!!
           MONGO_URI: mongodb://localhost:27017/ci_test
           ENCRYPTION_KEY: ci_encryption_key_32_bytes_min!!
+      - run: npm test -- --passWithNoTests
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_test_secret_32_chars_minimum_!!!
+          JWT_REFRESH_SECRET: ci_refresh_secret_different_!!!!!!
+          MONGO_URI: mongodb://localhost:27017/ci_test
+          ENCRYPTION_KEY: ci_encryption_key_32_bytes_min!!
 
   frontend:
     name: Frontend — build

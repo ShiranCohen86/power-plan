@@ -1,6 +1,9 @@
 const { getClientForUser, MAX_TOKENS } = require('./ai/claude.client');
 const env = require('../config/env');
 
+const MAX_DISCOVERY_QUESTIONS  = 7; // upper bound — force-complete after this many
+const MIN_COMPLETE_QUESTIONS   = 6; // allow DISCOVERY_COMPLETE after this many answered
+
 const SYSTEM_PROMPT = `You are a product discovery specialist conducting a structured interview with an entrepreneur.
 Your job is to ask targeted questions one at a time to deeply understand their app idea.
 
@@ -29,7 +32,7 @@ async function streamNextQuestion(res, { idea, title, answers, userPlan, userApi
 
   const answeredCount = answers.length;
 
-  if (answeredCount >= 7) {
+  if (answeredCount >= MAX_DISCOVERY_QUESTIONS) {
     res.write(`data: ${JSON.stringify({ done: true, finished: true })}\n\n`);
     res.end();
     return;
@@ -62,7 +65,7 @@ async function streamNextQuestion(res, { idea, title, answers, userPlan, userApi
     return;
   }
 
-  const finished = trimmed === 'DISCOVERY_COMPLETE' || answeredCount >= 6;
+  const finished = trimmed === 'DISCOVERY_COMPLETE' || answeredCount >= MIN_COMPLETE_QUESTIONS;
 
   res.write(`data: ${JSON.stringify({ done: true, finished })}\n\n`);
   res.end();

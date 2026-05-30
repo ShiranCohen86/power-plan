@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { saveServiceCredentials, skipServiceCredentials, consultService } from '../../api/projects.api';
 
+const DONE_DELAY_MS = 800;
+const ERR_STYLE     = { margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' };
+
 function ServiceCard({ projectId, service, onSaved, onSkipped }) {
   const { t } = useTranslation();
   const [values, setValues]     = useState(() => Object.fromEntries(service.fields.map((f) => [f.key, ''])));
@@ -104,7 +107,7 @@ function ServiceCard({ projectId, service, onSaved, onSkipped }) {
         ))}
       </div>
 
-      {err && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--danger)' }}>{err}</p>}
+      {err && <p style={ERR_STYLE}>{err}</p>}
 
       <button
         className="btn btn--ghost creds-card__consult"
@@ -175,7 +178,7 @@ export default function CredentialsGateModal({ projectId, services, onDone, onCl
     const requiredSaved = saved >= requiredServices.length;
     const allOptionalHandled = saved + skipped >= services.length;
     if (requiredSaved && (optionalServices.length === 0 || allOptionalHandled)) {
-      setTimeout(onDone, 800);
+      setTimeout(onDone, DONE_DELAY_MS);
     }
   }
 

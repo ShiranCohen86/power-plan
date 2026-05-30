@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link } from 'react-router-dom';
@@ -43,13 +43,17 @@ export default function TaskManagement() {
     },
   });
 
-  const totalTasks = epics.reduce(
-    (sum, e) => sum + (e.features || []).reduce((s, f) => s + (f.tasks || []).length, 0), 0,
+  const totalTasks = useMemo(
+    () => epics.reduce((sum, e) => sum + (e.features || []).reduce((s, f) => s + (f.tasks || []).length, 0), 0),
+    [epics],
   );
-  const doneTasks = epics.reduce(
-    (sum, e) => sum + (e.features || []).reduce(
-      (s, f) => s + (f.tasks || []).filter((t) => t.status === 'deployed').length, 0,
-    ), 0,
+  const doneTasks = useMemo(
+    () => epics.reduce(
+      (sum, e) => sum + (e.features || []).reduce(
+        (s, f) => s + (f.tasks || []).filter((t) => t.status === 'deployed').length, 0,
+      ), 0,
+    ),
+    [epics],
   );
 
   const VIEWS = [
@@ -115,8 +119,8 @@ export default function TaskManagement() {
                 </button>
               </div>
             ) : (
-              epics.map((epic, i) => (
-                <EpicGroup key={i} epic={epic} projectId={projectId} />
+              epics.map((epic) => (
+                <EpicGroup key={epic.title} epic={epic} projectId={projectId} />
               ))
             )}
           </div>

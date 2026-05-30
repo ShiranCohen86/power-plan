@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react'; // useState still used for core state
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,22 @@ import { usePanelResize } from './usePanelResize';
 import { useApprovalScroll } from './useApprovalScroll';
 import { usePhaseActions } from './usePhaseActions';
 import { useWorkspaceSocket } from './useWorkspaceSocket';
-import { TOTAL_PLANNING_PHASES } from '../config/constants';
+import { useDeploymentState } from './useDeploymentState';
+import { useMeetingFeed } from './useMeetingFeed';
+import { TOTAL_PLANNING_PHASES, MINUTES_PER_PHASE } from '../config/constants';
+const INTRO_COMPLETE_DELAY_MS  = 700;
+const INTRO_FAST_DELAY_MS      = 130;
+const INTRO_SLOW_DELAY_MS      = 55;
+
+function _buildMeetingMessages(meetingsRes) {
+  const allMsgs = [];
+  for (const m of meetingsRes) {
+    const cfg = PLANNING_PHASES.find((p) => p.index === m.phaseIndex);
+    allMsgs.push({ _isSeparator: true, phaseIndex: m.phaseIndex, label: cfg?.nameHe || `שלב ${m.phaseIndex}` });
+    allMsgs.push(...m.messages);
+  }
+  return allMsgs;
+}
 
 export function useWorkspaceState(id) {
   const { t }      = useTranslation();
@@ -37,23 +52,27 @@ export function useWorkspaceState(id) {
   const [showProjectSettings, setShowProjectSettings] = useState(false);
   const [awaitingServices, setAwaitingServices]     = useState(null);
 
-  // Deployment state
-  const [deploySteps, setDeploySteps]               = useState({});
-  const [liveUrl, setLiveUrl]                       = useState(null);
-  const [liveGithubUrl, setLiveGithubUrl]           = useState(null);
-  const [deployFailed, setDeployFailed]             = useState(false);
-  const [showCelebration, setShowCelebration]       = useState(false);
+  // Deployment state — isolated in useDeploymentState
+  const {
+    deploySteps, setDeploySteps,
+    liveUrl, setLiveUrl,
+    liveGithubUrl, setLiveGithubUrl,
+    deployFailed, setDeployFailed,
+    showCelebration, setShowCelebration,
+  } = useDeploymentState();
 
-  // Meeting / feed state
-  const [meetingMsgs, setMeetingMsgs]               = useState([]);
-  const [techLogs, setTechLogs]                     = useState([]);
-  const [activeFeedTab, setActiveFeedTab]           = useState('meeting');
-  const [scheduledMeeting, setScheduledMeeting]     = useState(null);
-  const [isMeetingLive, setIsMeetingLive]           = useState(false);
-  const [missedMeeting, setMissedMeeting]           = useState(false);
-  const [showMeetingRoom, setShowMeetingRoom]       = useState(false);
-  const [consultantMsgs, setConsultantMsgs]         = useState([]);
-  const [consultantsRunning, setConsultantsRunning] = useState(false);
+  // Meeting / feed state — isolated in useMeetingFeed
+  const {
+    meetingMsgs, setMeetingMsgs,
+    techLogs, setTechLogs,
+    activeFeedTab, setActiveFeedTab,
+    scheduledMeeting, setScheduledMeeting,
+    isMeetingLive, setIsMeetingLive,
+    missedMeeting, setMissedMeeting,
+    showMeetingRoom, setShowMeetingRoom,
+    consultantMsgs, setConsultantMsgs,
+    consultantsRunning, setConsultantsRunning,
+  } = useMeetingFeed();
 
   // Phase intro animation
   const [introCount, setIntroCount]                 = useState(null);
@@ -120,13 +139,7 @@ export function useWorkspaceState(id) {
         if (logsRes?.items?.length) setTechLogs(logsRes.items);
 
         if (meetingsRes?.length) {
-          const allMsgs = [];
-          for (const m of meetingsRes) {
-            const cfg = PLANNING_PHASES.find((p) => p.index === m.phaseIndex);
-            allMsgs.push({ _isSeparator: true, phaseIndex: m.phaseIndex, label: cfg?.nameHe || `שלב ${m.phaseIndex}` });
-            allMsgs.push(...m.messages);
-          }
-          setMeetingMsgs(allMsgs);
+          setMeetingMsgs(_buildMeetingMessages(meetingsRes));
         }
 
         const waitingPhase = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
@@ -156,6 +169,7 @@ export function useWorkspaceState(id) {
         setLoading(false);
       }
     })();
+  // intentional: re-fetch only when project id changes, not on every state setter reference
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -164,10 +178,10 @@ export function useWorkspaceState(id) {
     if (introCount === null) return;
     const target = introTargetRef.current;
     if (introCount >= target) {
-      const timer = setTimeout(() => setIntroCount(null), 700);
+      const timer = setTimeout(() => setIntroCount(null), INTRO_COMPLETE_DELAY_MS);
       return () => clearTimeout(timer);
     }
-    const delay = target - introCount <= 2 ? 130 : 55;
+    const delay = target - introCount <= 2 ? INTRO_FAST_DELAY_MS : INTRO_SLOW_DELAY_MS;
     const timer = setTimeout(() => setIntroCount((c) => c + 1), delay);
     return () => clearTimeout(timer);
   }, [introCount]);
@@ -191,7 +205,7 @@ export function useWorkspaceState(id) {
 
   const completedCount  = phases.filter((p) => p.status === 'completed' || p.status === 'awaiting_approval').length;
   const remainingPhases = Math.max(0, TOTAL_PLANNING_PHASES - completedCount);
-  const estMinutes      = Math.round(remainingPhases * 2.5);
+  const estMinutes      = Math.round(remainingPhases * MINUTES_PER_PHASE);
   const showEstTime     = isRunning && remainingPhases > 0;
 
   return {

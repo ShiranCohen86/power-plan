@@ -98,7 +98,7 @@ async function runDeployment(projectId) {
           projectTitle: project.title,
           liveUrl:      serviceUrl,
           githubUrl:    repoUrl,
-        }).catch(() => {});
+        }).catch((err) => logger.warn('deployment-runner: success email failed', { projectId, error: err.message }));
       }
       notifSvc.create({
         userId:    project.ownerId,
@@ -107,7 +107,7 @@ async function runDeployment(projectId) {
         title:     `🎉 ${project.title} — חיה!`,
         message:   `האפליקציה שלך פורסה בהצלחה`,
         url:       serviceUrl,
-      }).catch(() => {});
+      }).catch((err) => logger.warn('deployment-runner: success notification failed', { projectId, error: err.message }));
     }
 
   } catch (err) {

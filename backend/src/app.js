@@ -4,12 +4,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 const env = require('./config/env');
 const routes = require('./routes');
 const errorMiddleware = require('./middleware/error');
 const requestLogger = require('./middleware/logger');
 const logger = require('./utils/logger');
+const { RATE_AUTH_WINDOW_MS, RATE_AUTH_MAX } = require('./config/constants');
 
 // Sentry — init before any other middleware; no-op when DSN not configured
 let Sentry = null;
@@ -60,7 +62,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(require('compression')());
+app.use(compression());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -77,8 +79,8 @@ app.use('/api', globalLimiter);
 app.use('/api/v1', globalLimiter);
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
+  windowMs: RATE_AUTH_WINDOW_MS,
+  max: RATE_AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts. Please try again in 15 minutes.' },

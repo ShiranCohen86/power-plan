@@ -1,6 +1,13 @@
-const Lesson      = require('../models/Lesson');
-const Phase       = require('../models/Phase');
-const asyncHandler = require('../utils/asyncHandler');
+const Lesson        = require('../models/Lesson');
+const Phase         = require('../models/Phase');
+const Project       = require('../models/Project');
+const User          = require('../models/User');
+const GeneratedFile = require('../models/GeneratedFile');
+const AgentLog      = require('../models/AgentLog');
+const asyncHandler  = require('../utils/asyncHandler');
+const { ACTIVITY_PAGE_SIZE } = require('../config/constants');
+
+const ADMIN_ACTIVITY_MAX_LIMIT = 100;
 
 // ── Lessons CRUD (admin only) ─────────────────────────────────────────────────
 
@@ -96,7 +103,6 @@ exports.platformSetupStatus = asyncHandler(async (req, res) => {
 // ── Pipeline analytics ────────────────────────────────────────────────────────
 
 exports.getAnalytics = asyncHandler(async (req, res) => {
-  const Project = require('../models/Project');
 
   const [
     totalProjects,
@@ -140,11 +146,6 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
 // ── Platform stats ────────────────────────────────────────────────────────────
 
 exports.platformStats = asyncHandler(async (req, res) => {
-  const Project      = require('../models/Project');
-  const User         = require('../models/User');
-  const GeneratedFile = require('../models/GeneratedFile');
-  const AgentLog     = require('../models/AgentLog');
-
   const [
     totalUsers, totalProjects, liveProjects,
     totalFiles, totalLessons, recentActivity,
@@ -154,7 +155,7 @@ exports.platformStats = asyncHandler(async (req, res) => {
     Project.countDocuments({ status: 'live' }),
     GeneratedFile.countDocuments({ status: 'validated' }),
     Lesson.countDocuments({ isActive: true }),
-    AgentLog.find().sort({ timestamp: -1 }).limit(20).lean(),
+    AgentLog.find().sort({ timestamp: -1 }).limit(ACTIVITY_PAGE_SIZE).lean(),
   ]);
 
   res.json({
@@ -170,10 +171,8 @@ exports.platformStats = asyncHandler(async (req, res) => {
 // ── Paginated activity log ────────────────────────────────────────────────────
 
 exports.getActivity = asyncHandler(async (req, res) => {
-  const AgentLog = require('../models/AgentLog');
-
   const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  const limit = Math.min(ADMIN_ACTIVITY_MAX_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || ACTIVITY_PAGE_SIZE));
   const skip  = (page - 1) * limit;
 
   const [items, total] = await Promise.all([

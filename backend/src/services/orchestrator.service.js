@@ -5,10 +5,10 @@ const { startPlanning } = require('./planning-runner.service');
 const { emitToProject } = require('../sockets');
 const ApiError = require('../utils/ApiError');
 const logger   = require('../utils/logger');
+const { RATE_LIMIT_STARTS_PER_HOUR } = require('../config/constants');
 
-// Rate limiting: max 3 pipeline starts per user per hour — persisted in MongoDB
-const HOUR_MS    = 60 * 60 * 1000;
-const MAX_STARTS = 3;
+// Rate limiting: max pipeline starts per user per hour — persisted in MongoDB
+const HOUR_MS = 60 * 60 * 1000;
 
 async function startPipeline(projectId, userId) {
   await _checkRateLimit(userId);
@@ -37,7 +37,7 @@ async function startPipeline(projectId, userId) {
   const hasKey = await _hasApiKey(projectId, project.ownerId);
   if (!hasKey) {
     throw ApiError.badRequest(
-      'מפתח Anthropic לא מוגדר — הגדר מפתח API בהגדרות הפרויקט או בהגדרות החשבון לפני הפעלת הפייפליין',
+      'Anthropic API key not configured — set it in project settings or account settings before starting the pipeline',
     );
   }
 
@@ -84,14 +84,14 @@ async function _checkRateLimit(userId) {
   const cutoff = new Date(Date.now() - HOUR_MS);
   const user   = await User.findById(userId).select('+pipelineStarts').lean();
   const recent = (user?.pipelineStarts || []).filter((t) => t > cutoff);
-  if (recent.length >= MAX_STARTS) {
+  if (recent.length >= RATE_LIMIT_STARTS_PER_HOUR) {
     const resetAt = recent.length ? new Date(Math.min(...recent.map((t) => t.getTime())) + HOUR_MS) : null;
     const resetStr = resetAt
-      ? resetAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+      ? resetAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
       : null;
     throw ApiError.badRequest(
-      `הגעת למגבלת הניסיונות — מקסימום ${MAX_STARTS} הפעלות פייפליין בשעה.` +
-      (resetStr ? ` ניתן לנסות שוב מ-${resetStr}.` : ''),
+      `Rate limit reached — maximum ${RATE_LIMIT_STARTS_PER_HOUR} pipeline starts per hour.` +
+      (resetStr ? ` Try again after ${resetStr}.` : ''),
     );
   }
 }

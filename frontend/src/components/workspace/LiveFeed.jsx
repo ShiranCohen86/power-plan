@@ -15,7 +15,8 @@ const CONSULTANT_EMOJI = {
   mia:  '💻',
 };
 
-const SAFE_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{2,30})$/;
+const SAFE_COLOR_RE  = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{2,30})$/;
+const SCROLL_DELAY_MS = 50;
 const safeColor = (c) => (c && SAFE_COLOR_RE.test(c) ? c : undefined);
 
 const EVENT_ICON = {
@@ -45,8 +46,9 @@ function LiveFeed({
     if (meetingMsgs.length > 0) {
       setTimeout(() => {
         meetingRef.current?.scrollTo({ top: meetingRef.current.scrollHeight, behavior: 'smooth' });
-      }, 50);
+      }, SCROLL_DELAY_MS);
     }
+  // intentional: only react to message count changes, not tab/scroll state
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingMsgs.length]);
 
@@ -57,6 +59,7 @@ function LiveFeed({
         consultRef.current?.scrollTo({ top: consultRef.current.scrollHeight, behavior: 'smooth' });
       }, 50);
     }
+  // intentional: only react to consultant message count changes, not tab state
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultantMsgs.length]);
 
@@ -150,7 +153,7 @@ function LiveFeed({
             return (
               <div className="live-feed__meeting">
                 {currentMsgs.map((msg, i) => (
-                  <div key={i} className="meeting-msg">
+                  <div key={msg._id || i} className="meeting-msg">
                     <div className="meeting-msg__header">
                       <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
                       <span className="meeting-msg__name" style={{ color: safeColor(msg.color) }}>

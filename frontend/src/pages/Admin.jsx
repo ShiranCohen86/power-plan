@@ -4,12 +4,13 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { selectCurrentUser } from '../store/slices/authSlice';
 import * as adminApi from '../api/admin.api';
+import { ADMIN_ACTIVITY_PAGE_SIZE } from '../config/constants';
 import PlatformSetup   from '../components/admin/PlatformSetup';
 import AdminAnalytics  from '../components/admin/AdminAnalytics';
 import AdminLessons    from '../components/admin/AdminLessons';
 import AdminActivity   from '../components/admin/AdminActivity';
 
-const ACTIVITY_LIMIT = 20;
+const ACTIVITY_LIMIT = ADMIN_ACTIVITY_PAGE_SIZE;
 
 function StatCard({ label, value, icon }) {
   return (
@@ -38,7 +39,8 @@ export default function Admin() {
   useEffect(() => {
     if (user?.role !== 'admin') { navigate('/dashboard'); return; }
     load();
-  }, [user]); // eslint-disable-line
+  // intentional: admin check and initial load — only run when user identity changes
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true);

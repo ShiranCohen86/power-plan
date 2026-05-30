@@ -5,7 +5,11 @@ const logger = require('../utils/logger');
 async function connectDB() {
   mongoose.set('strictQuery', true);
   try {
-    await mongoose.connect(env.MONGO_URI, { serverSelectionTimeoutMS: 10000 });
+    await mongoose.connect(env.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 2,
+    });
     logger.info(`MongoDB connected: ${mongoose.connection.host}/${mongoose.connection.name}`);
   } catch (err) {
     logger.error('MongoDB connection error', { err: err.message });

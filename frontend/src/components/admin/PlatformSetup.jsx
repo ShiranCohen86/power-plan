@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { safeRequest } from '../../api/request';
 
 async function fetchSetupStatus() {
@@ -12,7 +13,7 @@ function Step({ number, text, code, link, linkLabel }) {
     <div className="setup-step">
       <span className="setup-step__num">{number}</span>
       <div className="setup-step__body">
-        <p className="setup-step__text" dangerouslySetInnerHTML={{ __html: text }} />
+        <p className="setup-step__text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text, { ALLOWED_TAGS: ['strong', 'code', 'a'], ALLOWED_ATTR: ['href', 'target', 'rel'] }) }} />
         {link && (
           <a href={link} target="_blank" rel="noreferrer" className="setup-step__link">
             → {linkLabel || link}
@@ -82,17 +83,24 @@ export default function PlatformSetup() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSetupStatus()
-      .then(setStatus)
-      .catch(() => setStatus(null))
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        setStatus(await fetchSetupStatus());
+      } catch {
+        setStatus(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  function refresh() {
+  async function refresh() {
     setLoading(true);
-    fetchSetupStatus()
-      .then(setStatus)
-      .finally(() => setLoading(false));
+    try {
+      setStatus(await fetchSetupStatus());
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (loading) return <div style={{ padding: 24 }}><div className="pwa-spinner" /></div>;

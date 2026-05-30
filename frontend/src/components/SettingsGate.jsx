@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { useTranslation } from 'react-i18next';
 import { setProjectApiKey, setProjectGithubToken, setProjectRenderToken } from '../api/projects.api';
 
@@ -69,7 +70,7 @@ export default function SettingsGate({ service, projectId, onConfigured }) {
             <p className="settings-gate__howto-title">{howtoTitle}</p>
             <ol className="settings-gate__howto-steps">
               {steps.map((step, i) => (
-                <li key={i} dangerouslySetInnerHTML={{ __html: step }} />
+                <li key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(step, { ALLOWED_TAGS: ['strong', 'code', 'a'], ALLOWED_ATTR: ['href', 'target', 'rel'] }) }} />
               ))}
             </ol>
             <p className="settings-gate__cost">{cost}</p>

@@ -16,6 +16,8 @@ import SettingsGate           from '../components/SettingsGate';
 import SafeMarkdown           from '../components/ui/SafeMarkdown';
 import Skeleton               from '@mui/material/Skeleton';
 
+const SIDEBAR_SKELETON_COUNT = 5;
+
 function PhaseIntroOverlay({ count, done }) {
   const cfg = ALL_PHASES.find((p) => p.index === count - 1);
   return (
@@ -33,6 +35,20 @@ export default function ProjectWorkspace() {
   const { lang } = useLanguage();
 
   const ws = useWorkspaceState(id);
+
+  // Pre-compute derived values used inside JSX to avoid IIFEs in render
+  const activePhase = ws.activePhaseIndex !== null
+    ? ALL_PHASES.find((p) => p.index === ws.activePhaseIndex)
+    : null;
+
+  const resumeNextLabel = (() => {
+    if (!ws.canResume) return null;
+    const nextPhase = ws.phases.find((p) =>
+      p.status === 'pending' || p.status === 'interrupted' || p.status === 'failed',
+    );
+    const nextCfg = nextPhase ? ALL_PHASES.find((p) => p.index === nextPhase.index) : null;
+    return nextCfg ? (lang === 'he' ? nextCfg.nameHe : nextCfg.name) : null;
+  })();
 
   // ── Loading / error states ─────────────────────────────────────────────────
   if (ws.loading) return <div className="workspace-loading"><div className="pwa-spinner" /></div>;
@@ -133,7 +149,7 @@ export default function ProjectWorkspace() {
         <aside className="workspace-sidebar" ref={ws.sidebarRef} style={{ width: ws.sidebarWidth }}>
           {ws.loading ? (
             <div style={{ padding: '12px 8px' }}>
-              {[0,1,2,3,4].map((i) => (
+              {Array.from({ length: SIDEBAR_SKELETON_COUNT }, (_, i) => (
                 <Skeleton key={i} variant="rectangular" height={36} sx={{ mb: 1, borderRadius: 1.5 }} />
               ))}
             </div>
@@ -166,36 +182,26 @@ export default function ProjectWorkspace() {
             </div>
           )}
 
-          {ws.canResume && (() => {
-            const nextPhase = ws.phases.find((p) =>
-              p.status === 'pending' || p.status === 'interrupted' || p.status === 'failed'
-            );
-            const nextCfg = nextPhase ? ALL_PHASES.find((p) => p.index === nextPhase.index) : null;
-            const nextLabel = nextCfg ? (lang === 'he' ? nextCfg.nameHe : nextCfg.name) : null;
-            return (
-              <div className="workspace-start-btn">
-                <button className="btn btn--primary btn--full" onClick={ws.isFailed ? ws.handleRetry : ws.handleStart}>
-                  {ws.isPaused
-                    ? `▶️ המשך: ${nextLabel || 'שלב הבא'}`
-                    : '🔄 נסה שוב'}
-                </button>
-              </div>
-            );
-          })()}
+          {ws.canResume && (
+            <div className="workspace-start-btn">
+              <button className="btn btn--primary btn--full" onClick={ws.isFailed ? ws.handleRetry : ws.handleStart}>
+                {ws.isPaused
+                  ? `▶️ המשך: ${resumeNextLabel || 'שלב הבא'}`
+                  : '🔄 נסה שוב'}
+              </button>
+            </div>
+          )}
         </aside>
 
         <div className="workspace-resize-handle" onMouseDown={(e) => ws.startResize(e, 'sidebar')} />
 
         {/* Center: Document output */}
         <div className="workspace-center">
-          {ws.activePhaseIndex !== null && (() => {
-            const cfg = ALL_PHASES.find((p) => p.index === ws.activePhaseIndex);
-            return cfg ? (
-              <div className="workspace-mobile-phase-title">
-                {cfg.icon} {lang === 'he' ? cfg.nameHe : cfg.name}
-              </div>
-            ) : null;
-          })()}
+          {activePhase && (
+            <div className="workspace-mobile-phase-title">
+              {activePhase.icon} {lang === 'he' ? activePhase.nameHe : activePhase.name}
+            </div>
+          )}
 
           {ws.activeDoc && (
             <div className="workspace-doc-bar">

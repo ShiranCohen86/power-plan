@@ -12,10 +12,18 @@ const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
+const { escapeRegex } = require('../utils/pagination');
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const MAX_SESSIONS            = 5;
+const MAX_LOGIN_ATTEMPTS      = 5;
+const ACCOUNT_LOCK_DURATION_MS   = 15 * 60 * 1000;
+const PASSWORD_RESET_EXPIRES_MS  = 60 * 60 * 1000;
+const ADMIN_USER_LIMIT        = 200;
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
-// ── Token helpers ──────────────────────────────────────────────────────────
+// ── Private helpers ───────────────────────────────────────────────────────────
 
 function hashJti(jti) {
   return crypto.createHash('sha256').update(jti).digest('hex');
@@ -31,7 +39,26 @@ function signTokens(user) {
 
 function pushSession(user, { jtiHash, userAgent, ip }) {
   user.sessions.push({ jtiHash, userAgent, ip, lastSeen: new Date() });
-  if (user.sessions.length > 5) user.sessions = user.sessions.slice(-5);
+  if (user.sessions.length > MAX_SESSIONS) user.sessions = user.sessions.slice(-MAX_SESSIONS);
+}
+
+// Shared finalizer for all successful auth paths — saves session + lastLogin
+async function _finalizeLogin(user, { jtiHash, userAgent = '', ip = '' }) {
+  pushSession(user, { jtiHash, userAgent, ip });
+  user.lastLogin = new Date();
+  await user.save();
+}
+
+// Fire-and-forget audit log — never blocks the auth flow
+function _audit(data) {
+  AuditLog.create(data).catch((err) =>
+    logger.warn('audit log failed', { action: data.action, error: err.message }),
+  );
+}
+
+// WebAuthn expected origin differs by environment
+function _getWebAuthnOrigin() {
+  return env.NODE_ENV === 'production' ? env.FRONTEND_URL : 'http://localhost:5173';
 }
 
 // ── Signup ─────────────────────────────────────────────────────────────────
@@ -45,11 +72,9 @@ async function signup({ name, email, password, userAgent, ip }) {
   await user.save();
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
-  pushSession(user, { jtiHash, userAgent, ip });
-  user.lastLogin = new Date();
-  await user.save();
+  await _finalizeLogin(user, { jtiHash, userAgent, ip });
 
-  AuditLog.create({ userId: user._id, action: 'auth.signup', ip, userAgent, meta: { email, name } }).catch(() => {});
+  _audit({ userId: user._id, action: 'auth.signup', ip, userAgent, meta: { email, name } });
   return { user: user.toJSON(), accessToken, refreshToken };
 }
 
@@ -59,23 +84,23 @@ async function login({ email, password, userAgent, ip }) {
   const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
 
   if (!user || !user.isActive) {
-    AuditLog.create({ action: 'auth.login.failed', ip, userAgent, meta: { email } }).catch(() => {});
+    _audit({ action: 'auth.login.failed', ip, userAgent, meta: { email } });
     throw ApiError.unauthorized('Invalid credentials');
   }
 
   if (user.lockUntil && user.lockUntil > new Date()) {
     const mins = Math.ceil((user.lockUntil - Date.now()) / 60000);
-    throw ApiError.tooManyRequests(`חשבון נעול. נסה שוב בעוד ${mins} דקות`);
+    throw ApiError.tooManyRequests(`Account locked. Try again in ${mins} minutes.`);
   }
 
   const ok = await user.verifyPassword(password);
   if (!ok) {
     user.loginAttempts = (user.loginAttempts || 0) + 1;
-    if (user.loginAttempts >= 5) {
-      user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+    if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+      user.lockUntil = new Date(Date.now() + ACCOUNT_LOCK_DURATION_MS);
     }
     await user.save();
-    AuditLog.create({ userId: user._id, action: 'auth.login.failed', ip, userAgent, meta: { email } }).catch(() => {});
+    _audit({ userId: user._id, action: 'auth.login.failed', ip, userAgent, meta: { email } });
     throw ApiError.unauthorized('Invalid credentials');
   }
 
@@ -83,11 +108,9 @@ async function login({ email, password, userAgent, ip }) {
   user.lockUntil = undefined;
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
-  pushSession(user, { jtiHash, userAgent, ip });
-  user.lastLogin = new Date();
-  await user.save();
+  await _finalizeLogin(user, { jtiHash, userAgent, ip });
 
-  AuditLog.create({ userId: user._id, action: 'auth.login', ip, userAgent, meta: { email: user.email } }).catch(() => {});
+  _audit({ userId: user._id, action: 'auth.login', ip, userAgent, meta: { email: user.email } });
   return { user: user.toJSON(), accessToken, refreshToken };
 }
 
@@ -115,8 +138,7 @@ async function refresh(refreshToken) {
   user.sessions.splice(sessionIdx, 1);
 
   const { accessToken, refreshToken: newRefresh, jtiHash: newJtiHash } = signTokens(user);
-  pushSession(user, { jtiHash: newJtiHash, userAgent: oldSession.userAgent, ip: oldSession.ip });
-  await user.save();
+  await _finalizeLogin(user, { jtiHash: newJtiHash, userAgent: oldSession.userAgent, ip: oldSession.ip });
 
   return { accessToken, refreshToken: newRefresh };
 }
@@ -129,7 +151,7 @@ async function requestPasswordReset(email) {
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   user.passwordResetToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-  user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+  user.passwordResetExpires = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MS);
   await user.save();
 
   return { ok: true, devToken: env.RETURN_DEV_TOKEN ? rawToken : undefined };
@@ -172,7 +194,7 @@ async function updateProfile(userId, patch) {
 
 async function logout(userId) {
   await User.updateOne({ _id: userId }, { $set: { sessions: [] } });
-  AuditLog.create({ userId, action: 'auth.logout' }).catch(() => {});
+  _audit({ userId, action: 'auth.logout' });
   return { ok: true };
 }
 
@@ -182,11 +204,10 @@ async function listUsers(query) {
   const filter = {};
   if (query.role) filter.role = query.role;
   if (query.q) {
-    const { escapeRegex } = require('../utils/pagination');
     const safe = escapeRegex(query.q);
     filter.$or = [{ name: new RegExp(safe, 'i') }, { email: new RegExp(safe, 'i') }];
   }
-  const users = await User.find(filter).limit(200).sort('-createdAt');
+  const users = await User.find(filter).limit(ADMIN_USER_LIMIT).sort('-createdAt');
   return users.map((u) => u.toJSON());
 }
 
@@ -230,11 +251,9 @@ async function loginWithGoogle(token, { ip, userAgent } = {}) {
   }
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
-  pushSession(user, { jtiHash, userAgent: userAgent || '', ip: ip || '' });
-  user.lastLogin = new Date();
-  await user.save();
+  await _finalizeLogin(user, { jtiHash, userAgent, ip });
 
-  AuditLog.create({ userId: user._id, action: 'auth.google', ip, userAgent, meta: { email } }).catch(() => {});
+  _audit({ userId: user._id, action: 'auth.google', ip, userAgent, meta: { email } });
   return { user: user.toJSON(), accessToken, refreshToken };
 }
 
@@ -270,14 +289,10 @@ async function verifyWebAuthnRegistration(userId, registrationResponse) {
   const user = await User.findById(userId).select('+webAuthnChallenge');
   if (!user || !user.webAuthnChallenge) throw ApiError.badRequest('No pending registration challenge');
 
-  const origin = env.NODE_ENV === 'production'
-    ? env.FRONTEND_URL
-    : 'http://localhost:5173';
-
   const { verified, registrationInfo } = await verifyRegistrationResponse({
     response:          registrationResponse,
     expectedChallenge: user.webAuthnChallenge,
-    expectedOrigin:    origin,
+    expectedOrigin:    _getWebAuthnOrigin(),
     expectedRPID:      env.WEBAUTHN_RP_ID,
   });
 
@@ -330,14 +345,10 @@ async function verifyWebAuthnAuthentication(email, authResponse) {
   const storedCred = user.webAuthnCredentials.find((c) => c.credentialID === authResponse.id);
   if (!storedCred) throw ApiError.badRequest('Unknown credential');
 
-  const origin = env.NODE_ENV === 'production'
-    ? env.FRONTEND_URL
-    : 'http://localhost:5173';
-
   const { verified, authenticationInfo } = await verifyAuthenticationResponse({
     response:          authResponse,
     expectedChallenge: user.webAuthnChallenge,
-    expectedOrigin:    origin,
+    expectedOrigin:    _getWebAuthnOrigin(),
     expectedRPID:      env.WEBAUTHN_RP_ID,
     credential: {
       id:         storedCred.credentialID,
@@ -351,18 +362,16 @@ async function verifyWebAuthnAuthentication(email, authResponse) {
 
   storedCred.counter = authenticationInfo.newCounter;
   user.webAuthnChallenge = undefined;
-  user.lastLogin = new Date();
 
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
-  pushSession(user, { jtiHash, userAgent: '', ip: '' });
-  await user.save();
+  await _finalizeLogin(user, { jtiHash });
 
-  AuditLog.create({ userId: user._id, action: 'auth.webauthn' }).catch(() => {});
+  _audit({ userId: user._id, action: 'auth.webauthn' });
   return { user: user.toJSON(), accessToken, refreshToken };
 }
 
 module.exports = {
-  signTokens, signup, login, refresh,
+  signup, login, refresh,
   requestPasswordReset, resetPassword,
   getProfile, updateProfile, logout, listUsers,
   loginWithGoogle,

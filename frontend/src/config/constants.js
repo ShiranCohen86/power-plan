@@ -21,3 +21,6 @@ export const MAX_DISCOVERY_ANSWERS   = 20;
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const ADMIN_ACTIVITY_PAGE_SIZE = 20;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export const BIOMETRIC_STORAGE_KEY = 'pp-biometric';

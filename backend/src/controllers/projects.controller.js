@@ -7,9 +7,10 @@ const User               = require('../models/User');
 const Meeting            = require('../models/Meeting');
 const MeetingMessage     = require('../models/MeetingMessage');
 const { decrypt }        = require('../services/encryption.service');
-
-const DISCOVERY_TIMEOUT_MS  = 5 * 60 * 1000;
-const MAX_DISCOVERY_ANSWERS = 20;
+const {
+  DISCOVERY_TIMEOUT_MS, MAX_DISCOVERY_ANSWERS,
+  MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE,
+} = require('../config/constants');
 
 function friendlyAIError(err) {
   const raw = err.message || '';
@@ -51,7 +52,7 @@ const VALID_SORTS = new Set(['date', 'status', 'completion']);
 
 exports.list = asyncHandler(async (req, res) => {
   const page   = Math.max(1, parseInt(req.query.page,  10) || 1);
-  const limit  = Math.min(50, parseInt(req.query.limit, 10) || 12);
+  const limit  = Math.min(MAX_PAGE_SIZE, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE);
   const search = (req.query.search || '').slice(0, 100);
   const sort   = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
   const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort });

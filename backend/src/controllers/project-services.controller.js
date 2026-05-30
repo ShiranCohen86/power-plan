@@ -6,6 +6,11 @@ const Document     = require('../models/Document');
 const registry     = require('../config/serviceRegistry');
 const { encrypt, decrypt } = require('../services/encryption.service');
 const logger       = require('../utils/logger');
+const env          = require('../config/env');
+const { getClientForUser, getPlatformClient } = require('../services/ai/claude.client');
+
+const CONSULT_DOC_LIMIT         = 4;
+const DOC_SUMMARY_PREVIEW_CHARS = 500;
 
 exports.getRequiredServices = asyncHandler(async (req, res) => {
   const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
@@ -107,16 +112,14 @@ exports.consultService = asyncHandler(async (req, res) => {
     ? decrypt(user.settings.anthropicApiKey) : null;
   const resolvedKey = projectKey || userKey;
 
-  const { getClientForUser, getPlatformClient } = require('../services/ai/claude.client');
-  const env = require('../config/env');
   const { client, model } = resolvedKey
     ? getClientForUser(user?.plan || 'starter', resolvedKey)
     : { client: getPlatformClient(), model: env.ANTHROPIC_MODEL };
 
   const docs = await Document.find({ projectId: req.params.id })
-    .sort({ createdAt: 1 }).limit(4).select('content type').lean();
+    .sort({ createdAt: 1 }).limit(CONSULT_DOC_LIMIT).select('content type').lean();
 
-  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, 500)}`).join('\n\n---\n\n');
+  const docSummary = docs.map((d) => `[${d.type}]\n${d.content.slice(0, DOC_SUMMARY_PREVIEW_CHARS)}`).join('\n\n---\n\n');
 
   const prompt = `פרויקט: "${project.title}"
 רעיון: ${project.idea || '—'}

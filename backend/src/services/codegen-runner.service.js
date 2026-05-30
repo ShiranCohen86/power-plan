@@ -11,6 +11,12 @@ const queue            = require('./pipeline-queue.service');
 const { resolveApiKey, resolveServiceEnv } = require('./pipeline-utils.service');
 const { emitToProject } = require('../sockets');
 const logger           = require('../utils/logger');
+const { MAX_FILES_PER_PHASE, MAX_FILE_SIZE_BYTES } = require('../config/constants');
+
+// Progress percent: codegen runs from 50% to 95%
+const CODEGEN_START_PERCENT  = 50;
+const CODEGEN_PHASE_OFFSET   = 11; // last planning phase index (CODEGEN_PHASES[0].index - 1)
+const CODEGEN_PERCENT_RANGE  = 45;
 
 // Code gen phases — index continues from planning (12-17)
 const CODEGEN_PHASES = [
@@ -67,7 +73,7 @@ const CODEGEN_PHASES = [
 ];
 
 async function startCodegen(projectId) {
-  const alreadyRunning = await Phase.findOne({ projectId, index: { $gte: 12 }, status: 'running' });
+  const alreadyRunning = await Phase.findOne({ projectId, index: { $gte: CODEGEN_PHASES[0].index }, status: 'running' });
   if (alreadyRunning) {
     logger.warn('codegen-runner: already running', { projectId });
     return;
@@ -81,7 +87,7 @@ async function startCodegen(projectId) {
 
   const userCtx = await _getUserCtx(project);
 
-  for (const cfg of CODEGEN_PHASES) {
+  for (const phaseCfg of CODEGEN_PHASES) {
     const fresh = await Project.findById(projectId).lean();
     if (!fresh || fresh.status === 'paused' || fresh.status === 'quota_paused') {
       logger.info('codegen-runner: paused', { projectId });
@@ -89,26 +95,26 @@ async function startCodegen(projectId) {
     }
 
     try {
-      await _runCodegenPhase(projectId, cfg, userCtx);
+      await _runCodegenPhase(projectId, phaseCfg, userCtx);
     } catch (err) {
       if (err.code === 'QUOTA_EXHAUSTED') {
-        await Phase.findOneAndUpdate({ projectId, index: cfg.index }, { status: 'interrupted', errorMessage: err.message });
+        await Phase.findOneAndUpdate({ projectId, index: phaseCfg.index }, { status: 'interrupted', errorMessage: err.message });
         await Project.findByIdAndUpdate(projectId, { status: 'quota_paused', quotaPausedAt: new Date() });
-        emitToProject(projectId, 'pipeline:quota_exhausted', { phaseIndex: cfg.index, message: err.message });
+        emitToProject(projectId, 'pipeline:quota_exhausted', { phaseIndex: phaseCfg.index, message: err.message });
         return;
       }
-      logger.error('codegen-runner: phase failed', { projectId, phase: cfg.type, error: err.message });
-      await Phase.findOneAndUpdate({ projectId, index: cfg.index }, { status: 'failed', errorMessage: err.message });
-      emitToProject(projectId, 'phase:failed', { phaseIndex: cfg.index, error: err.message });
+      logger.error('codegen-runner: phase failed', { projectId, phase: phaseCfg.type, error: err.message });
+      await Phase.findOneAndUpdate({ projectId, index: phaseCfg.index }, { status: 'failed', errorMessage: err.message });
+      emitToProject(projectId, 'phase:failed', { phaseIndex: phaseCfg.index, error: err.message });
       break;
     }
 
-    const pct = 50 + Math.round(((cfg.index - 11) / CODEGEN_PHASES.length) * 45);
+    const pct = CODEGEN_START_PERCENT + Math.round(((phaseCfg.index - CODEGEN_PHASE_OFFSET) / CODEGEN_PHASES.length) * CODEGEN_PERCENT_RANGE);
     await Project.findByIdAndUpdate(projectId, { completionPercent: pct });
   }
 
   // Check if all codegen phases completed successfully
-  const failedPhase = await Phase.findOne({ projectId, index: { $gte: 12 }, status: 'failed' });
+  const failedPhase = await Phase.findOne({ projectId, index: { $gte: CODEGEN_PHASES[0].index }, status: 'failed' });
   if (!failedPhase) {
     logger.info('codegen-runner: all phases complete', { projectId });
     emitToProject(projectId, 'pipeline:codegen_complete', {});
@@ -178,13 +184,13 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
   const files = parseFiles(result.content);
   logger.info('codegen-runner: parsed files', { projectId, phase: cfg.type, count: files.length });
 
-  if (files.length > 60) {
+  if (files.length > MAX_FILES_PER_PHASE) {
     logger.warn('codegen-runner: unusually high file count', { projectId, count: files.length, phase: cfg.type });
   }
 
   // Save files + emit events
   for (const file of files) {
-    if (file.content.length > 150_000) {
+    if (file.content.length > MAX_FILE_SIZE_BYTES) {
       logger.warn('codegen-runner: file too large, skipping', { projectId, filePath: file.filePath, size: file.content.length });
       continue;
     }

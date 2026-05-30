@@ -1,5 +1,10 @@
 const { getPlatformClient, MAX_TOKENS } = require('./claude.client');
 const env = require('../../config/env');
+
+const MEETING_MAX_TOKENS       = 1500;
+const MESSAGE_STAGGER_MS       = 400;
+const MEETING_DOC_PREVIEW_CHARS = 3_000;
+const FALLBACK_MSG_MAX_CHARS   = 800;
 const Meeting        = require('../../models/Meeting');
 const MeetingMessage = require('../../models/MeetingMessage');
 const { emitToProject } = require('../../sockets');
@@ -89,12 +94,12 @@ RULES:
 - Use the same language as the document
 - The Decision must summarize actual changes that will be applied`;
 
-  const userPrompt = `Review this planning document:\n\n${documentContent.slice(0, 3000)}`;
+  const userPrompt = `Review this planning document:\n\n${documentContent.slice(0, MEETING_DOC_PREVIEW_CHARS)}`;
 
   const client   = getPlatformClient();
   const response = await client.messages.create({
     model:      env.ANTHROPIC_MODEL,
-    max_tokens: 1500,
+    max_tokens: MEETING_MAX_TOKENS,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   });
@@ -123,7 +128,7 @@ RULES:
       type:        msg.type,
     });
     // Stagger messages for live-chat feel
-    await sleep(400);
+    await sleep(MESSAGE_STAGGER_MS);
   }
 
   if (parsed.decision) {
@@ -213,7 +218,7 @@ function parseMeetingOutput(text, participants) {
       role:        Object.keys(TEAM).find((k) => TEAM[k].name === firstParticipant?.name) || 'pm',
       displayName: firstParticipant?.name || 'Team',
       color:       firstParticipant?.color || '#2563eb',
-      message:     text.trim().slice(0, 800),
+      message:     text.trim().slice(0, FALLBACK_MSG_MAX_CHARS),
       type:        'observation',
     });
   }

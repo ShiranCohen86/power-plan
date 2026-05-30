@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
+import { BIOMETRIC_STORAGE_KEY } from '../config/constants.js';
 import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
 } from '../api/settings.api';
@@ -79,7 +81,7 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, input
               <p className="settings-apikey__howto-title">{inputProps.howto.title}</p>
               <ol className="settings-apikey__howto-steps">
                 {inputProps.howto.steps.map((s, i) => (
-                  <li key={i} dangerouslySetInnerHTML={{ __html: s }} />
+                  <li key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(s, { ALLOWED_TAGS: ['strong', 'code', 'a'], ALLOWED_ATTR: ['href', 'target', 'rel'] }) }} />
                 ))}
               </ol>
               {inputProps.howto.note && (
@@ -143,15 +145,18 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, input
 function BiometricSection() {
   const { t } = useTranslation();
   const [platformAvailable, setPlatformAvailable] = useState(false);
-  const [registered, setRegistered] = useState(localStorage.getItem('pp-biometric') === '1');
+  const [registered, setRegistered] = useState(localStorage.getItem(BIOMETRIC_STORAGE_KEY) === '1');
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!window.PublicKeyCredential) return;
-    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-      .then((ok) => setPlatformAvailable(ok))
-      .catch(() => {});
+    (async () => {
+      try {
+        const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        setPlatformAvailable(ok);
+      } catch { /* feature detection — failure is non-fatal */ }
+    })();
   }, []);
 
   if (!platformAvailable) return null;
@@ -163,7 +168,7 @@ function BiometricSection() {
       const options  = await webAuthnRegisterStart();
       const response = await startRegistration({ optionsJSON: options });
       await webAuthnRegisterFinish(response);
-      localStorage.setItem('pp-biometric', '1');
+      localStorage.setItem(BIOMETRIC_STORAGE_KEY, '1');
       setRegistered(true);
       setStatus('success');
     } catch (e) {
@@ -211,9 +216,14 @@ export default function Settings() {
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    getSettings()
-      .then((res) => setSettings(res))
-      .catch(() => setLoadError(t('settings.loadError')));
+    (async () => {
+      try {
+        const res = await getSettings();
+        setSettings(res);
+      } catch {
+        setLoadError(t('settings.loadError'));
+      }
+    })();
   }, []);
 
   return (

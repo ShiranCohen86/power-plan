@@ -13,6 +13,10 @@ const { autoExtractLessons } = require('./lesson-extractor.service');
 const { resolveApiKey } = require('./pipeline-utils.service');
 const { emitToProject } = require('../sockets');
 const logger         = require('../utils/logger');
+const ApiError       = require('../utils/ApiError');
+const { MAX_PHASE_REFINES } = require('../config/constants');
+
+const PLANNING_COMPLETE_PERCENT = 50;
 
 const PHASE_CONFIGS = [
   { type: 'idea_understanding',  agentName: 'IdeaAnalystAgent' },
@@ -43,10 +47,12 @@ async function startPlanning(projectId) {
   let startIndex  = 0;
 
   if (lastPhase) {
-    if (lastPhase.status === 'awaiting_approval') return;
-    if (lastPhase.status === 'completed')         startIndex = lastPhase.index + 1;
-    if (lastPhase.status === 'failed')            startIndex = lastPhase.index;
-    if (lastPhase.status === 'interrupted')       startIndex = lastPhase.index;
+    switch (lastPhase.status) {
+      case 'awaiting_approval': return;
+      case 'completed':         startIndex = lastPhase.index + 1; break;
+      case 'failed':
+      case 'interrupted':       startIndex = lastPhase.index;     break;
+    }
   }
 
   if (startIndex >= PHASE_CONFIGS.length) {
@@ -79,13 +85,13 @@ async function startPlanning(projectId) {
       break;
     }
 
-    const progress = Math.round(((i + 1) / PHASE_CONFIGS.length) * 50);
-    await Project.findByIdAndUpdate(projectId, {
-      currentPhaseIndex: i + 1,
-      completionPercent: progress,
-    });
+    const progress = Math.round(((i + 1) / PHASE_CONFIGS.length) * PLANNING_COMPLETE_PERCENT);
+    const updated = await Project.findByIdAndUpdate(
+      projectId,
+      { currentPhaseIndex: i + 1, completionPercent: progress },
+      { new: true },
+    ).lean();
 
-    const updated = await Project.findById(projectId).lean();
     if (updated.approvalGates !== false) {
       emitToProject(projectId, 'phase:awaiting_approval', { phaseIndex: i });
       logger.info('planning-runner: waiting for approval', { projectId, phaseIndex: i });
@@ -98,12 +104,16 @@ async function startPlanning(projectId) {
 }
 
 async function _onAllPhasesComplete(projectId) {
-  await Project.findByIdAndUpdate(projectId, { completionPercent: 50 });
+  await Project.findByIdAndUpdate(projectId, { completionPercent: PLANNING_COMPLETE_PERCENT });
   emitToProject(projectId, 'pipeline:planning_complete', {});
   logger.info('planning-runner: all phases complete', { projectId });
 
-  notifier.notifyPlanningComplete(projectId).catch(() => {});
-  autoExtractLessons(projectId).catch(() => {});
+  notifier.notifyPlanningComplete(projectId).catch((err) =>
+    logger.warn('planning-runner: notifyPlanningComplete failed', { projectId, error: err.message }),
+  );
+  autoExtractLessons(projectId).catch((err) =>
+    logger.warn('planning-runner: autoExtractLessons failed', { projectId, error: err.message }),
+  );
 
   const { runExternalConsultants }          = require('./ai/external-consultants.orchestrator');
   const { startCodegen }                    = require('./codegen-runner.service');
@@ -132,7 +142,9 @@ async function _handleQuotaExhausted(projectId, phaseIndex, err) {
   );
   await Project.findByIdAndUpdate(projectId, { status: 'quota_paused', quotaPausedAt: new Date() });
   emitToProject(projectId, 'pipeline:quota_exhausted', { phaseIndex, message: err.message });
-  notifier.notifyQuotaExhausted(projectId).catch(() => {});
+  notifier.notifyQuotaExhausted(projectId).catch((err) =>
+    logger.warn('planning-runner: notifyQuotaExhausted failed', { projectId, error: err.message }),
+  );
 }
 
 async function _getUserCtx(project) {
@@ -229,7 +241,7 @@ async function _runSinglePhase(projectId, phaseIndex, refineFeedback = null) {
 async function approvePhase(projectId, phaseIndex) {
   const phase = await Phase.findOne({ projectId, index: phaseIndex });
   if (!phase || phase.status !== 'awaiting_approval') {
-    throw new Error('Phase is not awaiting approval');
+    throw ApiError.badRequest('Phase is not awaiting approval');
   }
 
   phase.status = 'completed';
@@ -244,8 +256,8 @@ async function approvePhase(projectId, phaseIndex) {
 
 async function refinePhase(projectId, phaseIndex, feedback) {
   const phase = await Phase.findOne({ projectId, index: phaseIndex });
-  if (!phase || phase.status !== 'awaiting_approval') throw new Error('Phase is not awaiting approval');
-  if (phase.refineCount >= 2) throw new Error('Maximum refinements reached for this phase');
+  if (!phase || phase.status !== 'awaiting_approval') throw ApiError.badRequest('Phase is not awaiting approval');
+  if (phase.refineCount >= MAX_PHASE_REFINES) throw ApiError.badRequest('Maximum refinements reached for this phase');
 
   phase.refineCount += 1;
   phase.status       = 'running';

@@ -9,7 +9,9 @@ let io;
 async function initSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
+      origin: env.NODE_ENV === 'production'
+        ? [env.FRONTEND_URL]
+        : [env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'],
       credentials: true,
     },
   });

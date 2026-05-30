@@ -12,9 +12,16 @@ const Meeting                = require('../../models/Meeting');
 const MeetingMessage         = require('../../models/MeetingMessage');
 const { emitToProject }      = require('../../sockets');
 const logger                 = require('../../utils/logger');
+const env                    = require('../../config/env');
 
-const MODEL      = 'claude-sonnet-4-6';
+const MODEL      = env.ANTHROPIC_MODEL;
 const MAX_TOKENS = 1200;
+
+const DOC_SNIPPET_MAX_CHARS   = 800;
+const MESSAGE_DELAY_MS        = 500;
+const DECISION_DELAY_MS       = 300;
+const MIN_MESSAGE_LENGTH      = 20;
+const FALLBACK_MESSAGE_MAX_CHARS = 400;
 
 // ── Consultant definitions ────────────────────────────────────────────────────
 
@@ -151,7 +158,7 @@ async function runExternalConsultants(projectId) {
 
   // Build a condensed context from all docs (cap each at 800 chars for token safety)
   const docsContext = docs.map((d) => {
-    const snippet = d.content.slice(0, 800) + (d.content.length > 800 ? '\n...' : '');
+    const snippet = d.content.slice(0, DOC_SNIPPET_MAX_CHARS) + (d.content.length > DOC_SNIPPET_MAX_CHARS ? '\n...' : '');
     return `### ${d.type}\n${snippet}`;
   }).join('\n\n');
 
@@ -172,71 +179,11 @@ async function runExternalConsultants(projectId) {
     consultants: CONSULTANTS.map((c) => ({ id: c.id, name: c.name, role: c.role, color: c.color, emoji: c.emoji })),
   });
 
-  const client = getPlatformClient();
   let totalImprovements = 0;
 
   for (const consultant of CONSULTANTS) {
     try {
-      const response = await client.messages.create({
-        model:      MODEL,
-        max_tokens: MAX_TOKENS,
-        system:     consultant.systemPrompt,
-        messages:   [{ role: 'user', content: `Review the following planning documents and provide your findings:\n\n${fullContext}` }],
-      });
-
-      const rawText = response.content[0]?.text || '';
-      const parsed  = _parseConsultantOutput(rawText, consultant);
-
-      for (const msg of parsed.messages) {
-        await MeetingMessage.create({
-          meetingId:   meeting._id,
-          projectId,
-          role:        consultant.id,
-          displayName: consultant.name,
-          color:       consultant.color,
-          message:     msg.message,
-          type:        msg.type,
-        });
-
-        emitToProject(projectId, 'consultants:message', {
-          consultantId: consultant.id,
-          name:         consultant.name,
-          role:         consultant.role,
-          emoji:        consultant.emoji,
-          color:        consultant.color,
-          message:      msg.message,
-          type:         msg.type,
-        });
-
-        await _sleep(500); // Live-chat feel
-      }
-
-      if (parsed.decision) {
-        await MeetingMessage.create({
-          meetingId:   meeting._id,
-          projectId,
-          role:        consultant.id,
-          displayName: `${consultant.name} — סיכום`,
-          color:       consultant.color,
-          message:     parsed.decision,
-          type:        'decision',
-        });
-
-        emitToProject(projectId, 'consultants:message', {
-          consultantId: consultant.id,
-          name:         `${consultant.name} — סיכום`,
-          role:         consultant.role,
-          emoji:        '✅',
-          color:        consultant.color,
-          message:      parsed.decision,
-          type:         'decision',
-        });
-
-        await _sleep(300);
-      }
-
-      totalImprovements += parsed.messages.filter((m) => m.type !== 'approval').length;
-
+      totalImprovements += await _runConsultant(projectId, meeting._id, consultant, fullContext);
     } catch (err) {
       logger.warn('external-consultants: consultant failed (non-fatal)', {
         projectId, consultant: consultant.id, error: err.message,
@@ -257,6 +204,71 @@ async function runExternalConsultants(projectId) {
   });
 
   logger.info('external-consultants: spec review complete', { projectId, totalImprovements });
+}
+
+// ── Per-consultant runner ─────────────────────────────────────────────────────
+
+async function _runConsultant(projectId, meetingId, consultant, fullContext) {
+  const client = getPlatformClient();
+  const response = await client.messages.create({
+    model:      MODEL,
+    max_tokens: MAX_TOKENS,
+    system:     consultant.systemPrompt,
+    messages:   [{ role: 'user', content: `Review the following planning documents and provide your findings:\n\n${fullContext}` }],
+  });
+
+  const rawText = response.content[0]?.text || '';
+  const parsed  = _parseConsultantOutput(rawText, consultant);
+
+  for (const msg of parsed.messages) {
+    await MeetingMessage.create({
+      meetingId,
+      projectId,
+      role:        consultant.id,
+      displayName: consultant.name,
+      color:       consultant.color,
+      message:     msg.message,
+      type:        msg.type,
+    });
+
+    emitToProject(projectId, 'consultants:message', {
+      consultantId: consultant.id,
+      name:         consultant.name,
+      role:         consultant.role,
+      emoji:        consultant.emoji,
+      color:        consultant.color,
+      message:      msg.message,
+      type:         msg.type,
+    });
+
+    await _sleep(MESSAGE_DELAY_MS); // Live-chat feel
+  }
+
+  if (parsed.decision) {
+    await MeetingMessage.create({
+      meetingId,
+      projectId,
+      role:        consultant.id,
+      displayName: `${consultant.name} — סיכום`,
+      color:       consultant.color,
+      message:     parsed.decision,
+      type:        'decision',
+    });
+
+    emitToProject(projectId, 'consultants:message', {
+      consultantId: consultant.id,
+      name:         `${consultant.name} — סיכום`,
+      role:         consultant.role,
+      emoji:        '✅',
+      color:        consultant.color,
+      message:      parsed.decision,
+      type:         'decision',
+    });
+
+    await _sleep(DECISION_DELAY_MS);
+  }
+
+  return parsed.messages.filter((m) => m.type !== 'approval').length;
 }
 
 // ── Parser ────────────────────────────────────────────────────────────────────
@@ -281,7 +293,7 @@ function _parseConsultantOutput(text, consultant) {
     const msgType   = typeMatch ? typeMatch[1].toLowerCase() : 'observation';
     const message   = block.replace(/^[\s\n]*type:\s*\w+\n?/i, '').split(/\[/)[0].trim();
 
-    if (message && message.length > 20) {
+    if (message && message.length > MIN_MESSAGE_LENGTH) {
       messages.push({
         type:    ['observation', 'correction', 'concern', 'approval'].includes(msgType) ? msgType : 'observation',
         message,
@@ -293,7 +305,7 @@ function _parseConsultantOutput(text, consultant) {
   if (messages.length === 0 && text.length > 50) {
     messages.push({
       type:    'observation',
-      message: text.replace(/\[.*?\]/g, '').trim().slice(0, 400),
+      message: text.replace(/\[.*?\]/g, '').trim().slice(0, FALLBACK_MESSAGE_MAX_CHARS),
     });
   }
 

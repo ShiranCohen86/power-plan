@@ -2,6 +2,7 @@ const Project  = require('../models/Project');
 const User     = require('../models/User');
 const email    = require('./email.service');
 const notifSvc = require('./notification.service');
+const logger   = require('../utils/logger');
 
 /**
  * Sends email + in-app notification when all planning phases complete.
@@ -17,7 +18,7 @@ async function notifyPlanningComplete(projectId) {
       to:           owner.email,
       userName:     owner.name,
       projectTitle: proj.title,
-    }).catch(() => {});
+    }).catch((err) => logger.warn('phase-notifier: sendPlanningComplete email failed', { projectId, error: err.message }));
   }
 
   notifSvc.create({
@@ -26,7 +27,7 @@ async function notifyPlanningComplete(projectId) {
     type:      'planning_complete',
     title:     `📋 ${proj.title} — האפיון הושלם`,
     message:   'כל 12 שלבי התכנון הושלמו. Claude מתחיל לכתוב קוד.',
-  }).catch(() => {});
+  }).catch((err) => logger.warn('phase-notifier: planning_complete notification failed', { projectId, error: err.message }));
 }
 
 /**
@@ -44,7 +45,7 @@ async function notifyQuotaExhausted(projectId) {
       userName:     owner.name,
       projectTitle: proj.title,
       plan:         owner.plan || 'starter',
-    }).catch(() => {});
+    }).catch((err) => logger.warn('phase-notifier: sendQuotaExhausted email failed', { projectId, error: err.message }));
   }
 
   notifSvc.create({
@@ -53,7 +54,7 @@ async function notifyQuotaExhausted(projectId) {
     type:      'quota_exhausted',
     title:     `⚠️ ${proj.title} — הפייפליין הופסק`,
     message:   'נגמר קרדיט ה-API. הטען קרדיט כדי להמשיך.',
-  }).catch(() => {});
+  }).catch((err) => logger.warn('phase-notifier: quota_exhausted notification failed', { projectId, error: err.message }));
 }
 
 module.exports = { notifyPlanningComplete, notifyQuotaExhausted };

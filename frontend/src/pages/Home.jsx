@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -82,23 +82,24 @@ export default function Home() {
     if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
-  const features = [
+  // Memoize i18n-dependent arrays so they only rebuild on language change
+  const features = useMemo(() => [
     { icon: '🤖', title: t('home.feat1Title'), sub: t('home.feat1Sub') },
     { icon: '⚡', title: t('home.feat2Title'), sub: t('home.feat2Sub') },
     { icon: '🚀', title: t('home.feat3Title'), sub: t('home.feat3Sub') },
-  ];
+  ], [t]);
 
-  const steps = [
+  const steps = useMemo(() => [
     { num: '01', icon: '💡', title: t('home.step1Title'), sub: t('home.step1Sub') },
     { num: '02', icon: '🤖', title: t('home.step2Title'), sub: t('home.step2Sub') },
     { num: '03', icon: '🎉', title: t('home.step3Title'), sub: t('home.step3Sub') },
-  ];
+  ], [t]);
 
-  const faqs = [
+  const faqs = useMemo(() => [
     { q: t('home.faq1Q'), a: t('home.faq1A') },
     { q: t('home.faq2Q'), a: t('home.faq2A') },
     { q: t('home.faq3Q'), a: t('home.faq3A') },
-  ];
+  ], [t]);
 
   return (
     <div className="home">
@@ -154,7 +155,7 @@ export default function Home() {
                 <div className="home-hero__phases">
                   {MOCKUP_PHASES.map((p, i) => (
                     <div
-                      key={i}
+                      key={p.name}
                       className={`home-hero__phase home-hero__phase--${i < 3 ? 'done' : i === 3 ? 'active' : 'pending'}`}
                       style={{ animationDelay: `${i * 0.25}s` }}
                     >
@@ -175,8 +176,8 @@ export default function Home() {
         <section className="home-pipeline home-reveal" aria-label="pipeline phases">
           <div className="home-pipeline__label">{t('home.pipelineLabel')}</div>
           <div className="home-pipeline__track">
-            {PIPELINE_STRIP.map((p, i) => (
-              <div key={i} className="home-pipeline__chip">
+            {PIPELINE_STRIP.map((p) => (
+              <div key={p.name} className="home-pipeline__chip">
                 <span>{p.icon}</span>
                 <span className="home-pipeline__chip-name">{lang === 'he' ? p.nameHe : p.name}</span>
               </div>
@@ -192,7 +193,7 @@ export default function Home() {
           </div>
           <div className="home-how__steps">
             {steps.map((s, i) => (
-              <div key={i} className="home-how__step home-reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
+              <div key={s.num} className="home-how__step home-reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
                 <div className="home-how__header">
                   <span className="home-how__num" aria-hidden="true">{s.num}</span>
                   <span className="home-how__icon" aria-hidden="true">{s.icon}</span>

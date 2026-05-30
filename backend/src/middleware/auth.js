@@ -5,7 +5,8 @@ const User = require('../models/User');
 
 // Short-lived in-memory cache to avoid a DB hit on every request.
 // User records are cached for 30 seconds; role/isActive changes propagate within that window.
-const USER_CACHE_TTL_MS = 30_000;
+const USER_CACHE_TTL_MS  = 30_000;
+const USER_CACHE_MAX_SIZE = 1000;
 const userCache = new Map(); // userId → { user, expiresAt }
 
 function getCachedUser(userId) {
@@ -18,7 +19,7 @@ function getCachedUser(userId) {
 function setCachedUser(userId, user) {
   userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
   // Evict stale entries when cache grows large to prevent unbounded memory use
-  if (userCache.size > 1000) {
+  if (userCache.size > USER_CACHE_MAX_SIZE) {
     const now = Date.now();
     for (const [id, entry] of userCache) {
       if (now > entry.expiresAt) userCache.delete(id);

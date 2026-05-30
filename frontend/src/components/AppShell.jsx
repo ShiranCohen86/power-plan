@@ -20,6 +20,8 @@ import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import CloseOutlined from '@mui/icons-material/CloseOutlined';
 
+const SEARCH_DEBOUNCE_MS = 350;
+
 export default function AppShell({ children }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -37,6 +39,8 @@ export default function AppShell({ children }) {
   const searchTimerRef                = useRef(null);
   const searchInputRef                = useRef(null);
 
+  const goToDashboard = () => navigate('/dashboard');
+
   const isHome = location.pathname === '/dashboard';
   const isInProject = /^\/projects\/[^/]+\//.test(location.pathname);
   const showBack = !isHome && !isInProject;
@@ -53,6 +57,7 @@ export default function AppShell({ children }) {
       setSearchVal('');
       dispatch(setSearch(''));
     }
+  // intentional: only react when entering/leaving project context, not on search state changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInProject]);
 
@@ -72,7 +77,7 @@ export default function AppShell({ children }) {
     searchTimerRef.current = setTimeout(() => {
       dispatch(setSearch(val));
       if (val && location.pathname !== '/dashboard') navigate('/dashboard');
-    }, 350);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   function handleLogout() {
@@ -105,7 +110,7 @@ export default function AppShell({ children }) {
             </button>
           )}
           <NotificationBell />
-          <button className="app-topbar__brand-mobile" onClick={() => navigate('/dashboard')} aria-label="Power Plan — לוח הבקרה">
+          <button className="app-topbar__brand-mobile" onClick={goToDashboard} aria-label="Power Plan — לוח הבקרה">
             <span className="app-topbar__brand-icon">⚡</span>
           </button>
         </div>
@@ -113,7 +118,7 @@ export default function AppShell({ children }) {
         {/* ── Desktop row (>767px) ── unchanged layout */}
         <div className="app-topbar__row app-topbar__row--desktop">
           <div className="app-topbar__start">
-            <button className="app-topbar__brand btn-ghost" onClick={() => navigate('/dashboard')}>
+            <button className="app-topbar__brand btn-ghost" onClick={goToDashboard}>
               <span className="app-topbar__brand-icon">⚡</span>
               <span className="app-topbar__brand-name">{brandLabel}</span>
             </button>
@@ -151,7 +156,7 @@ export default function AppShell({ children }) {
                 <SearchOutlined fontSize="small" />
               </button>
             )}
-            <button className="btn btn--secondary app-topbar__logout" onClick={() => dispatch(logoutUser())}>
+            <button className="btn btn--secondary app-topbar__logout" onClick={handleLogout}>
               {t('auth.logout')}
             </button>
           </div>

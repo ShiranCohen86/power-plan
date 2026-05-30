@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { listProjects, createProject, deleteProject } from '../../api/projects.api';
+import { DASHBOARD_PAGE_SIZE } from '../../config/constants';
 
-const PAGE_LIMIT = 12;
+const PAGE_LIMIT = DASHBOARD_PAGE_SIZE;
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchAll',

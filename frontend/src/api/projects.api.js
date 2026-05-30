@@ -1,5 +1,7 @@
 import { safeRequest, getAccessToken } from './request';
 
+const DISCOVERY_SSE_TIMEOUT_MS = 45_000;
+
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
 
@@ -78,7 +80,7 @@ export function discoveryNextSSE(id, answers, { onChunk, onDone, onError }) {
   const timeoutId = setTimeout(() => {
     controller.abort();
     onError(new Error('Discovery request timed out — please try again'));
-  }, 45000);
+  }, DISCOVERY_SSE_TIMEOUT_MS);
 
   const token = getAccessToken();
   fetch(`${apiBaseUrl}/api/projects/${id}/discovery/next`, {

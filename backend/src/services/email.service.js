@@ -1,52 +1,70 @@
 const env = require('../config/env');
 const logger = require('../utils/logger');
 
+const DEFAULT_FROM = env.RESEND_FROM || 'Power Plan <hello@powerplan.app>';
+
 // Lazily resolve Resend so the service still loads when RESEND_API_KEY is absent
 async function _getResend() {
   const { Resend } = require('resend');
   return new Resend(env.RESEND_API_KEY);
 }
 
-/**
- * Send "your app is live!" email to the project owner.
- * Silently no-ops when RESEND_API_KEY is not configured.
- */
-async function sendDeploymentSuccess({ to, userName, projectTitle, liveUrl, githubUrl }) {
+// Shared send wrapper — guards missing key/recipient, normalizes try/catch and logging
+async function _send({ to, subject, html, context, meta = {} }) {
   if (!env.RESEND_API_KEY) return;
+  if (!to) {
+    logger.warn('email.service: missing recipient', { context, ...meta });
+    return;
+  }
   try {
     const resend = await _getResend();
-    await resend.emails.send({
-      from: env.RESEND_FROM || 'Power Plan <hello@powerplan.app>',
-      to,
-      subject: `האפליקציה שלך מוכנה! 🎉 — ${projectTitle}`,
-      html: _deploySuccessHtml({ userName, projectTitle, liveUrl, githubUrl }),
-    });
-    logger.info('email.service: deployment success email sent', { to, projectTitle });
+    await resend.emails.send({ from: DEFAULT_FROM, to, subject, html });
+    logger.info(`email.service: ${context} email sent`, { to, ...meta });
   } catch (err) {
-    // Non-fatal — log and continue
-    logger.warn('email.service: failed to send email', { error: err.message });
+    logger.warn(`email.service: failed to send ${context} email`, { error: err.message, ...meta });
   }
+}
+
+/**
+ * Send "your app is live!" email to the project owner.
+ */
+async function sendDeploymentSuccess({ to, userName, projectTitle, liveUrl, githubUrl }) {
+  await _send({
+    to,
+    subject: `האפליקציה שלך מוכנה! 🎉 — ${projectTitle}`,
+    html: _deploySuccessHtml({ userName, projectTitle, liveUrl, githubUrl }),
+    context: 'deployment-success',
+    meta: { projectTitle },
+  });
 }
 
 /**
  * Send quota-exhausted warning email.
  */
 async function sendQuotaExhausted({ to, userName, projectTitle, plan }) {
-  if (!env.RESEND_API_KEY) return;
-  try {
-    const resend = await _getResend();
-    const subject = plan === 'starter'
-      ? `נגמר הקרדיט ב-API שלך — ${projectTitle}`
-      : `מגבלת שימוש הגיעה — ${projectTitle}`;
-    await resend.emails.send({
-      from: env.RESEND_FROM || 'Power Plan <hello@powerplan.app>',
-      to,
-      subject,
-      html: _quotaHtml({ userName, projectTitle, plan }),
-    });
-  } catch (err) {
-    logger.warn('email.service: failed to send quota email', { error: err.message });
-  }
+  const subject = plan === 'starter'
+    ? `נגמר הקרדיט ב-API שלך — ${projectTitle}`
+    : `מגבלת שימוש הגיעה — ${projectTitle}`;
+  await _send({
+    to,
+    subject,
+    html: _quotaHtml({ userName, projectTitle, plan }),
+    context: 'quota-exhausted',
+    meta: { projectTitle },
+  });
+}
+
+/**
+ * Send "planning complete, codegen starting" email.
+ */
+async function sendPlanningComplete({ to, userName, projectTitle }) {
+  await _send({
+    to,
+    subject: `📋 האפיון של "${projectTitle}" הושלם — Claude מתחיל לכתוב קוד`,
+    html: _planningCompleteHtml({ userName, projectTitle }),
+    context: 'planning-complete',
+    meta: { projectTitle },
+  });
 }
 
 // ── HTML templates ────────────────────────────────────────────────────────────
@@ -135,15 +153,8 @@ function _quotaHtml({ userName, projectTitle, plan }) {
 </html>`;
 }
 
-async function sendPlanningComplete({ to, userName, projectTitle }) {
-  if (!env.RESEND_API_KEY) return;
-  try {
-    const resend = await _getResend();
-    await resend.emails.send({
-      from: env.RESEND_FROM || 'Power Plan <hello@powerplan.app>',
-      to,
-      subject: `📋 האפיון של "${projectTitle}" הושלם — Claude מתחיל לכתוב קוד`,
-      html: `<!DOCTYPE html>
+function _planningCompleteHtml({ userName, projectTitle }) {
+  return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0a0a0f;font-family:system-ui,sans-serif;color:#e2e8f0;direction:rtl">
@@ -176,12 +187,7 @@ async function sendPlanningComplete({ to, userName, projectTitle }) {
     </tr>
   </table>
 </body>
-</html>`,
-    });
-    logger.info('email.service: planning complete email sent', { to, projectTitle });
-  } catch (err) {
-    logger.warn('email.service: failed to send planning complete email', { error: err.message });
-  }
+</html>`;
 }
 
 module.exports = { sendDeploymentSuccess, sendQuotaExhausted, sendPlanningComplete };

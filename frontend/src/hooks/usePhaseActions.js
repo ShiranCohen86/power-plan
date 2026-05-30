@@ -40,7 +40,7 @@ export function usePhaseActions(projectId, {
       setActionError('');
       toast.success('הפייפליין התחיל!');
       analytics.pipelineStarted(projectId);
-      getRateLimit().then(setRateLimit).catch(() => {});
+      getRateLimit().then(setRateLimit).catch(() => {}); // non-fatal — rate limit display is best-effort
     } catch (err) { handleActionError(err); }
   }
 
@@ -49,7 +49,7 @@ export function usePhaseActions(projectId, {
       await retryPipeline(projectId);
       setActionError('');
       toast.success('מנסה שוב מהשלב שנכשל...');
-      getRateLimit().then(setRateLimit).catch(() => {});
+      getRateLimit().then(setRateLimit).catch(() => {}); // non-fatal — rate limit display is best-effort
     } catch (err) { handleActionError(err); }
   }
 

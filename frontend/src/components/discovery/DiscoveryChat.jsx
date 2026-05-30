@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { discoveryNextSSE, saveDiscoveryProgress } from '../../api/projects.api';
 
+const discoveryCacheKey = (id) => `discovery_${id}`;
+
 export default function DiscoveryChat({ projectId, onComplete }) {
   const { t } = useTranslation();
 
@@ -19,7 +21,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
 
   // Start discovery — restore progress from sessionStorage if available
   useEffect(() => {
-    const key = `discovery_${projectId}`;
+    const key = discoveryCacheKey(projectId);
     try {
       const saved = sessionStorage.getItem(key);
       if (saved) {
@@ -34,6 +36,7 @@ export default function DiscoveryChat({ projectId, onComplete }) {
     } catch { /* corrupted storage — start fresh */ }
     fetchNextQuestion([]);
     return () => abortRef.current?.abort();
+  // intentional: run once on mount — projectId is stable for the component lifetime
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -97,16 +100,17 @@ export default function DiscoveryChat({ projectId, onComplete }) {
   // Persist answers to sessionStorage and auto-save to server
   useEffect(() => {
     if (answers.length > 0) {
-      sessionStorage.setItem(`discovery_${projectId}`, JSON.stringify({ messages, answers }));
+      sessionStorage.setItem(discoveryCacheKey(projectId), JSON.stringify({ messages, answers }));
       if (projectId) {
         saveDiscoveryProgress(projectId, answers).catch(() => {});
       }
     }
+  // intentional: persist + auto-save on answers change; saveDiscoveryProgress ref is stable
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers]);
 
   function handleFinish() {
-    sessionStorage.removeItem(`discovery_${projectId}`);
+    sessionStorage.removeItem(discoveryCacheKey(projectId));
     onComplete(answers);
   }
 

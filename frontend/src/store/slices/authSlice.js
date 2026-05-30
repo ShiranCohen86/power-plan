@@ -4,6 +4,7 @@ import {
   googleLoginRequest, webAuthnLoginStart, webAuthnLoginFinish,
 } from '../../api/auth.api.js';
 import { logError, logInfo } from '../../api/logger.js';
+import { BIOMETRIC_STORAGE_KEY } from '../../config/constants.js';
 
 const initialState = {
   currentUser:    null,
@@ -75,7 +76,7 @@ export const logoutUser = createAsyncThunk('auth/logout', async () => {
 
 function syncBiometricFlag(user) {
   if (user?.authMethods?.includes('webauthn')) {
-    localStorage.setItem('pp-biometric', '1');
+    localStorage.setItem(BIOMETRIC_STORAGE_KEY, '1');
   }
 }
 

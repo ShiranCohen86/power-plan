@@ -1,5 +1,11 @@
 const { getClientForUser, MAX_TOKENS } = require('./claude.client');
 const Lesson = require('../../models/Lesson');
+const { LESSON_INJECT_LIMIT } = require('../../config/constants');
+
+const MAX_RETRIES              = 3;
+const RETRY_BASE_DELAY_MS      = 1_000;
+const RETRY_MAX_DELAY_MS       = 30_000;
+const CONTEXT_FILE_PREVIEW_CHARS = 3_000;
 
 function _isQuotaError(err) {
   // Anthropic SDK throws APIError with status codes
@@ -28,7 +34,6 @@ class BaseAgent {
     const { client, model } = getClientForUser(userCtx.plan, userCtx.apiKey);
     const fullSystemPrompt  = await this._buildSystemPrompt();
 
-    const MAX_RETRIES = 3;
     let lastErr;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -47,7 +52,7 @@ class BaseAgent {
         const isRetryable = status === 429 || status === 529;
         if (!isRetryable || attempt === MAX_RETRIES) throw err;
 
-        const delayMs = Math.min(1000 * Math.pow(2, attempt), 30_000); // 1s, 2s, 4s … cap 30s
+        const delayMs = Math.min(RETRY_BASE_DELAY_MS * Math.pow(2, attempt), RETRY_MAX_DELAY_MS);
         await new Promise((r) => setTimeout(r, delayMs));
       }
     }
@@ -99,7 +104,7 @@ Every decision must explain WHY it matters for this specific business, not just 
       try {
         const lessons = await Lesson.find({ agentType: this.phaseType, isActive: true })
           .sort({ occurrenceCount: -1 })
-          .limit(10)
+          .limit(LESSON_INJECT_LIMIT)
           .lean();
 
         if (lessons.length > 0) {
@@ -169,7 +174,7 @@ Every decision must explain WHY it matters for this specific business, not just 
     if (previousFiles.length > 0) {
       parts.push('## Previously Generated Files (maintain consistency with these)');
       previousFiles.forEach((f) => {
-        parts.push(`<<<EXISTING: ${f.filePath}>>>\n${f.content.slice(0, 3000)}${f.content.length > 3000 ? '\n// ... (truncated)' : ''}`);
+        parts.push(`<<<EXISTING: ${f.filePath}>>>\n${f.content.slice(0, CONTEXT_FILE_PREVIEW_CHARS)}${f.content.length > CONTEXT_FILE_PREVIEW_CHARS ? '\n// ... (truncated)' : ''}`);
       });
     }
 

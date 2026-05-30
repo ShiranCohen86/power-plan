@@ -25,7 +25,7 @@ const startLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.user?.role === 'admin',
-  message: { error: 'יותר מדי הפעלות — נסה שוב בעוד שעה' },
+  message: { error: 'Too many pipeline starts — try again in an hour' },
 });
 
 const rollbackBody = {

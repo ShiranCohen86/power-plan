@@ -6,6 +6,7 @@ import Skeleton from '@mui/material/Skeleton';
 import toast from 'react-hot-toast';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
 import { friendlyError } from '../utils/errorMessages.js';
+import { DASHBOARD_AUTO_REFRESH_MS } from '../config/constants.js';
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectLoadingMore,
@@ -14,6 +15,7 @@ import {
 import { restoreProject } from '../api/projects.api.js';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
+const UNDO_TOAST_DURATION_MS = 5000;
 
 function ProjectCard({ project, dispatch }) {
   const { t }    = useTranslation();
@@ -28,30 +30,34 @@ function ProjectCard({ project, dispatch }) {
     }
   }
 
-  function handleDelete(e) {
+  async function handleDelete(e) {
     e.stopPropagation();
-    const projectId = project._id;
+    const projectId    = project._id;
     const projectTitle = project.title;
-    dispatch(deleteProjectThunk(projectId))
-      .unwrap()
-      .then(() => {
-        toast((toastInstance) => (
-          <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {`"${projectTitle}" נמחק`}
-            <button
-              style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-              onClick={() => {
-                restoreProject(projectId)
-                  .then(() => { dispatch(fetchProjects({ page: 1 })); toast.dismiss(toastInstance.id); })
-                  .catch(() => toast.error('לא ניתן לשחזר'));
-              }}
-            >
-              ביטול
-            </button>
-          </span>
-        ), { duration: 5000 });
-      })
-      .catch((err) => toast.error(friendlyError(err)));
+    try {
+      await dispatch(deleteProjectThunk(projectId)).unwrap();
+      toast((toastInstance) => (
+        <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {`"${projectTitle}" נמחק`}
+          <button
+            style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+            onClick={async () => {
+              try {
+                await restoreProject(projectId);
+                dispatch(fetchProjects({ page: 1 }));
+                toast.dismiss(toastInstance.id);
+              } catch {
+                toast.error('לא ניתן לשחזר');
+              }
+            }}
+          >
+            ביטול
+          </button>
+        </span>
+      ), { duration: UNDO_TOAST_DURATION_MS });
+    } catch (err) {
+      toast.error(friendlyError(err));
+    }
   }
 
   return (
@@ -105,7 +111,7 @@ export default function Dashboard() {
   const hasActive = projects.some((p) => ACTIVE_STATUSES.has(p.status));
   useEffect(() => {
     if (!hasActive || storeSearch) return;
-    const timer = setInterval(() => dispatch(refreshProjects()), 30_000);
+    const timer = setInterval(() => dispatch(refreshProjects()), DASHBOARD_AUTO_REFRESH_MS);
     return () => clearInterval(timer);
   }, [hasActive, dispatch, storeSearch]);
 

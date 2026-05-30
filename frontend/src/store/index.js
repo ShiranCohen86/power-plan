@@ -7,7 +7,7 @@ import tasksReducer         from './slices/tasksSlice.js';
 import sprintsReducer       from './slices/sprintsSlice.js';
 import notificationsReducer from './slices/notificationsSlice.js';
 import { injectStore }      from '../api/request.js';
-import { setAccessToken }   from './slices/authSlice.js';
+import { setAccessToken, logoutUser } from './slices/authSlice.js';
 
 export const store = configureStore({
   reducer: {
@@ -21,7 +21,7 @@ export const store = configureStore({
   },
 });
 
-// Give the axios interceptor access to Redux state + setAccessToken action
-injectStore(store, setAccessToken);
+// Give the axios interceptor access to Redux state + setAccessToken + logout callback
+injectStore(store, setAccessToken, () => store.dispatch(logoutUser()));
 
 export { CACHE_TTL_MS, isCacheStale } from './cacheUtils.js';

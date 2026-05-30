@@ -1,7 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 import i18n from '../../i18n/index.js';
 
-const storedLanguage = (typeof window !== 'undefined' && localStorage.getItem('lang')) || 'en';
+const LANG_STORAGE_KEY = 'lang';
+const directionFor = (lang) => (lang === 'he' ? 'rtl' : 'ltr');
+
+const storedLanguage = (typeof window !== 'undefined' && localStorage.getItem(LANG_STORAGE_KEY)) || 'en';
 
 const initialState = {
   language:  storedLanguage,
@@ -15,13 +18,13 @@ const uiSlice = createSlice({
   reducers: {
     setLanguage(state, action) {
       state.language  = action.payload;
-      state.direction = action.payload === 'he' ? 'rtl' : 'ltr';
+      state.direction = directionFor(action.payload);
       i18n.changeLanguage(action.payload);
     },
     toggleLanguage(state) {
       const next      = state.language === 'he' ? 'en' : 'he';
       state.language  = next;
-      state.direction = next === 'he' ? 'rtl' : 'ltr';
+      state.direction = directionFor(next);
       i18n.changeLanguage(next);
     },
     pushToast(state, action) {

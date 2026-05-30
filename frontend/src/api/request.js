@@ -8,12 +8,14 @@ export const httpClient = axios.create({
   timeout: 30000,
 });
 
-// Store + setAccessToken injected by store/index.js to avoid circular imports
+// Store + setAccessToken + logout injected by store/index.js to avoid circular imports
 let _store = null;
 let _setAccessToken = null;
-export function injectStore(store, setAccessToken) {
+let _logout = null;
+export function injectStore(store, setAccessToken, logout) {
   _store = store;
   _setAccessToken = setAccessToken;
+  _logout = logout;
 }
 export function getAccessToken() { return _store?.getState()?.auth?.accessToken || null; }
 
@@ -79,7 +81,7 @@ httpClient.interceptors.response.use(
         return httpClient(originalReq);
       } catch (refreshError) {
         processQueue(refreshError);
-        location.href = '/login';
+        if (_logout) _logout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

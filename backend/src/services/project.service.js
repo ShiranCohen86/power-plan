@@ -9,6 +9,7 @@ const Meeting        = require('../models/Meeting');
 const MeetingMessage = require('../models/MeetingMessage');
 const AgentLog       = require('../models/AgentLog');
 const ApiError       = require('../utils/ApiError');
+const { escapeRegex } = require('../utils/pagination');
 
 async function create({ title, idea, ownerId }) {
   const project = await Project.create({ title, idea, ownerId });
@@ -24,7 +25,7 @@ const SORT_MAP = {
 async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date' } = {}) {
   const query = { ownerId, deletedAt: null };
   if (search) {
-    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = escapeRegex(search);
     const re = new RegExp(escaped, 'i');
     query.$or = [{ title: re }, { idea: re }];
   }

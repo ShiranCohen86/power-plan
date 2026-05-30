@@ -1,6 +1,8 @@
 const Notification = require('../models/Notification');
 const logger       = require('../utils/logger');
 
+const NOTIFICATION_DEFAULT_LIMIT = 30;
+
 async function create({ userId, projectId, type, title, message, url }) {
   try {
     return await Notification.create({ userId, projectId, type, title, message, url });
@@ -22,7 +24,7 @@ async function markAllRead(userId) {
   return Notification.updateMany({ userId, read: false }, { read: true });
 }
 
-async function getForUser(userId, { limit = 30, unreadOnly = false } = {}) {
+async function getForUser(userId, { limit = NOTIFICATION_DEFAULT_LIMIT, unreadOnly = false } = {}) {
   const filter = { userId };
   if (unreadOnly) filter.read = false;
   return Notification.find(filter)

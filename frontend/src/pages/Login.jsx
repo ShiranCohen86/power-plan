@@ -8,6 +8,7 @@ import {
 } from '../store/slices/authSlice.js';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
 import ApiKeyPrompt from '../components/auth/ApiKeyPrompt.jsx';
+import { BIOMETRIC_STORAGE_KEY } from '../config/constants.js';
 import GoogleButton from '../components/auth/GoogleButton.jsx';
 import BiometricButton from '../components/auth/BiometricButton.jsx';
 import BiometricEnrollPrompt from '../components/auth/BiometricEnrollPrompt.jsx';
@@ -41,9 +42,12 @@ export default function Login() {
 
   useEffect(() => {
     if (!window.PublicKeyCredential) return;
-    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-      .then((ok) => setPlatformAvailable(ok))
-      .catch(() => {});
+    (async () => {
+      try {
+        const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        setPlatformAvailable(ok);
+      } catch { /* feature detection — failure is non-fatal */ }
+    })();
   }, []);
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export default function Login() {
     };
 
     const shouldOfferBiometric =
-      platformAvailable && localStorage.getItem('pp-biometric') !== '1';
+      platformAvailable && localStorage.getItem(BIOMETRIC_STORAGE_KEY) !== '1';
 
     if (shouldOfferBiometric) {
       afterBiometricRef.current = proceed;
@@ -69,7 +73,8 @@ export default function Login() {
     }
   }, [currentUser, navigate, searchParams, platformAvailable]);
 
-  useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line
+  // intentional: clear auth error whenever the user edits email or password
+  useEffect(() => { if (authError) dispatch(clearAuthError()); }, [emailInput, passInput]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isLoading = authStatus === 'loading';
   const error     = localError || authError;
