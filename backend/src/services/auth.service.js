@@ -215,6 +215,7 @@ async function listUsers(query) {
 // ── Google OAuth ───────────────────────────────────────────────────────────
 
 async function loginWithGoogle(token, { ip, userAgent } = {}) {
+  if (!token) throw ApiError.badRequest('idToken is required');
   if (!env.GOOGLE_CLIENT_ID) throw ApiError.badRequest('Google OAuth not configured');
 
   let googleId, email, name, avatar;
@@ -320,6 +321,7 @@ async function verifyWebAuthnRegistration(userId, registrationResponse) {
 // ── WebAuthn: Authentication ───────────────────────────────────────────────
 
 async function generateWebAuthnAuthentication(email) {
+  if (!email) throw ApiError.badRequest('email is required');
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user || !user.webAuthnCredentials.length) {
     throw ApiError.badRequest('No biometric credentials registered for this account');
@@ -340,6 +342,7 @@ async function generateWebAuthnAuthentication(email) {
 }
 
 async function verifyWebAuthnAuthentication(email, authResponse) {
+  if (!email || !authResponse) throw ApiError.badRequest('email and response are required');
   const user = await User.findOne({ email: email.toLowerCase() }).select('+webAuthnChallenge');
   if (!user || !user.webAuthnChallenge) throw ApiError.badRequest('No pending authentication challenge');
 

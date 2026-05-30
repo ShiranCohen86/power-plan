@@ -66,8 +66,9 @@ export default function Login() {
       }
     };
 
+    const isMobile = navigator.maxTouchPoints > 0;
     const shouldOfferBiometric =
-      platformAvailable && localStorage.getItem(BIOMETRIC_STORAGE_KEY) !== '1';
+      isMobile && platformAvailable && localStorage.getItem(BIOMETRIC_STORAGE_KEY) !== '1';
 
     if (shouldOfferBiometric) {
       afterBiometricRef.current = proceed;

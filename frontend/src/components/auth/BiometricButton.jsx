@@ -10,6 +10,7 @@ export default function BiometricButton({ email }) {
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
+    if (navigator.maxTouchPoints === 0) return;
     if (localStorage.getItem('pp-biometric') !== '1') return;
     if (!window.PublicKeyCredential) return;
     PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()

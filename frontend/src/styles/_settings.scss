@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 // ── Settings Page ──────────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@
 
 .settings-plans {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
+  @include mobile { grid-template-columns: 1fr; }
 }
 
 .settings-plan-card {

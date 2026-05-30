@@ -20,7 +20,7 @@ const ProjectSchema = new mongoose.Schema(
     completionPercent: { type: Number, default: 0 },
     discoveryAnswers:  { type: [DiscoveryAnswerSchema], default: [] },
     approvalGates:     { type: Boolean, default: true },
-    stack:             { type: String, default: 'dor-cellular' },
+    stack:             { type: String, default: 'node-react' },
 
     // Auto-provisioned infrastructure (managed by Power Plan)
     infra: {

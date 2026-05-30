@@ -150,6 +150,7 @@ function BiometricSection() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (navigator.maxTouchPoints === 0) return;
     if (!window.PublicKeyCredential) return;
     (async () => {
       try {

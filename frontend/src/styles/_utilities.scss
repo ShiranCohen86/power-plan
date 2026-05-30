@@ -55,7 +55,7 @@
 // â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Tablet (2-panel: sidebar + main, no live feed)
-@media (max-width: 1279px) and (min-width: 768px) {
+@include tablet {
   .workspace-sidebar { width: 220px !important; }
   .workspace-feed-wrapper,
   .workspace-resize-handle { display: none; }
@@ -64,8 +64,8 @@
   .workspace-doc__content { padding: 20px; }
 }
 
-// Mobile (tabs â€” sidebar collapses, main full width)
-@media (max-width: 767px) {
+// Mobile (tabs — sidebar collapses, main full width)
+@include mobile {
   .workspace-body { flex-direction: column; }
   .workspace-sidebar { width: 100% !important; max-height: 180px; overflow-x: auto; overflow-y: hidden; border-inline-end: none; border-bottom: 1px solid var(--border); }
   .workspace-feed-wrapper, .workspace-resize-handle { display: none; }
@@ -90,6 +90,7 @@
   .workspace-topbar__project-name { font-size: 13px; }
   .workspace-topbar__btn-label { display: none; }
 
+  // ── App topbar — in-project workspace overrides ───────────────────────────
   // AppShell in workspace — same height (44px), hide non-essential items
   .app-topbar--in-project .app-topbar__logout,
   .app-topbar--in-project .app-topbar__username,
@@ -107,6 +108,7 @@
     padding-bottom: calc(60px + env(safe-area-inset-bottom, 0) + 4px);
   }
 
+  // ── App topbar — global mobile layout ─────────────────────────────────────
   // On all pages: hamburger visible, brand+bell grouped together
   .app-topbar__row { height: 52px; }
   .app-topbar__start { flex: 1; }
@@ -167,6 +169,7 @@
     min-height: 0;
   }
 
+  // ── iOS scrolling ──────────────────────────────────────────────────────────
   // iOS momentum scrolling + overscroll containment
   .workspace-main,
   .live-feed__content,
@@ -177,6 +180,7 @@
     overscroll-behavior: contain;
   }
 
+  // ── Modals & overlays ──────────────────────────────────────────────────────
   // Auth
   .login-card { padding: 20px 16px; }
 
@@ -228,12 +232,12 @@
   .form-input { max-width: 100% !important; }
 }
 
-@media (min-width: 1280px) {
+@include desktop {
   .workspace-resize-handle { display: block; }
 }
 
 // Small phones (≤ 480px)
-@media (max-width: 480px) {
+@include small-phone {
   .workspace-doc__content { padding: 12px; }
   .new-project-card { padding: 16px 12px; }
   .celebration-card { padding: 20px 12px 16px; }
@@ -251,7 +255,7 @@
 }
 
 // Touch target minimums for all interactive elements on mobile
-@media (max-width: 767px) {
+@include mobile {
   .btn, button { min-height: 40px; }
   .phase-item { min-height: 40px; }
   .live-feed__tab { min-height: 44px; padding: 0 12px; }
@@ -261,7 +265,7 @@
 [dir="rtl"] .icon-directional { transform: scaleX(-1); }
 
 // xsmall-phone — iPhone SE (375px and below)
-@media (max-width: 375px) {
+@include xsmall-phone {
   // Topbar: tighter gaps so 5 icons fit on 320px
   .app-topbar__row--mobile { padding: 0 6px; }
   .app-topbar__icon-btn, .notif-bell-btn, .app-topbar__brand-mobile {

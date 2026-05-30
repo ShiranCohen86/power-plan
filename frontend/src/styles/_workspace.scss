@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 // â”€â”€ Alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -53,14 +54,14 @@
     &--danger { color: var(--danger) !important; }
   }
 
-  @media (max-width: 767px) {
+  @include mobile {
     &__btn-label { display: none; }
     &__action-btn { width: 40px; padding: 0 !important; justify-content: center; gap: 0; }
   }
 }
 
-@media (max-width: 1279px) {
-  .workspace-topbar__join-meeting { display: inline-flex !important; }
+@include not-desktop {
+  .workspace-topbar__join-meeting { display: inline-flex; }
 }
 
 .workspace-body {

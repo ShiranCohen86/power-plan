@@ -20,7 +20,7 @@ $card-bg-input: #f9fafb;
   overflow: hidden;
   animation: fade-in .4s ease;
 
-  @media (max-width: 599px) {
+  @include mobile {
     overflow-y: auto;
   }
 
@@ -106,7 +106,7 @@ $card-bg-input: #f9fafb;
   }
 
   // Hidden on small mobile to save vertical space
-  @media (max-width: 599px) {
+  @include mobile {
     margin-bottom: 12px;
     &__tagline { display: none; }
     &__icon    { font-size: 28px; }
@@ -120,7 +120,7 @@ $card-bg-input: #f9fafb;
   animation: modal-in .35s cubic-bezier(.22, 1, .36, 1) both;
 
   // Mobile
-  @media (max-width: 599px) {
+  @include mobile {
     border-radius: 20px;
     padding: 24px 20px;
     max-height: calc(100dvh - 90px);
@@ -129,7 +129,7 @@ $card-bg-input: #f9fafb;
   }
 
   // Tablet
-  @media (min-width: 600px) and (max-width: 1023px) {
+  @include tablet {
     max-width: 440px;
     border-radius: 20px;
     padding: 28px 28px;
@@ -139,7 +139,7 @@ $card-bg-input: #f9fafb;
   }
 
   // Desktop
-  @media (min-width: 1024px) {
+  @include desktop {
     max-width: 420px;
     border-radius: 24px;
     padding: 32px;

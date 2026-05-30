@@ -25,7 +25,8 @@ const env = {
   MEETING_PRE_DELAY_MS:   parseInt(process.env.MEETING_PRE_DELAY_MS, 10) || 20000,
 
   // Google OAuth
-  GOOGLE_CLIENT_ID:   process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_ID:     process.env.GOOGLE_CLIENT_ID     || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
 
   // WebAuthn / Passkeys
   WEBAUTHN_RP_NAME:   process.env.WEBAUTHN_RP_NAME || 'Power Plan',
