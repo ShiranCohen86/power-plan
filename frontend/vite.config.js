@@ -38,4 +38,40 @@ export default defineConfig({
       '/socket.io': { target: 'http://localhost:5000', ws: true, changeOrigin: true },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // React core — changes rarely, cache-friendly
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor-react';
+          }
+          // Redux stack
+          if (id.includes('node_modules/@reduxjs/') || id.includes('node_modules/react-redux/') || id.includes('node_modules/redux/')) {
+            return 'vendor-redux';
+          }
+          // Router
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run/')) {
+            return 'vendor-router';
+          }
+          // i18n
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) {
+            return 'vendor-i18n';
+          }
+          // MUI — large, changes with design-system upgrades
+          if (id.includes('node_modules/@mui/')) {
+            return 'vendor-mui';
+          }
+          // socket.io — loaded dynamically, but chunk still benefits from naming
+          if (id.includes('node_modules/socket.io-client') || id.includes('node_modules/engine.io-client')) {
+            return 'vendor-socket';
+          }
+          // Axios + networking utils
+          if (id.includes('node_modules/axios')) {
+            return 'vendor-http';
+          }
+        },
+      },
+    },
+  },
 });

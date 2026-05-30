@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { io } from 'socket.io-client';
 import { selectAccessToken } from '../store/slices/authSlice';
 
 const SocketContext = createContext(null);
@@ -21,18 +20,23 @@ export function SocketProvider({ children }) {
     // Reconnect if token changed (refresh rotation)
     if (socketRef.current) socketRef.current.disconnect();
 
-    const socket = io('/', { path: '/socket.io', withCredentials: true, auth: { token: accessToken } });
-    socketRef.current = socket;
+    // Dynamic import keeps socket.io-client out of the main bundle entry point
+    let cancelled = false;
+    import('socket.io-client').then(({ io }) => {
+      if (cancelled) return;
+      const socket = io('/', { path: '/socket.io', withCredentials: true, auth: { token: accessToken } });
+      socketRef.current = socket;
 
-    socket.on('connect',       () => setConnected(true));
-    socket.on('disconnect',    () => setConnected(false));
-    socket.on('connect_error', (err) => {
-      if (err.message === 'auth:required' || err.message === 'auth:invalid') {
-        setConnected(false);
-      }
+      socket.on('connect',       () => setConnected(true));
+      socket.on('disconnect',    () => setConnected(false));
+      socket.on('connect_error', (err) => {
+        if (err.message === 'auth:required' || err.message === 'auth:invalid') {
+          setConnected(false);
+        }
+      });
     });
 
-    return () => { socket.disconnect(); socketRef.current = null; };
+    return () => { cancelled = true; if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; } };
   }, [accessToken]);
 
   return (
