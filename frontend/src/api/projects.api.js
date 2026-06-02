@@ -12,8 +12,8 @@ export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date',
   return safeRequest({ method: 'get', url: '/projects', params, signal });
 };
 
-export const getProject = (id) =>
-  safeRequest({ method: 'get', url: `/projects/${id}` });
+export const getProject = (id, signal) =>
+  safeRequest({ method: 'get', url: `/projects/${id}`, signal });
 
 export const deleteProject = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}` });

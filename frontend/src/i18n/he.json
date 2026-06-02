@@ -157,7 +157,17 @@
       "ended": "הישיבה הסתיימה",
       "starting": "הצוות מתחיל את הישיבה...",
       "missedTitle": "📋 פספסת את הישיבה — הנה הסיכום",
-      "afterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב"
+      "afterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב",
+      "liveNow": "הצוות בפגישה עכשיו",
+      "joinNow": "הצטרף →",
+      "countdownLabel": "🗓 פגישת צוות מתחילה בעוד {{seconds}}s",
+      "prepare": "התכונן →"
+    },
+    "teamStatus": {
+      "idle": "זמין",
+      "working": "עובד",
+      "inMeeting": "בפגישה",
+      "justFinished": "סיים"
     },
     "feed": {
       "tabMeeting": "🏢 ישיבה",
@@ -169,7 +179,8 @@
       "specReview": "סקירת מפרט — סבב 1",
       "noEvents": "אירועי הסוכן יופיעו כאן",
       "missedMeeting": "📋 פספסת את הישיבה — הנה הסיכום",
-      "meetingAfterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב"
+      "meetingAfterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב",
+      "decisionLabel": "✅ החלטה"
     },
     "creds": {
       "title": "🔧 שירותים נדרשים לפרויקט",

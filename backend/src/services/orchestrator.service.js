@@ -131,13 +131,13 @@ async function retryFromPhase(projectId, userId) {
 
   const hasKey = await _hasApiKey(projectId, project.ownerId);
   if (!hasKey) {
-    throw ApiError.badRequest('מפתח Anthropic לא מוגדר — הגדר מפתח API לפני הפעלת הפייפליין');
+    throw ApiError.badRequest('Anthropic API key not configured — set an API key before starting the pipeline');
   }
 
   // Reset the failed phase so it can re-run
   await Phase.findOneAndUpdate(
     { projectId, index: project.currentPhaseIndex, status: 'failed' },
-    { status: 'pending', output: null, error: null },
+    { status: 'pending', errorMessage: null },
   );
 
   project.status = 'planning';
@@ -166,7 +166,7 @@ async function rollbackToPhase(projectId, userId, toPhaseIndex) {
   // Mark phases from toPhaseIndex onward as pending
   await Phase.updateMany(
     { projectId, index: { $gte: toPhaseIndex } },
-    { status: 'pending', output: null, error: null, approvedAt: null },
+    { status: 'pending', errorMessage: null },
   );
 
   project.currentPhaseIndex = toPhaseIndex;

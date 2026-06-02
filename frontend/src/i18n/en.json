@@ -157,7 +157,17 @@
       "ended": "Meeting ended",
       "starting": "Team is starting the meeting...",
       "missedTitle": "📋 You missed the meeting — here's the summary",
-      "afterPhase": "The internal meeting will begin after each phase is completed"
+      "afterPhase": "The internal meeting will begin after each phase is completed",
+      "liveNow": "The team is in a meeting now",
+      "joinNow": "Join →",
+      "countdownLabel": "🗓 Team meeting starts in {{seconds}}s",
+      "prepare": "Prepare →"
+    },
+    "teamStatus": {
+      "idle": "Available",
+      "working": "Working",
+      "inMeeting": "In meeting",
+      "justFinished": "Finished"
     },
     "feed": {
       "tabMeeting": "🏢 Meeting",
@@ -169,7 +179,8 @@
       "specReview": "Spec Review — Round 1",
       "noEvents": "Agent events will appear here",
       "missedMeeting": "📋 You missed the meeting — here's the summary",
-      "meetingAfterPhase": "The internal meeting will begin after each phase is completed"
+      "meetingAfterPhase": "The internal meeting will begin after each phase is completed",
+      "decisionLabel": "✅ Decision"
     },
     "creds": {
       "title": "🔧 Services Required for Project",

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { webAuthnRegisterStart, webAuthnRegisterFinish } from '../../api/auth.api.js';
+import { BIOMETRIC_STORAGE_KEY } from '../../config/constants.js';
 
 export default function BiometricEnrollPrompt({ onDone }) {
   const { t } = useTranslation();
@@ -14,7 +15,7 @@ export default function BiometricEnrollPrompt({ onDone }) {
       const options  = await webAuthnRegisterStart();
       const response = await startRegistration({ optionsJSON: options });
       await webAuthnRegisterFinish(response);
-      localStorage.setItem('pp-biometric', '1');
+      localStorage.setItem(BIOMETRIC_STORAGE_KEY, '1');
       setStatus('success');
       setTimeout(onDone, 1400);
     } catch (e) {

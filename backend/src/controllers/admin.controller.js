@@ -70,7 +70,7 @@ exports.platformSetupStatus = asyncHandler(async (req, res) => {
   const services = {
     anthropic: {
       configured: Boolean(env.ANTHROPIC_API_KEY),
-      hint: env.ANTHROPIC_API_KEY ? `sk-ant-...${env.ANTHROPIC_API_KEY.slice(-4)}` : null,
+      hint: env.ANTHROPIC_API_KEY ? '***' : null,
     },
     encryption: {
       configured: Boolean(env.ENCRYPTION_KEY && env.ENCRYPTION_KEY.length >= 32),

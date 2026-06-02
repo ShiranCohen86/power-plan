@@ -30,13 +30,13 @@ router.patch('/:id/discovery-progress',
 router.get('/:id/meetings', validate(projectValidator.objectId), ctrl.getMeetings);
 
 // ── Per-project settings ──────────────────────────────────────────────────────
-router.get   ('/:id/settings',              settingsCtrl.getProjectSettings);
-router.put   ('/:id/settings/api-key',      settingsCtrl.setProjectApiKey);
-router.delete('/:id/settings/api-key',      settingsCtrl.deleteProjectApiKey);
-router.put   ('/:id/settings/github-token', settingsCtrl.setProjectGithubToken);
-router.delete('/:id/settings/github-token', settingsCtrl.deleteProjectGithubToken);
-router.put   ('/:id/settings/render-token', settingsCtrl.setProjectRenderToken);
-router.delete('/:id/settings/render-token', settingsCtrl.deleteProjectRenderToken);
+router.get   ('/:id/settings',              validate(projectValidator.objectId), settingsCtrl.getProjectSettings);
+router.put   ('/:id/settings/api-key',      validate(projectValidator.objectId), settingsCtrl.setProjectApiKey);
+router.delete('/:id/settings/api-key',      validate(projectValidator.objectId), settingsCtrl.deleteProjectApiKey);
+router.put   ('/:id/settings/github-token', validate(projectValidator.objectId), settingsCtrl.setProjectGithubToken);
+router.delete('/:id/settings/github-token', validate(projectValidator.objectId), settingsCtrl.deleteProjectGithubToken);
+router.put   ('/:id/settings/render-token', validate(projectValidator.objectId), settingsCtrl.setProjectRenderToken);
+router.delete('/:id/settings/render-token', validate(projectValidator.objectId), settingsCtrl.deleteProjectRenderToken);
 
 // ── External service credentials ──────────────────────────────────────────────
 router.get  ('/:id/required-services',                            servicesCtrl.getRequiredServices);

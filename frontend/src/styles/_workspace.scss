@@ -332,7 +332,7 @@
 
 .phase-item__rollback {
   position: absolute;
-  left: 4px;
+  inset-inline-start: 4px;
   opacity: 0;
   background: none;
   border: none;

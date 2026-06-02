@@ -49,8 +49,7 @@ exports.login = asyncHandler(async (req, res) => {
 });
 
 exports.refresh = asyncHandler(async (req, res) => {
-  // Accept from httpOnly cookie first, fall back to body for backward compat
-  const refreshToken = req.cookies?.refresh_token || req.body.refreshToken;
+  const refreshToken = req.cookies?.refresh_token;
   const tokens = await authService.refresh(refreshToken);
   setRefreshCookie(res, tokens.refreshToken);
   res.json({ accessToken: tokens.accessToken });

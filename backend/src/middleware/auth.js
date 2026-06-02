@@ -18,11 +18,14 @@ function getCachedUser(userId) {
 
 function setCachedUser(userId, user) {
   userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
-  // Evict stale entries when cache grows large to prevent unbounded memory use
   if (userCache.size > USER_CACHE_MAX_SIZE) {
     const now = Date.now();
     for (const [id, entry] of userCache) {
       if (now > entry.expiresAt) userCache.delete(id);
+    }
+    // If evicting expired entries wasn't enough, remove the oldest entry (LRU)
+    if (userCache.size > USER_CACHE_MAX_SIZE) {
+      userCache.delete(userCache.keys().next().value);
     }
   }
 }

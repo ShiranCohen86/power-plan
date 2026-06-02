@@ -70,6 +70,33 @@
   &__body   { margin: 0; color: var(--text); line-height: 1.5; direction: rtl; text-align: right; }
 }
 
+.meeting-decision {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: $radius;
+  font-size: 13px;
+
+  &__label {
+    display: block;
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-xs);
+    color: #22c55e;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__text {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.5;
+    direction: rtl;
+    text-align: right;
+  }
+}
+
 // â”€â”€ Approval Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .approval-bar {
@@ -114,12 +141,12 @@
 
 .tech-log {
   padding: 5px 10px; margin-bottom: 2px;
-  font-size: 12px; border-left: 2px solid transparent;
+  font-size: 12px; border-inline-start: 2px solid transparent;
 
-  &--completed   { border-left-color: #34d399; }
-  &--error       { border-left-color: #f87171; background: rgba(220,38,38,0.04); }
-  &--started     { border-left-color: rgba(6,182,212,0.4); }
-  &--file_written { border-left-color: rgba(59,130,246,0.4); }
+  &--completed   { border-inline-start-color: #34d399; }
+  &--error       { border-inline-start-color: #f87171; background: rgba(220,38,38,0.04); }
+  &--started     { border-inline-start-color: rgba(6,182,212,0.4); }
+  &--file_written { border-inline-start-color: rgba(59,130,246,0.4); }
 
   &__line   { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
   &__icon   { flex-shrink: 0; }
@@ -128,7 +155,7 @@
   &__event  { color: var(--text-muted); }
   &__tokens { color: var(--text-subtle); font-size: 11px; }
   &__time   { margin-inline-start: auto; color: var(--text-subtle); font-size: 11px; white-space: nowrap; }
-  &__msg    { margin: 2px 0 0 18px; color: var(--text-muted); font-size: 11px; font-style: italic; }
+  &__msg    { margin-block-start: 2px; margin-inline-start: 18px; color: var(--text-muted); font-size: 11px; font-style: italic; }
 }
 
 // â”€â”€ Meeting type badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

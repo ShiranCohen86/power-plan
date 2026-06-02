@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { logError } from '../../api/logger.js';
 
 export default class FeatureErrorBoundary extends Component {
   state = { error: null };
@@ -8,7 +9,7 @@ export default class FeatureErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('FeatureErrorBoundary caught:', error, info);
+    logError('FeatureErrorBoundary', 'caught', { error, info });
   }
 
   render() {

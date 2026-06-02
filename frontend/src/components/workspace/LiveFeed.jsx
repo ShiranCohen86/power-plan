@@ -150,9 +150,11 @@ function LiveFeed({
                 </div>
               );
             }
+            const regularMsgs = currentMsgs.filter((m) => m.type !== 'decision');
+            const decisionMsg = currentMsgs.find((m) => m.type === 'decision');
             return (
               <div className="live-feed__meeting">
-                {currentMsgs.map((msg, i) => (
+                {regularMsgs.map((msg, i) => (
                   <div key={msg._id || i} className="meeting-msg">
                     <div className="meeting-msg__header">
                       <span className="meeting-msg__avatar">{ROLE_EMOJI[msg.role] || '👤'}</span>
@@ -170,6 +172,12 @@ function LiveFeed({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
                     <div className="pwa-spinner" style={{ width: 16, height: 16 }} />
                     {t('workspace.feed.teamDiscussing')}
+                  </div>
+                )}
+                {decisionMsg && (
+                  <div className="meeting-decision">
+                    <span className="meeting-decision__label">{t('workspace.feed.decisionLabel')}</span>
+                    <p className="meeting-decision__text" dir="rtl">{decisionMsg.message}</p>
                   </div>
                 )}
               </div>

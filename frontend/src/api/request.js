@@ -76,15 +76,15 @@ httpClient.interceptors.response.use(
         if (_store && _setAccessToken) {
           _store.dispatch(_setAccessToken(data.accessToken));
         }
+        isRefreshing = false;
         processQueue(null, data.accessToken);
         originalReq.headers.Authorization = `Bearer ${data.accessToken}`;
         return httpClient(originalReq);
       } catch (refreshError) {
+        isRefreshing = false;
         processQueue(refreshError);
         if (_logout) _logout();
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

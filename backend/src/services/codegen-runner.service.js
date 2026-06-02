@@ -198,8 +198,8 @@ async function _runCodegenPhase(projectId, cfg, userCtx) {
     const status     = scanResult.clean ? 'validated' : 'failed';
 
     if (!scanResult.clean) {
-      logger.warn('codegen-runner: secret detected', { projectId, file: file.filePath, findings: scanResult.findings });
-      emitToProject(projectId, 'file:secret_detected', { filePath: file.filePath, findings: scanResult.findings });
+      logger.warn('codegen-runner: secret detected', { projectId, file: file.filePath, count: scanResult.findings.length, types: scanResult.findings.map((f) => f.name) });
+      emitToProject(projectId, 'file:secret_detected', { filePath: file.filePath, count: scanResult.findings.length });
       continue;
     }
 

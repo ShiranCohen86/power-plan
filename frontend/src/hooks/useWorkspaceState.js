@@ -13,6 +13,7 @@ import { usePanelResize } from './usePanelResize';
 import { useApprovalScroll } from './useApprovalScroll';
 import { usePhaseActions } from './usePhaseActions';
 import { useWorkspaceSocket } from './useWorkspaceSocket';
+import { useSocket } from '../context/SocketContext';
 import { useDeploymentState } from './useDeploymentState';
 import { useMeetingFeed } from './useMeetingFeed';
 import { TOTAL_PLANNING_PHASES, MINUTES_PER_PHASE } from '../config/constants';
@@ -35,6 +36,7 @@ export function useWorkspaceState(id) {
   const { lang }   = useLanguage();
   const navigate   = useNavigate();
   const dispatch   = useDispatch();
+  const { connected } = useSocket();
 
   // ── Core state ───────────────────────────────────────────────────────────────
   const [project, setProject]                       = useState(null);
@@ -77,6 +79,7 @@ export function useWorkspaceState(id) {
   // Phase intro animation
   const [introCount, setIntroCount]                 = useState(null);
   const introTargetRef                              = useRef(null);
+  const hasFetchedRef                               = useRef(false);
 
   // ── Sub-hooks ────────────────────────────────────────────────────────────────
   const panels   = usePanelResize();
@@ -166,12 +169,45 @@ export function useWorkspaceState(id) {
       } catch {
         setError('שגיאה בטעינת הפרויקט');
       } finally {
+        hasFetchedRef.current = true;
         setLoading(false);
       }
     })();
   // intentional: re-fetch only when project id changes, not on every state setter reference
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // ── Reconnect resync ─────────────────────────────────────────────────────────
+  // When the socket reconnects after a disconnect, events fired during the gap
+  // are lost. Fetch fresh pipeline state so the UI reflects reality.
+  useEffect(() => {
+    if (!connected || !hasFetchedRef.current) return;
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const [statusRes, projRes] = await Promise.all([
+          getPipelineStatus(id, controller.signal),
+          getProject(id, controller.signal),
+        ]);
+        setProject(projRes);
+        dispatch(updateProject(projRes));
+        setPhases(statusRes.phases || []);
+
+        const waitingPhase = (statusRes.phases || []).find((p) => p.status === 'awaiting_approval');
+        if (waitingPhase) {
+          setAwaiting(waitingPhase.index);
+          setActive(waitingPhase.index);
+          loadDocument(waitingPhase.index);
+        }
+      } catch (err) {
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          // non-critical — user can manually refresh
+        }
+      }
+    })();
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, id]);
 
   // ── Phase intro animation ────────────────────────────────────────────────────
   useEffect(() => {

@@ -8,8 +8,8 @@ export const startPipeline  = (projectId) =>
 export const pausePipeline  = (projectId) =>
   safeRequest({ method: 'post', url: `${base(projectId)}/pause` });
 
-export const getPipelineStatus = (projectId) =>
-  safeRequest({ method: 'get', url: `${base(projectId)}/status` });
+export const getPipelineStatus = (projectId, signal) =>
+  safeRequest({ method: 'get', url: `${base(projectId)}/status`, signal });
 
 export const approvePhase = (projectId, phaseIndex) =>
   safeRequest({ method: 'post', url: `${base(projectId)}/approve`, data: { phaseIndex } });

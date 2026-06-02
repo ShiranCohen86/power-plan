@@ -58,12 +58,18 @@ exports.saveServiceCredentials = asyncHandler(async (req, res) => {
   await project.save();
 
   const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
-  if (allDone && project.status === 'awaiting_credentials') {
-    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
-    const { startCodegen } = require('../services/codegen-runner.service');
-    startCodegen(req.params.id).catch((err) =>
-      logger.error('project-services: codegen resume failed', { error: err.message }),
+  if (allDone) {
+    // Atomic: only one concurrent request can win this transition
+    const triggered = await Project.findOneAndUpdate(
+      { _id: req.params.id, status: 'awaiting_credentials' },
+      { $set: { status: 'planning' } },
     );
+    if (triggered) {
+      const { startCodegen } = require('../services/codegen-runner.service');
+      startCodegen(req.params.id).catch((err) =>
+        logger.error('project-services: codegen resume failed', { error: err.message }),
+      );
+    }
   }
 
   res.json({ ok: true, credentialsProvided: true, allDone });
@@ -83,12 +89,18 @@ exports.skipService = asyncHandler(async (req, res) => {
   await project.save();
 
   const allDone = project.requiredServices.every((s) => s.credentialsProvided || s.skipped);
-  if (allDone && project.status === 'awaiting_credentials') {
-    await Project.findByIdAndUpdate(req.params.id, { status: 'planning' });
-    const { startCodegen } = require('../services/codegen-runner.service');
-    startCodegen(req.params.id).catch((err) =>
-      logger.error('project-services: codegen resume after skip failed', { error: err.message }),
+  if (allDone) {
+    // Atomic: only one concurrent request can win this transition
+    const triggered = await Project.findOneAndUpdate(
+      { _id: req.params.id, status: 'awaiting_credentials' },
+      { $set: { status: 'planning' } },
     );
+    if (triggered) {
+      const { startCodegen } = require('../services/codegen-runner.service');
+      startCodegen(req.params.id).catch((err) =>
+        logger.error('project-services: codegen resume after skip failed', { error: err.message }),
+      );
+    }
   }
 
   res.json({ ok: true, skipped: true, allDone });

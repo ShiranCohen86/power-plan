@@ -1,11 +1,15 @@
 // status: 'idle' | 'working' | 'in-meeting' | 'just-finished'
+import { useTranslation } from 'react-i18next';
+
 export default function TeamMemberAvatar({ memberKey, member, status }) {
+  const { t } = useTranslation();
+
   const statusLabel = {
-    idle:          'זמין',
-    working:       'עובד',
-    'in-meeting':  'בפגישה',
-    'just-finished': 'סיים',
-  }[status] || 'זמין';
+    idle:           t('workspace.teamStatus.idle'),
+    working:        t('workspace.teamStatus.working'),
+    'in-meeting':   t('workspace.teamStatus.inMeeting'),
+    'just-finished': t('workspace.teamStatus.justFinished'),
+  }[status] || t('workspace.teamStatus.idle');
 
   return (
     <div

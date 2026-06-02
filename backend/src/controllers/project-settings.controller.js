@@ -43,7 +43,7 @@ exports.getProjectSettings = asyncHandler(async (req, res) => {
 exports.setProjectApiKey = asyncHandler(async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey?.startsWith('sk-ant-') || apiKey.length < 40) {
-    throw ApiError.badRequest('מפתח API לא תקין — חייב להתחיל עם "sk-ant-" ולהיות באורך מלא');
+    throw ApiError.badRequest('Invalid API key — must start with "sk-ant-" and be full length');
   }
   const project = await ownedProject(req);
   if (!project.settings) project.settings = {};
@@ -78,7 +78,7 @@ exports.deleteProjectApiKey = asyncHandler(async (req, res) => {
 exports.setProjectGithubToken = asyncHandler(async (req, res) => {
   const { token } = req.body;
   if (!token?.startsWith('ghp_') && !token?.startsWith('github_pat_')) {
-    throw ApiError.badRequest('קוד גישה GitHub לא תקין — חייב להתחיל עם "ghp_" או "github_pat_"');
+    throw ApiError.badRequest('Invalid GitHub token — must start with "ghp_" or "github_pat_"');
   }
   const project = await ownedProject(req);
   if (!project.settings) project.settings = {};

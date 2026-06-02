@@ -13,6 +13,7 @@ const AuditLog = require('../models/AuditLog');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
 const { escapeRegex } = require('../utils/pagination');
+const { invalidateUserCache } = require('../middleware/auth');
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MAX_SESSIONS            = 5;
@@ -188,6 +189,7 @@ async function updateProfile(userId, patch) {
   for (const k of allowed) if (patch[k] !== undefined) update[k] = patch[k];
   const user = await User.findByIdAndUpdate(userId, update, { new: true });
   if (!user) throw ApiError.notFound('User not found');
+  invalidateUserCache(userId);
   return user.toJSON();
 }
 
@@ -195,6 +197,7 @@ async function updateProfile(userId, patch) {
 
 async function logout(userId) {
   await User.updateOne({ _id: userId }, { $set: { sessions: [] } });
+  invalidateUserCache(userId);
   _audit({ userId, action: 'auth.logout' });
   return { ok: true };
 }
@@ -366,6 +369,7 @@ async function verifyWebAuthnAuthentication(email, authResponse) {
 
   storedCred.counter = authenticationInfo.newCounter;
   user.webAuthnChallenge = undefined;
+  user.markModified('webAuthnChallenge');
   // Mongoose doesn't auto-detect mutations to nested array sub-documents
   user.markModified('webAuthnCredentials');
 

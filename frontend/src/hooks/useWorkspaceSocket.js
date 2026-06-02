@@ -30,8 +30,10 @@ export function useWorkspaceSocket(projectId, {
   setConsultantsRunning,
   activeFeedTab,
 }) {
-  const wasWatchingRef   = useRef(false);
-  const pageLoadTimeRef  = useRef(Date.now());
+  const wasWatchingRef    = useRef(false);
+  const pageLoadTimeRef   = useRef(Date.now());
+  const activeFeedTabRef  = useRef(activeFeedTab);
+  activeFeedTabRef.current = activeFeedTab;
 
   useProjectSocket(projectId, {
     onPhaseRefining:   ({ phaseIndex }) => {
@@ -64,7 +66,7 @@ export function useWorkspaceSocket(projectId, {
     },
     onMeetingStarted:  ({ phaseIndex, phaseType, startedAt }) => {
       const loadedBeforeMeeting = startedAt && new Date(startedAt) > new Date(pageLoadTimeRef.current);
-      wasWatchingRef.current = activeFeedTab === 'meeting' || !loadedBeforeMeeting;
+      wasWatchingRef.current = activeFeedTabRef.current === 'meeting' || !loadedBeforeMeeting;
       setScheduledMeeting(null);
       setIsMeetingLive(true);
       const cfg = PLANNING_PHASES.find((p) => p.type === phaseType || p.index === phaseIndex);
