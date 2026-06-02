@@ -70,6 +70,20 @@
   &__body   { margin: 0; color: var(--text); line-height: 1.5; direction: rtl; text-align: right; }
 }
 
+.live-feed__files { display: flex; flex-direction: column; gap: 4px; }
+
+.file-entry {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius-sm;
+  font-size: var(--text-xs);
+
+  &__lang   { flex-shrink: 0; padding: 1px 6px; background: var(--surface-3); border-radius: 4px; color: var(--text-muted); font-family: monospace; }
+  &__path   { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; font-size: 11px; color: var(--text); }
+  &__status { flex-shrink: 0; font-size: 10px; color: var(--text-muted); }
+  &__status--validated { color: #22c55e; }
+  &__status--failed    { color: var(--danger); }
+}
+
 .meeting-decision {
   margin-top: 16px;
   padding: 12px 14px;

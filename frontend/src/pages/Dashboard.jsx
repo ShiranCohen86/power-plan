@@ -10,10 +10,10 @@ import { friendlyError } from '../utils/errorMessages.js';
 import { DASHBOARD_AUTO_REFRESH_MS, DASHBOARD_PAGE_SIZE } from '../config/constants.js';
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
-  selectProjectsSearch, selectProjectsSort, selectLoadingMore,
-  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort,
+  selectProjectsSearch, selectProjectsSort, selectProjectsStatusFilter, selectLoadingMore,
+  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort, setStatusFilter,
 } from '../store/slices/projectsSlice.js';
-import { restoreProject } from '../api/projects.api.js';
+import { restoreProject, cloneProject } from '../api/projects.api.js';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 const UNDO_TOAST_DURATION_MS = 5000;
@@ -85,6 +85,19 @@ function ProjectCard({ project, dispatch }) {
         >
           🗑️
         </button>
+        <button
+          className="project-card__clone"
+          title={t('dashboard.clone')}
+          onClick={async (e) => {
+            e.stopPropagation();
+            try {
+              const clone = await cloneProject(project._id);
+              dispatch(require('../store/slices/projectsSlice.js').addProject(clone));
+            } catch { /* non-critical */ }
+          }}
+        >
+          🔁
+        </button>
       </div>
     </div>
   );
@@ -99,20 +112,20 @@ export default function Dashboard() {
   const status       = useSelector(selectProjectsStatus);
   const hasMore      = useSelector(selectProjectsHasMore);
   const total        = useSelector(selectProjectsTotal);
-  const storeSearch  = useSelector(selectProjectsSearch);
-  const storeSort    = useSelector(selectProjectsSort);
-  const loadingMore  = useSelector(selectLoadingMore);
+  const storeSearch       = useSelector(selectProjectsSearch);
+  const storeSort         = useSelector(selectProjectsSort);
+  const storeStatusFilter = useSelector(selectProjectsStatusFilter);
+  const loadingMore       = useSelector(selectLoadingMore);
 
-  function handleSort(newSort) {
-    dispatch(setSort(newSort));
-  }
+  function handleSort(newSort) { dispatch(setSort(newSort)); }
+  function handleStatusFilter(s) { dispatch(setStatusFilter(s)); }
 
-  // Fetch projects when search or sort changes (covers initial load too)
+  // Fetch projects when search, sort, or statusFilter changes
   useEffect(() => {
     const ctrl = new AbortController();
-    dispatch(fetchProjects({ page: 1, search: storeSearch, sort: storeSort, signal: ctrl.signal }));
+    dispatch(fetchProjects({ page: 1, search: storeSearch, sort: storeSort, statusFilter: storeStatusFilter, signal: ctrl.signal }));
     return () => ctrl.abort();
-  }, [storeSearch, storeSort, dispatch]);
+  }, [storeSearch, storeSort, storeStatusFilter, dispatch]);
 
   // Auto-refresh every 30s while any project is actively running — paused during active search
   const hasActive = projects.some((p) => ACTIVE_STATUSES.has(p.status));
@@ -140,7 +153,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Sort bar */}
+        {/* Sort + filter bar */}
         <div className="dashboard-toolbar">
           <div className="dashboard-toolbar__sort">
             {[
@@ -160,6 +173,25 @@ export default function Dashboard() {
           {status === 'succeeded' && (
             <span className="dashboard-toolbar__count">{total} פרויקטים</span>
           )}
+        </div>
+
+        {/* Status filter chips */}
+        <div className="dashboard-status-filters">
+          {[
+            { key: '',          label: t('dashboard.filterAll') },
+            { key: 'planning',  label: t('dashboard.status.planning') },
+            { key: 'coding',    label: t('dashboard.status.coding') },
+            { key: 'live',      label: t('dashboard.status.live') },
+            { key: 'failed',    label: t('dashboard.status.failed') },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              className={`status-filter-chip${storeStatusFilter === key ? ' status-filter-chip--active' : ''}`}
+              onClick={() => handleStatusFilter(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {status === 'loading' ? (

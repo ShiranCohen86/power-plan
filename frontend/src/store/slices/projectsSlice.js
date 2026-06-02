@@ -6,9 +6,9 @@ const PAGE_LIMIT = DASHBOARD_PAGE_SIZE;
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchAll',
-  async ({ page = 1, search = '', sort = 'date', signal } = {}, { rejectWithValue }) => {
+  async ({ page = 1, search = '', sort = 'date', statusFilter = '', signal } = {}, { rejectWithValue }) => {
     try {
-      return await listProjects({ page, limit: PAGE_LIMIT, search, sort, signal });
+      return await listProjects({ page, limit: PAGE_LIMIT, search, sort, statusFilter, signal });
     } catch (err) {
       if (err?.name === 'CanceledError' || err?.name === 'AbortError') return rejectWithValue('aborted');
       return rejectWithValue(err.message || 'Failed to load projects');
@@ -18,9 +18,9 @@ export const fetchProjects = createAsyncThunk(
 
 export const loadMoreProjects = createAsyncThunk(
   'projects/loadMore',
-  async ({ page, search, sort = 'date' }, { rejectWithValue }) => {
+  async ({ page, search, sort = 'date', statusFilter = '' }, { rejectWithValue }) => {
     try {
-      return await listProjects({ page, limit: PAGE_LIMIT, search, sort });
+      return await listProjects({ page, limit: PAGE_LIMIT, search, sort, statusFilter });
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to load more');
     }
@@ -32,9 +32,9 @@ export const refreshProjects = createAsyncThunk(
   'projects/refresh',
   async (_, { getState, rejectWithValue }) => {
     try {
-      const { items, search, sort } = getState().projects;
+      const { items, search, sort, statusFilter } = getState().projects;
       const limit = Math.max(items.length, PAGE_LIMIT);
-      return await listProjects({ page: 1, limit, search, sort });
+      return await listProjects({ page: 1, limit, search, sort, statusFilter });
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -72,10 +72,11 @@ const initialState = {
   page:       1,
   totalPages: 1,
   total:      0,
-  search:     '',
-  sort:       'date',
-  hasMore:    false,
-  loadingMore: false,
+  search:       '',
+  sort:         'date',
+  statusFilter: '',
+  hasMore:      false,
+  loadingMore:  false,
 };
 
 const projectsSlice = createSlice({
@@ -100,6 +101,9 @@ const projectsSlice = createSlice({
     },
     setSort(state, action) {
       state.sort = action.payload;
+    },
+    setStatusFilter(state, action) {
+      state.statusFilter = action.payload;
     },
     setProjectsError(state, action) {
       state.status = 'failed';
@@ -166,7 +170,7 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { setProjects, addProject, updateProject, setSearch, setSort, setProjectsError, setProjectsLoading } =
+export const { setProjects, addProject, updateProject, setSearch, setSort, setStatusFilter, setProjectsError, setProjectsLoading } =
   projectsSlice.actions;
 
 export const selectProjects        = (state) => state.projects.items;
@@ -175,7 +179,8 @@ export const selectProjectsError   = (state) => state.projects.error;
 export const selectProjectsHasMore = (state) => state.projects.hasMore;
 export const selectProjectsTotal   = (state) => state.projects.total;
 export const selectProjectsSearch  = (state) => state.projects.search;
-export const selectProjectsSort    = (state) => state.projects.sort;
+export const selectProjectsSort         = (state) => state.projects.sort;
+export const selectProjectsStatusFilter = (state) => state.projects.statusFilter;
 export const selectLoadingMore     = (state) => state.projects.loadingMore;
 export const selectProjectById     = (id) => (state) => state.projects.items.find((p) => p._id === id);
 

@@ -55,7 +55,8 @@ exports.list = asyncHandler(async (req, res) => {
   const limit  = Math.min(MAX_PAGE_SIZE, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE);
   const search = (req.query.search || '').slice(0, 100);
   const sort   = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
-  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort });
+  const status = (req.query.status || '').slice(0, 20);
+  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort, status });
   res.json(result);
 });
 
@@ -187,3 +188,19 @@ async function _resolveApiKey(projectId, userId) {
   }
   return null;
 }
+
+exports.cloneProject = asyncHandler(async (req, res) => {
+  const original = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!original) throw ApiError.notFound('Project not found');
+
+  const clone = await Project.create({
+    ownerId:           req.user.id,
+    title:             `${original.title} (Copy)`,
+    idea:              original.idea,
+    status:            'onboarding',
+    completionPercent: 0,
+    discoveryAnswers:  original.discoveryAnswers || [],
+  });
+
+  res.status(201).json(clone);
+});

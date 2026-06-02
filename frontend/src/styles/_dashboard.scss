@@ -76,6 +76,22 @@
   }
 }
 
+.dashboard-status-filters {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+}
+
+.status-filter-chip {
+  font: inherit; font-size: var(--text-xs); padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+  cursor: pointer; transition: all var(--ease-fast); white-space: nowrap;
+
+  &:hover { background: var(--surface-3); color: var(--text); border-color: var(--border-strong); }
+  &--active {
+    background: var(--brand-primary); color: #fff; border-color: var(--brand-primary);
+    &:hover { background: var(--brand-primary-dark); }
+  }
+}
+
 .dashboard-empty-state { margin-top: 40px; max-width: 480px; margin-inline: auto; }
 .dashboard-empty__cta  { margin-top: 20px; }
 .dashboard-empty__steps {

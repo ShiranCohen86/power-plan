@@ -29,3 +29,6 @@ export const validateApiKey = (apiKey) =>
 
 export const getRateLimit = () =>
   safeRequest({ method: 'get', url: '/settings/rate-limit' });
+
+export const getNotifPrefs    = ()      => safeRequest({ method: 'get',   url: '/settings/notification-prefs' });
+export const updateNotifPrefs = (prefs) => safeRequest({ method: 'patch', url: '/settings/notification-prefs', data: prefs });

@@ -24,6 +24,7 @@ exports.getSettings = asyncHandler(async (req, res) => {
     apiKeyHint:      safeDecrypt(s.anthropicApiKey),
     githubTokenHint: safeDecrypt(s.githubToken),
     renderTokenHint: safeDecrypt(s.renderApiKey),
+    totpEnabled:     !!(user.totpEnabled),
   });
 });
 
@@ -75,7 +76,7 @@ exports.updateGithubToken = asyncHandler(async (req, res) => {
   if (!token || typeof token !== 'string') throw ApiError.badRequest('token required');
 
   if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-    throw ApiError.badRequest('קוד גישה GitHub לא תקין — צריך להתחיל עם "ghp_" או "github_pat_"');
+    throw ApiError.badRequest('Invalid GitHub token — must start with "ghp_" or "github_pat_"');
   }
 
   const user = await User.findById(req.user.id);
@@ -164,3 +165,25 @@ function _maskKey(key) {
   if (!key || key.length < 16) return '***';
   return `${key.slice(0, 12)}...${key.slice(-4)}`;
 }
+
+exports.getNotifPrefs = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).lean();
+  if (!user) throw ApiError.notFound('User not found');
+  const prefs = user.notifPrefs || {};
+  res.json({
+    deploymentSuccess: prefs.deploymentSuccess !== false,
+    quotaExhausted:    prefs.quotaExhausted    !== false,
+    phaseFailed:       prefs.phaseFailed       !== false,
+    planningComplete:  prefs.planningComplete  !== false,
+  });
+});
+
+exports.updateNotifPrefs = asyncHandler(async (req, res) => {
+  const KEYS = ['deploymentSuccess', 'quotaExhausted', 'phaseFailed', 'planningComplete'];
+  const update = {};
+  for (const k of KEYS) {
+    if (typeof req.body[k] === 'boolean') update[`notifPrefs.${k}`] = req.body[k];
+  }
+  await User.updateOne({ _id: req.user.id }, { $set: update });
+  res.json({ ok: true });
+});

@@ -15,4 +15,8 @@ router.post  ('/lessons',        ctrl.createLesson);
 router.patch ('/lessons/:id',    ctrl.updateLesson);
 router.delete('/lessons/:id',    ctrl.deleteLesson);
 
+// User management
+router.get   ('/users',          ctrl.listUsers);
+router.patch ('/users/:id',      ctrl.updateUser);
+
 module.exports = router;

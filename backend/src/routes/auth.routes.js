@@ -23,9 +23,11 @@ router.post('/password/forgot', authLimiter, validate(authValidator.requestReset
 router.post('/password/reset',  authLimiter, validate(authValidator.resetPassword), authController.resetPassword);
 
 // Authenticated
-router.post('/logout',  authenticate, authController.logout);
-router.get('/me',       authenticate, authController.me);
-router.patch('/me',     authenticate, validate(authValidator.updateProfile), authController.updateMe);
+router.post('/logout',             authenticate, authController.logout);
+router.get('/me',                  authenticate, authController.me);
+router.patch('/me',                authenticate, validate(authValidator.updateProfile), authController.updateMe);
+router.get('/sessions',            authenticate, authController.listSessions);
+router.delete('/sessions/:jtiHash', authenticate, authController.revokeSession);
 
 // Admin only
 router.get('/users',   authenticate, authorize('admin'), authController.listUsers);
@@ -40,5 +42,11 @@ router.post('/webauthn/register/finish', authenticate, authController.webAuthnRe
 // WebAuthn — login (public, provides its own auth)
 router.post('/webauthn/login/start',  authLimiter, authController.webAuthnLoginStart);
 router.post('/webauthn/login/finish', authLimiter, authController.webAuthnLoginFinish);
+
+// TOTP 2FA
+router.post('/totp/setup',    authenticate, authController.totpSetup);
+router.post('/totp/enable',   authenticate, authController.totpEnable);
+router.delete('/totp',        authenticate, authController.totpDisable);
+router.post('/totp/verify',   authLimiter,  authController.totpVerify);
 
 module.exports = router;

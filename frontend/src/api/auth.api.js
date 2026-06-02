@@ -55,3 +55,12 @@ export function webAuthnLoginStart(email) {
 export function webAuthnLoginFinish(email, response) {
   return safeRequest(httpClient.post('/auth/webauthn/login/finish', { email, response }));
 }
+
+// Sessions
+export const getSessions    = ()          => safeRequest({ method: 'get',    url: '/auth/sessions' });
+export const revokeSession  = (jtiHash)   => safeRequest({ method: 'delete', url: `/auth/sessions/${jtiHash}` });
+
+// TOTP 2FA
+export const totpSetup      = ()          => safeRequest({ method: 'post',   url: '/auth/totp/setup' });
+export const totpEnable     = (token)     => safeRequest({ method: 'post',   url: '/auth/totp/enable', data: { token } });
+export const totpDisable    = (token)     => safeRequest({ method: 'delete', url: '/auth/totp', data: { token } });

@@ -133,3 +133,18 @@
   &__actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 }
 
+
+
+// ── Sessions ────────────────────────────────────────────────────────────────
+
+.settings-sessions { display: flex; flex-direction: column; gap: 8px; }
+
+.settings-session {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius;
+
+  &__info { flex: 1; min-width: 0; }
+  &__agent { display: block; font-size: var(--text-sm); font-weight: var(--weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  &__meta  { display: block; font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+  &__revoke { font-size: var(--text-xs); padding: 4px 10px; flex-shrink: 0; }
+}

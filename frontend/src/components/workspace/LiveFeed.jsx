@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { listFiles } from '../../api/files.api';
 import { useTranslation } from 'react-i18next';
 import { TEAM_MEMBERS, PHASE_LEAD } from '../../utils/phaseConfig';
 import MeetingCountdownBanner from './MeetingCountdownBanner';
@@ -32,11 +33,12 @@ function LiveFeed({
   techLogs, isRunning,
   activeTab, onTabChange,
   scheduledMeeting, isMeetingLive, missedMeeting, onClearMissed, onJoinMeeting,
-  activePhaseIndex,
+  activePhaseIndex, projectId, hasGeneratedFiles,
 }) {
   const { t } = useTranslation();
   const meetingRef   = useRef(null);
   const consultRef   = useRef(null);
+  const [files, setFiles] = useState(null);
   const techRef      = useRef(null);
 
   useEffect(() => {
@@ -68,6 +70,12 @@ function LiveFeed({
       techRef.current.scrollTop = techRef.current.scrollHeight;
     }
   }, [techLogs, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'files' && projectId && files === null) {
+      listFiles(projectId).then((r) => setFiles(r.files || [])).catch(() => setFiles([]));
+    }
+  }, [activeTab, projectId, files]);
 
   function getMemberStatus(key) {
     if (isMeetingLive) return 'in-meeting';
@@ -127,6 +135,14 @@ function LiveFeed({
         >
           {t('workspace.feed.tabTech')}
         </button>
+        {hasGeneratedFiles && (
+          <button
+            className={`live-feed__tab${activeTab === 'files' ? ' live-feed__tab--active' : ''}`}
+            onClick={() => onTabChange('files')}
+          >
+            {t('workspace.feed.tabFiles')}
+          </button>
+        )}
       </div>
 
       {activeTab === 'meeting' && (
@@ -263,6 +279,26 @@ function LiveFeed({
                     </span>
                   </div>
                   {log.message && <p className="tech-log__msg">{log.message}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'files' && (
+        <div className="live-feed__content">
+          {files === null ? (
+            <div className="live-feed__empty"><div className="pwa-spinner" /></div>
+          ) : files.length === 0 ? (
+            <div className="live-feed__empty"><p>{t('workspace.feed.noFiles')}</p></div>
+          ) : (
+            <div className="live-feed__files">
+              {files.map((f) => (
+                <div key={f.filePath} className="file-entry">
+                  <span className="file-entry__lang">{f.language}</span>
+                  <span className="file-entry__path" dir="ltr">{f.filePath}</span>
+                  <span className={`file-entry__status file-entry__status--${f.status}`}>{f.status}</span>
                 </div>
               ))}
             </div>

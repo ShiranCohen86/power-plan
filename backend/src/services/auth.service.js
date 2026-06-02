@@ -14,6 +14,7 @@ const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
 const { escapeRegex } = require('../utils/pagination');
 const { invalidateUserCache } = require('../middleware/auth');
+const { encrypt: encryptField, decrypt: decryptField } = require('./encryption.service');
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MAX_SESSIONS            = 5;
@@ -109,6 +110,17 @@ async function login({ email, password, userAgent, ip }) {
   user.loginAttempts = 0;
   user.lockUntil = undefined;
 
+  // If TOTP is enabled, issue a short-lived temp token instead of real tokens
+  if (user.totpEnabled) {
+    const tempToken = jwt.sign(
+      { sub: String(user._id), type: 'totp_pending' },
+      env.JWT_SECRET + ':totp',
+      { expiresIn: '5m' },
+    );
+    _audit({ userId: user._id, action: 'auth.login.totp_required', ip, userAgent, meta: { email: user.email } });
+    return { requiresTotp: true, tempToken };
+  }
+
   const { accessToken, refreshToken, jtiHash } = signTokens(user);
   await _finalizeLogin(user, { jtiHash, userAgent, ip });
 
@@ -199,6 +211,29 @@ async function logout(userId) {
   await User.updateOne({ _id: userId }, { $set: { sessions: [] } });
   invalidateUserCache(userId);
   _audit({ userId, action: 'auth.logout' });
+  return { ok: true };
+}
+
+// ── Session management ─────────────────────────────────────────────────────
+
+async function listSessions(userId) {
+  const user = await User.findById(userId).select('+sessions').lean();
+  if (!user) throw ApiError.notFound('User not found');
+  return (user.sessions || []).map((s) => ({
+    jtiHash:   s.jtiHash,
+    userAgent: s.userAgent || '',
+    ip:        s.ip        || '',
+    lastSeen:  s.lastSeen,
+  }));
+}
+
+async function revokeSession(userId, jtiHash) {
+  const result = await User.findOneAndUpdate(
+    { _id: userId },
+    { $pull: { sessions: { jtiHash } } },
+  );
+  if (!result) throw ApiError.notFound('User not found');
+  invalidateUserCache(userId);
   return { ok: true };
 }
 
@@ -380,11 +415,92 @@ async function verifyWebAuthnAuthentication(email, authResponse) {
   return { user: user.toJSON(), accessToken, refreshToken };
 }
 
+// ── TOTP 2FA ────────────────────────────────────────────────────────────────
+
+const { authenticator } = require('otplib');
+const QRCode = require('qrcode');
+
+const TOTP_TEMP_SECRET = env.JWT_SECRET + ':totp';
+const TOTP_TEMP_TTL    = '5m';
+
+// Completes a TOTP-gated login: validates temp token + TOTP code, issues real tokens
+async function completeTotpLogin(tempToken, totpCode, { userAgent = '', ip = '' } = {}) {
+  let payload;
+  try {
+    payload = jwt.verify(tempToken, TOTP_TEMP_SECRET);
+  } catch {
+    throw ApiError.unauthorized('Expired or invalid verification token — please log in again');
+  }
+  if (payload.type !== 'totp_pending') throw ApiError.unauthorized('Invalid token type');
+
+  const user = await User.findById(payload.sub).select('+totpSecret');
+  if (!user || !user.isActive) throw ApiError.unauthorized();
+  if (!user.totpEnabled || !user.totpSecret) throw ApiError.badRequest('2FA not enabled');
+
+  const secret = decryptField(user.totpSecret);
+  if (!authenticator.verify({ token: totpCode, secret })) {
+    throw ApiError.unauthorized('Invalid 2FA code');
+  }
+
+  const { accessToken, refreshToken, jtiHash } = signTokens(user);
+  await _finalizeLogin(user, { jtiHash, userAgent, ip });
+  _audit({ userId: user._id, action: 'auth.totp_login', ip, userAgent });
+  return { user: user.toJSON(), accessToken, refreshToken };
+}
+
+async function setupTotp(userId) {
+  const user = await User.findById(userId);
+  if (!user) throw ApiError.notFound('User not found');
+  const secret = authenticator.generateSecret(20);
+  const otpauthUrl = authenticator.keyuri(user.email, 'Power Plan', secret);
+  const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
+  // Store encrypted secret temporarily (not enabled yet)
+  user.totpSecret = encryptField(secret);
+  await user.save();
+  return { qrDataUrl, secret };
+}
+
+async function verifyAndEnableTotp(userId, token) {
+  const user = await User.findById(userId).select('+totpSecret');
+  if (!user || !user.totpSecret) throw ApiError.badRequest('TOTP setup not initiated');
+  const secret = decryptField(user.totpSecret);
+  if (!secret || !authenticator.verify({ token, secret })) {
+    throw ApiError.badRequest('Invalid TOTP code');
+  }
+  user.totpEnabled = true;
+  await user.save();
+  return { ok: true };
+}
+
+async function disableTotp(userId, token) {
+  const user = await User.findById(userId).select('+totpSecret');
+  if (!user) throw ApiError.notFound('User not found');
+  if (user.totpEnabled) {
+    const secret = user.totpSecret ? decryptField(user.totpSecret) : null;
+    if (!secret || !authenticator.verify({ token, secret })) {
+      throw ApiError.badRequest('Invalid TOTP code — required to disable 2FA');
+    }
+  }
+  user.totpEnabled = false;
+  user.totpSecret  = undefined;
+  await user.save();
+  return { ok: true };
+}
+
+async function verifyTotp(email, token) {
+  const user = await User.findOne({ email: email.toLowerCase() }).select('+totpSecret');
+  if (!user || !user.totpEnabled || !user.totpSecret) throw ApiError.unauthorized('2FA not configured');
+  const secret = decryptField(user.totpSecret);
+  if (!authenticator.verify({ token, secret })) throw ApiError.unauthorized('Invalid 2FA code');
+  return user;
+}
+
 module.exports = {
   signup, login, refresh,
   requestPasswordReset, resetPassword,
-  getProfile, updateProfile, logout, listUsers,
+  getProfile, updateProfile, logout, listSessions, revokeSession, listUsers,
   loginWithGoogle,
   generateWebAuthnRegistration, verifyWebAuthnRegistration,
   generateWebAuthnAuthentication, verifyWebAuthnAuthentication,
+  setupTotp, verifyAndEnableTotp, disableTotp, verifyTotp, completeTotpLogin,
 };

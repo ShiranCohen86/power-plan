@@ -4,8 +4,10 @@ import DOMPurify from 'dompurify';
 import { BIOMETRIC_STORAGE_KEY } from '../config/constants.js';
 import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
+  updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
+  getNotifPrefs, updateNotifPrefs,
 } from '../api/settings.api';
-import { webAuthnRegisterStart, webAuthnRegisterFinish } from '../api/auth.api.js';
+import { webAuthnRegisterStart, webAuthnRegisterFinish, getSessions, revokeSession, totpSetup, totpEnable, totpDisable } from '../api/auth.api.js';
 
 function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, inputProps, onValidate }) {
   const { t } = useTranslation();
@@ -142,6 +144,202 @@ function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, input
   );
 }
 
+function NotifPrefsSection() {
+  const { t } = useTranslation();
+  const [prefs, setPrefs] = useState(null);
+
+  useEffect(() => {
+    getNotifPrefs().then(setPrefs).catch(() => {});
+  }, []);
+
+  async function toggle(key) {
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    try { await updateNotifPrefs({ [key]: next[key] }); } catch { setPrefs(prefs); }
+  }
+
+  if (!prefs) return null;
+
+  const items = [
+    { key: 'deploymentSuccess', label: t('settings.notif.deploymentSuccess') },
+    { key: 'planningComplete',  label: t('settings.notif.planningComplete') },
+    { key: 'quotaExhausted',    label: t('settings.notif.quotaExhausted') },
+    { key: 'phaseFailed',       label: t('settings.notif.phaseFailed') },
+  ];
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.notifSection')}</h2>
+      <p className="settings-section__desc">{t('settings.notifDesc')}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {items.map(({ key, label }) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+            <input
+              type="checkbox"
+              checked={!!prefs[key]}
+              onChange={() => toggle(key)}
+              style={{ width: 16, height: 16, cursor: 'pointer' }}
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TotpSection({ totpEnabled: initialEnabled }) {
+  const { t } = useTranslation();
+  const [enabled, setEnabled]   = useState(initialEnabled);
+  const [step, setStep]         = useState('idle'); // idle | setup | disable
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [codeInput, setCodeInput] = useState('');
+  const [busy, setBusy]         = useState(false);
+  const [err, setErr]           = useState('');
+
+  async function handleSetup() {
+    setBusy(true); setErr('');
+    try {
+      const res = await totpSetup();
+      setQrDataUrl(res.qrDataUrl);
+      setStep('setup');
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  async function handleEnable() {
+    setBusy(true); setErr('');
+    try {
+      await totpEnable(codeInput.trim());
+      setEnabled(true); setStep('idle'); setCodeInput(''); setQrDataUrl('');
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  async function handleDisable() {
+    setBusy(true); setErr('');
+    try {
+      await totpDisable(codeInput.trim());
+      setEnabled(false); setStep('idle'); setCodeInput('');
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.totpSection')}</h2>
+      <p className="settings-section__desc">{t('settings.totpDesc')}</p>
+      <div className="settings-apikey">
+        <div className="settings-apikey__header">
+          <div>
+            <h3 className="settings-apikey__title">2FA</h3>
+          </div>
+          <div className={`settings-apikey__status${enabled ? ' settings-apikey__status--ok' : ''}`}>
+            {enabled ? t('settings.totpEnabled') : t('settings.totpDisabled')}
+          </div>
+        </div>
+        {err && <p className="settings-apikey__error">{err}</p>}
+        {step === 'idle' && !enabled && (
+          <button className="btn btn--primary" onClick={handleSetup} disabled={busy}>
+            {t('settings.totpSetup')}
+          </button>
+        )}
+        {step === 'idle' && enabled && (
+          <button className="btn btn--secondary" onClick={() => setStep('disable')}>
+            {t('settings.totpDisableBtn')}
+          </button>
+        )}
+        {step === 'setup' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13 }}>{t('settings.totpScanQR')}</p>
+            {qrDataUrl && <img src={qrDataUrl} alt="QR" style={{ width: 180, borderRadius: 8, alignSelf: 'center' }} />}
+            <input
+              type="text" inputMode="numeric" maxLength={6} dir="ltr"
+              className="settings-apikey__input"
+              placeholder={t('settings.totpCodePlaceholder')}
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              style={{ letterSpacing: '0.2em', textAlign: 'center' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn--primary" onClick={handleEnable} disabled={busy || codeInput.length < 6}>
+                {busy ? '...' : t('settings.totpVerifyBtn')}
+              </button>
+              <button className="btn btn--secondary" onClick={() => { setStep('idle'); setCodeInput(''); setQrDataUrl(''); }}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'disable' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ fontSize: 13 }}>{t('settings.totpDisableConfirm')}</p>
+            <input
+              type="text" inputMode="numeric" maxLength={6} dir="ltr"
+              className="settings-apikey__input"
+              placeholder={t('settings.totpCodePlaceholder')}
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              style={{ letterSpacing: '0.2em', textAlign: 'center' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn settings-apikey__delete-btn" onClick={handleDisable} disabled={busy || codeInput.length < 6}>
+                {busy ? '...' : t('settings.totpDisableBtn')}
+              </button>
+              <button className="btn btn--secondary" onClick={() => { setStep('idle'); setCodeInput(''); }}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SessionsSection() {
+  const { t } = useTranslation();
+  const [sessions, setSessions]   = useState(null);
+  const [revoking, setRevoking]   = useState(null);
+
+  useEffect(() => {
+    getSessions().then((r) => setSessions(r.sessions)).catch(() => setSessions([]));
+  }, []);
+
+  async function handleRevoke(jtiHash) {
+    setRevoking(jtiHash);
+    try {
+      await revokeSession(jtiHash);
+      setSessions((prev) => prev.filter((s) => s.jtiHash !== jtiHash));
+    } finally { setRevoking(null); }
+  }
+
+  if (!sessions) return null;
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.sessionsSection')}</h2>
+      <p className="settings-section__desc">{t('settings.sessionsDesc')}</p>
+      <div className="settings-sessions">
+        {sessions.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('settings.sessionsNone')}</p>
+        ) : sessions.map((s) => (
+          <div key={s.jtiHash} className="settings-session">
+            <div className="settings-session__info">
+              <span className="settings-session__agent">{s.userAgent || t('settings.sessionUnknown')}</span>
+              <span className="settings-session__meta">{s.ip} · {s.lastSeen ? new Date(s.lastSeen).toLocaleDateString() : ''}</span>
+            </div>
+            <button
+              className="btn btn--secondary settings-session__revoke"
+              onClick={() => handleRevoke(s.jtiHash)}
+              disabled={revoking === s.jtiHash}
+            >
+              {revoking === s.jtiHash ? '...' : t('settings.sessionRevoke')}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function BiometricSection() {
   const { t } = useTranslation();
   const [platformAvailable, setPlatformAvailable] = useState(false);
@@ -259,6 +457,9 @@ export default function Settings() {
       {settings && (
         <div className="settings-page__body">
           <BiometricSection />
+          <TotpSection totpEnabled={!!settings?.totpEnabled} />
+          <NotifPrefsSection />
+          <SessionsSection />
           <section className="settings-section">
             <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
             <p className="settings-section__desc">{t('settings.apiDesc')}</p>
@@ -290,6 +491,43 @@ export default function Settings() {
                   note: t('settings.howtoNote'),
                 },
               }}
+            />
+          </section>
+
+          <section className="settings-section">
+            <h2 className="settings-section__title">{t('settings.deploySection')}</h2>
+            <p className="settings-section__desc">{t('settings.deployDesc')}</p>
+
+            <TokenSection
+              title={t('settings.githubTokenTitle')}
+              subtitle={t('settings.githubTokenSubtitle')}
+              hint={settings.githubTokenHint}
+              hasToken={settings.hasGithubToken}
+              onSave={async (v) => {
+                const res = await updateGithubToken(v);
+                setSettings((s) => ({ ...s, hasGithubToken: res.hasGithubToken, githubTokenHint: res.githubTokenHint }));
+              }}
+              onDelete={async () => {
+                await deleteGithubToken();
+                setSettings((s) => ({ ...s, hasGithubToken: false, githubTokenHint: null }));
+              }}
+              inputProps={{ placeholder: 'ghp_... or github_pat_...' }}
+            />
+
+            <TokenSection
+              title={t('settings.renderTokenTitle')}
+              subtitle={t('settings.renderTokenSubtitle')}
+              hint={settings.renderTokenHint}
+              hasToken={settings.hasRenderToken}
+              onSave={async (v) => {
+                const res = await updateRenderToken(v);
+                setSettings((s) => ({ ...s, hasRenderToken: res.hasRenderToken, renderTokenHint: res.renderTokenHint }));
+              }}
+              onDelete={async () => {
+                await deleteRenderToken();
+                setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
+              }}
+              inputProps={{ placeholder: 'rnd_...' }}
             />
           </section>
         </div>

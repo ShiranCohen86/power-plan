@@ -71,6 +71,40 @@ exports.updateMe = asyncHandler(async (req, res) => {
   res.json(profile);
 });
 
+exports.listSessions = asyncHandler(async (req, res) => {
+  const sessions = await authService.listSessions(req.user.id);
+  res.json({ sessions });
+});
+
+exports.revokeSession = asyncHandler(async (req, res) => {
+  const result = await authService.revokeSession(req.user.id, req.params.jtiHash);
+  res.json(result);
+});
+
+exports.totpSetup = asyncHandler(async (req, res) => {
+  const result = await authService.setupTotp(req.user.id);
+  res.json(result);
+});
+
+exports.totpEnable = asyncHandler(async (req, res) => {
+  const result = await authService.verifyAndEnableTotp(req.user.id, req.body.token);
+  res.json(result);
+});
+
+exports.totpDisable = asyncHandler(async (req, res) => {
+  const result = await authService.disableTotp(req.user.id, req.body.token);
+  res.json(result);
+});
+
+// Called after password login when totpEnabled=true — takes the temp token + TOTP code
+exports.totpVerify = asyncHandler(async (req, res) => {
+  const { tempToken, token } = req.body;
+  if (!tempToken || !token) throw require('../utils/ApiError').badRequest('tempToken and token required');
+  const tokens = await authService.completeTotpLogin(tempToken, token, getRequestMeta(req));
+  setRefreshCookie(res, tokens.refreshToken);
+  res.json({ user: tokens.user, accessToken: tokens.accessToken });
+});
+
 exports.requestPasswordReset = asyncHandler(async (req, res) => {
   const result = await authService.requestPasswordReset(req.body.email);
   res.json(result);

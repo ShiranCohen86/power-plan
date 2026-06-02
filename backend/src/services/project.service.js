@@ -22,13 +22,16 @@ const SORT_MAP = {
   completion: { completionPercent: -1, createdAt: -1 },
 };
 
-async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date' } = {}) {
+const VALID_STATUSES = new Set(['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'archived']);
+
+async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date', status = '' } = {}) {
   const query = { ownerId, deletedAt: null };
   if (search) {
     const escaped = escapeRegex(search);
     const re = new RegExp(escaped, 'i');
     query.$or = [{ title: re }, { idea: re }];
   }
+  if (status && VALID_STATUSES.has(status)) query.status = status;
   const sortQuery = SORT_MAP[sort] || SORT_MAP.date;
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([

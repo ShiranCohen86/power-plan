@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  loginUser, signupUser, clearAuthError, loginWithGoogle,
+  loginUser, signupUser, clearAuthError, loginWithGoogle, totpLoginUser,
   selectAuthError, selectAuthStatus, selectCurrentUser,
+  selectTotpPending, selectTotpTempToken,
 } from '../store/slices/authSlice.js';
 import { toggleLanguage, selectLanguage } from '../store/slices/uiSlice.js';
 import ApiKeyPrompt from '../components/auth/ApiKeyPrompt.jsx';
@@ -25,12 +26,15 @@ export default function Login() {
   const authStatus      = useSelector(selectAuthStatus);
   const currentUser     = useSelector(selectCurrentUser);
   const lang            = useSelector(selectLanguage);
+  const totpPending     = useSelector(selectTotpPending);
+  const totpTempToken   = useSelector(selectTotpTempToken);
 
   const [isRegister,          setIsRegister]          = useState(false);
   const [nameInput,           setNameInput]           = useState('');
   const [emailInput,          setEmailInput]          = useState('');
   const [passInput,           setPassInput]           = useState('');
   const [showPassword,        setShowPassword]        = useState(false);
+  const [totpInput,           setTotpInput]           = useState('');
   const [emailBlurError,      setEmailBlurError]      = useState('');
   const [localError,          setLocalError]          = useState('');
   const [showApiKeyPrompt,    setShowApiKeyPrompt]    = useState(false);
@@ -133,6 +137,45 @@ export default function Login() {
         {lang === 'he' ? 'EN' : 'עב'}
       </button>
     </header>
+  );
+
+  if (totpPending) return (
+    <div className="login-page">
+      {loginHeader}
+      <div className="login-card">
+        <h2 className="login-card__title" style={{ marginBottom: 8 }}>🔐 {t('auth.totpTitle')}</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>{t('auth.totpDesc')}</p>
+        {authError && <div className="badge danger login-error">{authError}</div>}
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          dispatch(clearAuthError());
+          await dispatch(totpLoginUser({ tempToken: totpTempToken, token: totpInput.trim() }));
+        }}>
+          <div className="form-group">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              autoFocus
+              className="login-input"
+              placeholder="000000"
+              value={totpInput}
+              onChange={(e) => setTotpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              dir="ltr"
+              style={{ letterSpacing: '0.3em', fontSize: 22, textAlign: 'center' }}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn btn--primary login-submit"
+            disabled={totpInput.length < 6 || authStatus === 'loading'}
+          >
+            {authStatus === 'loading' ? t('common.loading') : t('auth.totpVerify')}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 
   if (showBiometricEnroll) return (

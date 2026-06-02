@@ -14,5 +14,7 @@ router.put ('/github-token',  ctrl.updateGithubToken);
 router.delete('/github-token',ctrl.deleteGithubToken);
 router.put ('/render-token',  ctrl.updateRenderToken);
 router.delete('/render-token',ctrl.deleteRenderToken);
+router.get   ('/notification-prefs',  ctrl.getNotifPrefs);
+router.patch ('/notification-prefs',  ctrl.updateNotifPrefs);
 
 module.exports = router;

@@ -5,10 +5,11 @@ const DISCOVERY_SSE_TIMEOUT_MS = 45_000;
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
 
-export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date', signal } = {}) => {
+export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date', statusFilter = '', signal } = {}) => {
   const params = { page, limit };
   if (search) params.search = search;
   if (sort && sort !== 'date') params.sort = sort;
+  if (statusFilter) params.status = statusFilter;
   return safeRequest({ method: 'get', url: '/projects', params, signal });
 };
 
@@ -17,6 +18,9 @@ export const getProject = (id, signal) =>
 
 export const deleteProject = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}` });
+
+export const cloneProject = (id) =>
+  safeRequest({ method: 'post', url: `/projects/${id}/clone` });
 
 export const restoreProject = (id) =>
   safeRequest({ method: 'patch', url: `/projects/${id}/restore` });

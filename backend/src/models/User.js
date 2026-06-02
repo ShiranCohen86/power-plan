@@ -56,6 +56,18 @@ const UserSchema = new mongoose.Schema(
     webAuthnCredentials: { type: [WebAuthnCredentialSchema], default: [] },
     webAuthnChallenge:   { type: String, select: false },
 
+    // TOTP 2FA
+    totpSecret:  { type: String, select: false },
+    totpEnabled: { type: Boolean, default: false },
+
+    // Email notification preferences
+    notifPrefs: {
+      deploymentSuccess: { type: Boolean, default: true },
+      quotaExhausted:    { type: Boolean, default: true },
+      phaseFailed:       { type: Boolean, default: true },
+      planningComplete:  { type: Boolean, default: true },
+    },
+
     pipelineStarts: { type: [Date], select: false, default: [] },
     loginAttempts:  { type: Number, default: 0 },
     lockUntil:      { type: Date },
@@ -78,6 +90,7 @@ UserSchema.methods.toJSON = function toJSON() {
   delete obj.passwordResetToken;
   delete obj.passwordResetExpires;
   delete obj.sessions;
+  delete obj.totpSecret;
   delete obj.__v;
   return obj;
 };

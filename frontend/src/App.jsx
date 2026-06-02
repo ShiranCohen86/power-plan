@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
 import BottomSheet from './components/ui/BottomSheet.jsx';
+import OfflineBanner from './components/ui/OfflineBanner.jsx';
 import {
   InstallSheetContent, UpdateSheetContent, VersionSheetContent,
   isStandalone, isIOS, INSTALL_DISMISSED_KEY,
@@ -132,6 +133,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <OfflineBanner />
       {sheet && (
         <BottomSheet onClose={closeSheet}>
           {sheet === 'install' && <InstallSheetContent deferredPrompt={deferredPrompt} onClose={closeSheet} />}

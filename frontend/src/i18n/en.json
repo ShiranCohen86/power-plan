@@ -84,6 +84,9 @@
     "biometricEnrollBtn": "🔐 Enable Biometric Login",
     "biometricEnrollSkip": "Skip — I'll set it up later in Settings",
     "biometricEnrollOk": "Done! Next time you'll sign in with one tap.",
+    "totpTitle": "Two-Factor Authentication",
+    "totpDesc": "Enter the code from your authenticator app.",
+    "totpVerify": "Verify & Sign In",
     "biometricEnrollError": "Registration failed — please try again"
   },
   "dashboard": {
@@ -91,6 +94,8 @@
     "newProject": "New Project",
     "empty": "No projects yet",
     "emptySub": "Create a new project to get started",
+    "filterAll": "All",
+    "clone": "Clone project",
     "status": {
       "onboarding": "Onboarding",
       "planning": "Planning",
@@ -180,7 +185,9 @@
       "noEvents": "Agent events will appear here",
       "missedMeeting": "📋 You missed the meeting — here's the summary",
       "meetingAfterPhase": "The internal meeting will begin after each phase is completed",
-      "decisionLabel": "✅ Decision"
+      "decisionLabel": "✅ Decision",
+      "tabFiles": "📁 Files",
+      "noFiles": "No generated files yet."
     },
     "creds": {
       "title": "🔧 Services Required for Project",
@@ -234,6 +241,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "offlineMsg": "You are offline — some features will not be available",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -269,6 +277,35 @@
     "howtoStep3": "Click \"Create Key\" and give it a name (e.g. \"Power Plan\")",
     "howtoStep4": "Copy the key (starts with <code>sk-ant-</code>) and paste here",
     "howtoNote": "💡 Each complete project costs approximately $1-5 — pay per use only.",
+    "deploySection": "Auto-Deployment (GitHub + Render)",
+    "deployDesc": "Configure once — every built project is automatically deployed to GitHub and Render.",
+    "githubTokenTitle": "GitHub Personal Access Token",
+    "githubTokenSubtitle": "Required for automatic repo creation for each project.",
+    "renderTokenTitle": "Render API Key",
+    "renderTokenSubtitle": "Required for automatic app deployment on Render.",
+    "sessionsSection": "Active Sessions",
+    "sessionsDesc": "These are the devices logged into your account. Revoke any suspicious session immediately.",
+    "sessionsNone": "No active sessions.",
+    "sessionUnknown": "Unknown browser",
+    "sessionRevoke": "Revoke",
+    "totpSection": "Two-Factor Authentication (2FA)",
+    "totpDesc": "Protect your account with an authenticator app (Google Authenticator, Authy, etc.).",
+    "totpEnabled": "Enabled",
+    "totpDisabled": "Disabled",
+    "totpSetup": "Set up 2FA",
+    "totpScanQR": "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm.",
+    "totpCodePlaceholder": "6-digit code",
+    "totpVerifyBtn": "Enable 2FA",
+    "totpDisableBtn": "Disable 2FA",
+    "totpDisableConfirm": "Enter your current code to confirm removal:",
+    "notifSection": "Email Notifications",
+    "notifDesc": "Choose which events send you email notifications.",
+    "notif": {
+      "deploymentSuccess": "✅ Project deployed successfully",
+      "planningComplete":  "📋 Planning phases completed",
+      "quotaExhausted":    "⚠️ API quota exhausted",
+      "phaseFailed":       "❌ Phase failed"
+    },
     "confirmDeleteMsg": "Delete the access key?",
     "saving": "Saving...",
     "deleting": "Deleting...",

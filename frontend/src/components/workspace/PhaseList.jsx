@@ -11,10 +11,18 @@ const STATUS_ICON = {
   interrupted:       '⏸️',
 };
 
+function fmtDuration(startedAt, completedAt) {
+  if (!startedAt || !completedAt) return null;
+  const s = Math.round((new Date(completedAt) - new Date(startedAt)) / 1000);
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s / 60)}m${s % 60 > 0 ? ` ${s % 60}s` : ''}`;
+}
+
 function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
-  const status = phaseData?.status || 'pending';
-  const icon   = STATUS_ICON[status] || '⏳';
-  const tokens = phaseData?.tokensUsed;
+  const status   = phaseData?.status || 'pending';
+  const icon     = STATUS_ICON[status] || '⏳';
+  const tokens   = phaseData?.tokensUsed;
+  const duration = status === 'completed' ? fmtDuration(phaseData?.startedAt, phaseData?.completedAt) : null;
 
   return (
     <div className="phase-item-wrapper">
@@ -28,9 +36,11 @@ function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
         <span className="phase-item__num">{config.index + 1}</span>
         <span className="phase-item__name">{lang === 'he' ? config.nameHe : config.name}</span>
         {status === 'running' && <span className="phase-item__pulse" />}
-        {tokens > 0 && status !== 'running' && status !== 'failed' && (
+        {(tokens > 0 || duration) && status !== 'running' && status !== 'failed' && (
           <span className="phase-item__tokens" style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 'auto', opacity: 0.7 }}>
-            {tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t
+            {tokens > 0 && `${tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens}t`}
+            {tokens > 0 && duration && ' · '}
+            {duration}
           </span>
         )}
         {status === 'failed' && phaseData?.errorMessage && (

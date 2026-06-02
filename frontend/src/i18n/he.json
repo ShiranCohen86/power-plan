@@ -84,6 +84,9 @@
     "biometricEnrollBtn": "🔐 הפעל כניסה ביומטרית",
     "biometricEnrollSkip": "דלג — אפעיל מאוחר יותר בהגדרות",
     "biometricEnrollOk": "הוגדר! בפעם הבאה תיכנס בלחיצה אחת.",
+    "totpTitle": "אימות דו-שלבי",
+    "totpDesc": "הזן את הקוד מאפליקציית האימות שלך.",
+    "totpVerify": "אמת והיכנס",
     "biometricEnrollError": "ההרשמה נכשלה — נסה שוב"
   },
   "dashboard": {
@@ -91,6 +94,8 @@
     "newProject": "פרויקט חדש",
     "empty": "עדיין אין פרויקטים",
     "emptySub": "צור פרויקט חדש כדי להתחיל",
+    "filterAll": "הכל",
+    "clone": "שכפל פרויקט",
     "status": {
       "onboarding": "איסוף מידע",
       "planning": "בתכנון",
@@ -180,7 +185,9 @@
       "noEvents": "אירועי הסוכן יופיעו כאן",
       "missedMeeting": "📋 פספסת את הישיבה — הנה הסיכום",
       "meetingAfterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב",
-      "decisionLabel": "✅ החלטה"
+      "decisionLabel": "✅ החלטה",
+      "tabFiles": "📁 קבצים",
+      "noFiles": "אין קבצים שנוצרו עדיין."
     },
     "creds": {
       "title": "🔧 שירותים נדרשים לפרויקט",
@@ -234,6 +241,7 @@
   },
   "common": {
     "loading": "טוען...",
+    "offlineMsg": "אתה במצב לא מקוון — חלק מהפעולות לא יהיו זמינות",
     "save": "שמור",
     "cancel": "ביטול",
     "delete": "מחק",
@@ -269,6 +277,35 @@
     "howtoStep3": "לחץ \"Create Key\" ותן לו שם (לדוגמה: \"Power Plan\")",
     "howtoStep4": "העתק את המפתח (מתחיל ב-<code>sk-ant-</code>) והדבק כאן",
     "howtoNote": "💡 כל פרויקט מלא עולה בערך $1-5 — תשלום לפי שימוש בלבד.",
+    "deploySection": "פריסה אוטומטית (GitHub + Render)",
+    "deployDesc": "הגדר פעם אחת — כל פרויקט שנבנה יפורס אוטומטית ל-GitHub ו-Render.",
+    "githubTokenTitle": "GitHub Personal Access Token",
+    "githubTokenSubtitle": "דרוש ליצירת repo אוטומטית עבור כל פרויקט.",
+    "renderTokenTitle": "Render API Key",
+    "renderTokenSubtitle": "דרוש לפריסה אוטומטית של האפליקציה על Render.",
+    "sessionsSection": "סשנים פעילים",
+    "sessionsDesc": "אלו המכשירים המחוברים לחשבונך. בטל סשן חשוד לאבטחה מיידית.",
+    "sessionsNone": "אין סשנים פעילים.",
+    "sessionUnknown": "דפדפן לא ידוע",
+    "sessionRevoke": "בטל",
+    "totpSection": "אימות דו-שלבי (2FA)",
+    "totpDesc": "הגן על חשבונך עם אפליקציית אימות (Google Authenticator, Authy וכו').",
+    "totpEnabled": "מופעל",
+    "totpDisabled": "מושבת",
+    "totpSetup": "הגדר 2FA",
+    "totpScanQR": "סרוק את קוד ה-QR עם אפליקציית האימות שלך, ולאחר מכן הזן את הקוד בן 6 הספרות לאישור.",
+    "totpCodePlaceholder": "קוד בן 6 ספרות",
+    "totpVerifyBtn": "אפשר 2FA",
+    "totpDisableBtn": "השבת 2FA",
+    "totpDisableConfirm": "הזן את הקוד הנוכחי שלך לאישור הסרה:",
+    "notifSection": "התראות במייל",
+    "notifDesc": "בחר אילו אירועים ישלחו אליך הודעות מייל.",
+    "notif": {
+      "deploymentSuccess": "✅ פרויקט פורס בהצלחה",
+      "planningComplete":  "📋 שלבי תכנון הושלמו",
+      "quotaExhausted":    "⚠️ מכסת API מוצתה",
+      "phaseFailed":       "❌ שלב נכשל"
+    },
     "confirmDeleteMsg": "למחוק את קוד הגישה?",
     "saving": "שומר...",
     "deleting": "מוחק...",

@@ -182,3 +182,62 @@ exports.getActivity = asyncHandler(async (req, res) => {
 
   res.json({ items, total, page, totalPages: Math.ceil(total / limit) || 1 });
 });
+
+// ── User management ───────────────────────────────────────────────────────────
+
+exports.listUsers = asyncHandler(async (req, res) => {
+  const page   = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit  = Math.min(50, parseInt(req.query.limit, 10) || 20);
+  const search = (req.query.search || '').slice(0, 100);
+  const skip   = (page - 1) * limit;
+
+  const filter = {};
+  if (search) {
+    const re = new RegExp(search.replace(/[.*+?^${}()|[\]\]/g, '\$&'), 'i');
+    filter.$or = [{ name: re }, { email: re }];
+  }
+
+  const [users, total] = await Promise.all([
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    User.countDocuments(filter),
+  ]);
+
+  // Attach project count per user
+  const userIds = users.map((u) => u._id);
+  const projectCounts = await Project.aggregate([
+    { $match: { ownerId: { $in: userIds } } },
+    { $group: { _id: '$ownerId', count: { $sum: 1 } } },
+  ]);
+  const countMap = Object.fromEntries(projectCounts.map((p) => [String(p._id), p.count]));
+
+  const result = users.map((u) => ({
+    _id:          u._id,
+    name:         u.name,
+    email:        u.email,
+    role:         u.role,
+    plan:         u.plan,
+    isActive:     u.isActive,
+    totpEnabled:  u.totpEnabled,
+    lastLogin:    u.lastLogin,
+    createdAt:    u.createdAt,
+    projectCount: countMap[String(u._id)] || 0,
+  }));
+
+  res.json({ users: result, total, page, totalPages: Math.ceil(total / limit) || 1 });
+});
+
+exports.updateUser = asyncHandler(async (req, res) => {
+  const { isActive, role, plan } = req.body;
+  const update = {};
+  if (typeof isActive === 'boolean') update.isActive = isActive;
+  if (role && ['admin', 'client'].includes(role)) update.role = role;
+  if (plan && ['starter', 'pro'].includes(plan)) update.plan = plan;
+
+  const user = await User.findByIdAndUpdate(req.params.id, update, { new: true }).lean();
+  if (!user) throw require('../utils/ApiError').notFound('User not found');
+
+  const { invalidateUserCache } = require('../middleware/auth');
+  invalidateUserCache(String(user._id));
+
+  res.json({ ok: true, user: { _id: user._id, name: user.name, email: user.email, role: user.role, plan: user.plan, isActive: user.isActive } });
+});

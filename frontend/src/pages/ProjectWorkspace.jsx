@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { ALL_PHASES } from '../utils/phaseConfig';
 import { useWorkspaceState } from '../hooks/useWorkspaceState';
+import { downloadFiles } from '../api/files.api';
 
 import PhaseList              from '../components/workspace/PhaseList';
 import FeatureErrorBoundary   from '../components/ui/FeatureErrorBoundary';
@@ -35,6 +37,22 @@ export default function ProjectWorkspace() {
   const { lang } = useLanguage();
 
   const ws = useWorkspaceState(id);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const slug = ws.project?.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) || 'project';
+      await downloadFiles(id, `${slug}-source.zip`);
+    } catch {
+      // non-critical — browser will show no download
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const hasGeneratedFiles = ['live', 'coding', 'deploying'].includes(ws.project?.status);
 
   // Pre-compute derived values used inside JSX to avoid IIFEs in render
   const activePhase = ws.activePhaseIndex !== null
@@ -191,6 +209,18 @@ export default function ProjectWorkspace() {
               </button>
             </div>
           )}
+
+          {hasGeneratedFiles && (
+            <div className="workspace-start-btn">
+              <button
+                className="btn btn--secondary btn--full"
+                onClick={handleDownload}
+                disabled={downloading}
+              >
+                {downloading ? '⏳ מכין ZIP...' : '⬇️ הורד קוד מקור'}
+              </button>
+            </div>
+          )}
         </aside>
 
         <div className="workspace-resize-handle" onMouseDown={(e) => ws.startResize(e, 'sidebar')} />
@@ -278,6 +308,8 @@ export default function ProjectWorkspace() {
               onClearMissed={() => ws.setMissedMeeting(false)}
               onJoinMeeting={() => ws.setShowMeetingRoom(true)}
               activePhaseIndex={ws.activePhaseIndex}
+              projectId={id}
+              hasGeneratedFiles={hasGeneratedFiles}
             />
           </FeatureErrorBoundary>
         </div>
