@@ -13,6 +13,22 @@ const requestLogger = require('./middleware/logger');
 const logger = require('./utils/logger');
 const { RATE_AUTH_WINDOW_MS, RATE_AUTH_MAX } = require('./config/constants');
 
+// Build a shared Redis store for rate limiters when REDIS_URL is configured.
+// Falls back to in-memory (default) when Redis is unavailable.
+function _buildRateLimitStore(prefix) {
+  if (!env.REDIS_URL) return undefined;
+  try {
+    const { RedisStore } = require('rate-limit-redis');
+    const Redis = require('ioredis');
+    const client = new Redis(env.REDIS_URL, { lazyConnect: true, enableOfflineQueue: false });
+    client.on('error', (err) => logger.warn('rate-limit redis error', { error: err.message }));
+    return new RedisStore({ prefix, sendCommand: (...args) => client.call(...args) });
+  } catch (err) {
+    logger.warn('rate-limit-redis store init failed, falling back to in-memory', { error: err.message });
+    return undefined;
+  }
+}
+
 // Sentry — init before any other middleware; no-op when DSN not configured
 let Sentry = null;
 if (env.SENTRY_DSN) {
@@ -74,6 +90,7 @@ const globalLimiter = rateLimit({
   max: env.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
+  store: _buildRateLimitStore('rl:global:'),
 });
 app.use('/api', globalLimiter);
 app.use('/api/v1', globalLimiter);
@@ -84,6 +101,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts. Please try again in 15 minutes.' },
+  store: _buildRateLimitStore('rl:auth:'),
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);

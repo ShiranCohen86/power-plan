@@ -1,6 +1,11 @@
 const Joi = require('joi');
 
-const password = Joi.string().min(6).max(128);
+// Min 8 chars, at least one digit or special character
+const password = Joi.string()
+  .min(8)
+  .max(128)
+  .pattern(/[0-9!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/, 'number or special character');
+
 // tlds: false disables IANA list; the pattern enforces at least one dot in the domain (blocks user@localhost)
 const email = Joi.string().email({ tlds: { allow: false } }).pattern(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/).lowercase().trim();
 
@@ -19,9 +24,8 @@ exports.login = {
   }),
 };
 
-exports.refresh = {
-  body: Joi.object({ refreshToken: Joi.string() }),
-};
+// refresh token is read from httpOnly cookie — no body validation needed
+exports.refresh = { body: Joi.object({}) };
 
 exports.requestReset = {
   body: Joi.object({ email: email.required() }),

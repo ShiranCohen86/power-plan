@@ -95,6 +95,11 @@ export default function Login() {
     setLocalError('');
     if (isRegister) {
       if (!nameInput.trim()) { setLocalError('נא להזין שם מלא'); return; }
+      if (passInput.length < 8) { setLocalError('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
+      if (!/[0-9!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(passInput)) {
+        setLocalError('הסיסמה חייבת להכיל לפחות ספרה אחת או תו מיוחד');
+        return;
+      }
       justRegisteredRef.current = true;
       const result = await dispatch(signupUser({ name: nameInput.trim(), email: emailInput, password: passInput }));
       if (result.error) { justRegisteredRef.current = false; setLocalError(result.payload || 'שגיאה בהרשמה'); }
@@ -205,7 +210,7 @@ export default function Login() {
                 onChange={(e) => setPassInput(e.target.value)}
                 type={showPassword ? 'text' : 'password'} required
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
-                placeholder={isRegister ? 'לפחות 6 תווים' : '••••••••'}
+                placeholder={isRegister ? 'לפחות 8 תווים + ספרה/תו מיוחד' : '••••••••'}
               />
               <button
                 type="button"

@@ -40,6 +40,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
+    "rate-limit-redis": "^5.0.0",
     "resend": "^6.12.4",
     "socket.io": "^4.7.5",
     "winston": "^3.13.1"
