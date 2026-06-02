@@ -19,8 +19,8 @@ export const getProject = (id, signal) =>
 export const deleteProject = (id) =>
   safeRequest({ method: 'delete', url: `/projects/${id}` });
 
-export const cloneProject = (id) =>
-  safeRequest({ method: 'post', url: `/projects/${id}/clone` });
+export const cloneProject   = (id) => safeRequest({ method: 'post',  url: `/projects/${id}/clone` });
+export const archiveProject = (id) => safeRequest({ method: 'patch', url: `/projects/${id}/archive` });
 
 export const restoreProject = (id) =>
   safeRequest({ method: 'patch', url: `/projects/${id}/restore` });

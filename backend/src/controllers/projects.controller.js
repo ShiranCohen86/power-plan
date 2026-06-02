@@ -204,3 +204,14 @@ exports.cloneProject = asyncHandler(async (req, res) => {
 
   res.status(201).json(clone);
 });
+
+exports.archiveProject = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id });
+  if (!project) throw ApiError.notFound('Project not found');
+  if (['planning', 'coding', 'deploying'].includes(project.status)) {
+    throw ApiError.badRequest('Cannot archive a project that is actively running');
+  }
+  project.status = 'archived';
+  await project.save();
+  res.json({ ok: true, status: 'archived' });
+});

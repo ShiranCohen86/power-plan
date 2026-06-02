@@ -39,6 +39,19 @@ export default function ProjectWorkspace() {
   const ws = useWorkspaceState(id);
   const [downloading, setDownloading] = useState(false);
 
+  // Keyboard shortcuts: Ctrl+Enter to approve, Escape to close modals
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (ws.awaitingPhase !== null && ws.awaitingPhase === ws.activePhaseIndex && ws.hasScrolledToBottom) {
+          ws.handleApprove();
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ws.awaitingPhase, ws.activePhaseIndex, ws.hasScrolledToBottom, ws.handleApprove]);
+
   async function handleDownload() {
     if (downloading) return;
     setDownloading(true);
@@ -235,7 +248,7 @@ export default function ProjectWorkspace() {
 
           {ws.activeDoc && (
             <div className="workspace-doc-bar">
-{ws.awaitingPhase !== null && ws.awaitingPhase === ws.activePhaseIndex && (
+              {ws.awaitingPhase !== null && ws.awaitingPhase === ws.activePhaseIndex && (
                 <button
                   className={`btn btn--primary workspace-doc-bar__approve${ws.hasScrolledToBottom ? ' workspace-approval-footer__approve--unlocked' : ''}`}
                   onClick={ws.handleApprove}
@@ -245,6 +258,21 @@ export default function ProjectWorkspace() {
                   ✅ אשר והמשך
                 </button>
               )}
+              <button
+                className="btn btn--secondary workspace-doc-bar__export"
+                title="ייצא כ-Markdown"
+                onClick={() => {
+                  const blob = new Blob([ws.activeDoc.content], { type: 'text/markdown' });
+                  const url  = URL.createObjectURL(blob);
+                  const a    = document.createElement('a');
+                  const phaseName = (ws.project?.title || 'phase').toLowerCase().replace(/\s+/g, '-');
+                  a.href = url; a.download = `${phaseName}-phase-${ws.activePhaseIndex}.md`;
+                  document.body.appendChild(a); a.click(); a.remove();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                ⬇️ MD
+              </button>
             </div>
           )}
 

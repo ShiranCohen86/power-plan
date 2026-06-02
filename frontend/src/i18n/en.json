@@ -96,6 +96,7 @@
     "emptySub": "Create a new project to get started",
     "filterAll": "All",
     "clone": "Clone project",
+    "archive": "Archive project",
     "status": {
       "onboarding": "Onboarding",
       "planning": "Planning",
@@ -103,7 +104,8 @@
       "deploying": "Deploying",
       "live": "Live",
       "failed": "Failed",
-      "paused": "Paused"
+      "paused": "Paused",
+      "archived": "Archived"
     }
   },
   "newProject": {

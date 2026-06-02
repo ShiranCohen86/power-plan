@@ -18,10 +18,22 @@ const EMPTY_FORM = { agentType: '', category: '', mistake: '', lesson: '' };
 export default function AdminLessons({ lessons, onSave, onToggleActive, onDelete }) {
   const { t } = useTranslation();
 
-  const [showForm,   setShowForm]   = useState(false);
-  const [formData,   setFormData]   = useState(EMPTY_FORM);
-  const [editId,     setEditId]     = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [showForm,     setShowForm]    = useState(false);
+  const [formData,     setFormData]    = useState(EMPTY_FORM);
+  const [editId,       setEditId]      = useState(null);
+  const [submitting,   setSubmitting]  = useState(false);
+  const [searchQuery,  setSearchQuery] = useState('');
+  const [filterActive, setFilterActive] = useState('all');
+
+  const filteredLessons = (lessons || []).filter((l) => {
+    if (filterActive === 'active'   && !l.isActive) return false;
+    if (filterActive === 'inactive' &&  l.isActive) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return l.mistake?.toLowerCase().includes(q) || l.lesson?.toLowerCase().includes(q) || l.agentType?.includes(q);
+    }
+    return true;
+  });
 
   function field(key) {
     return (e) => setFormData((prev) => ({ ...prev, [key]: e.target.value }));
@@ -104,11 +116,28 @@ export default function AdminLessons({ lessons, onSave, onToggleActive, onDelete
         </form>
       )}
 
-      {lessons.length === 0 ? (
+      <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
+        <input
+          type="search"
+          placeholder="חפש לפי שגיאה, לקח, סוכן..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ flex: 1, minWidth: 200, fontSize: 13, padding: '6px 10px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)' }}
+        />
+        {['all', 'active', 'inactive'].map((f) => (
+          <button key={f} onClick={() => setFilterActive(f)}
+            className={`sort-btn${filterActive === f ? ' sort-btn--active' : ''}`} style={{ fontSize: 12 }}>
+            {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'לא פעיל'}
+          </button>
+        ))}
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>{filteredLessons.length} / {lessons.length}</span>
+      </div>
+
+      {filteredLessons.length === 0 ? (
         <div className="admin-empty">{t('admin.noLessons')}</div>
       ) : (
         <div className="admin-lessons-list">
-          {lessons.map((l) => (
+          {filteredLessons.map((l) => (
             <div key={l._id} className={`admin-lesson-card${l.isActive ? '' : ' admin-lesson-card--inactive'}`}>
               <div className="admin-lesson-card__header">
                 <span className="admin-lesson-badge"

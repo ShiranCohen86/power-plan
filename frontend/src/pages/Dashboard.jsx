@@ -11,9 +11,9 @@ import { DASHBOARD_AUTO_REFRESH_MS, DASHBOARD_PAGE_SIZE } from '../config/consta
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectProjectsStatusFilter, selectLoadingMore,
-  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort, setStatusFilter,
+  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort, setStatusFilter, updateProject, addProject,
 } from '../store/slices/projectsSlice.js';
-import { restoreProject, cloneProject } from '../api/projects.api.js';
+import { restoreProject, cloneProject, archiveProject } from '../api/projects.api.js';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 const UNDO_TOAST_DURATION_MS = 5000;
@@ -92,12 +92,27 @@ function ProjectCard({ project, dispatch }) {
             e.stopPropagation();
             try {
               const clone = await cloneProject(project._id);
-              dispatch(require('../store/slices/projectsSlice.js').addProject(clone));
+              dispatch(addProject(clone));
             } catch { /* non-critical */ }
           }}
         >
           🔁
         </button>
+        {project.status !== 'archived' && !ACTIVE_STATUSES.has(project.status) && (
+          <button
+            className="project-card__archive"
+            title={t('dashboard.archive')}
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                await archiveProject(project._id);
+                dispatch(updateProject({ ...project, status: 'archived' }));
+              } catch { /* non-critical */ }
+            }}
+          >
+            📦
+          </button>
+        )}
       </div>
     </div>
   );
@@ -178,11 +193,12 @@ export default function Dashboard() {
         {/* Status filter chips */}
         <div className="dashboard-status-filters">
           {[
-            { key: '',          label: t('dashboard.filterAll') },
-            { key: 'planning',  label: t('dashboard.status.planning') },
-            { key: 'coding',    label: t('dashboard.status.coding') },
-            { key: 'live',      label: t('dashboard.status.live') },
-            { key: 'failed',    label: t('dashboard.status.failed') },
+            { key: '',           label: t('dashboard.filterAll') },
+            { key: 'planning',   label: t('dashboard.status.planning') },
+            { key: 'coding',     label: t('dashboard.status.coding') },
+            { key: 'live',       label: t('dashboard.status.live') },
+            { key: 'failed',     label: t('dashboard.status.failed') },
+            { key: 'archived',   label: t('dashboard.status.archived') },
           ].map(({ key, label }) => (
             <button
               key={key}

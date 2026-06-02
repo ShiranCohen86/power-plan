@@ -96,6 +96,7 @@
     "emptySub": "צור פרויקט חדש כדי להתחיל",
     "filterAll": "הכל",
     "clone": "שכפל פרויקט",
+    "archive": "ארכב פרויקט",
     "status": {
       "onboarding": "איסוף מידע",
       "planning": "בתכנון",
@@ -103,7 +104,8 @@
       "deploying": "בפריסה",
       "live": "פעיל",
       "failed": "נכשל",
-      "paused": "מושהה"
+      "paused": "מושהה",
+      "archived": "בארכיון"
     }
   },
   "newProject": {

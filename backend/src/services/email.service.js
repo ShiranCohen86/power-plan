@@ -1,5 +1,16 @@
-const env = require('../config/env');
+const env  = require('../config/env');
 const logger = require('../utils/logger');
+const User = require('../models/User');
+
+// Returns true if the user has this notification enabled (defaults to true when unset)
+async function _prefEnabled(userId, prefKey) {
+  if (!userId) return true;
+  try {
+    const user = await User.findById(userId).select('notifPrefs').lean();
+    const pref = user?.notifPrefs?.[prefKey];
+    return pref !== false;
+  } catch { return true; }
+}
 
 const DEFAULT_FROM = env.RESEND_FROM || 'Power Plan <hello@powerplan.app>';
 
@@ -28,7 +39,8 @@ async function _send({ to, subject, html, context, meta = {} }) {
 /**
  * Send "your app is live!" email to the project owner.
  */
-async function sendDeploymentSuccess({ to, userName, projectTitle, liveUrl, githubUrl }) {
+async function sendDeploymentSuccess({ to, userName, projectTitle, liveUrl, githubUrl, userId }) {
+  if (!await _prefEnabled(userId, 'deploymentSuccess')) return;
   await _send({
     to,
     subject: `האפליקציה שלך מוכנה! 🎉 — ${projectTitle}`,
@@ -41,7 +53,8 @@ async function sendDeploymentSuccess({ to, userName, projectTitle, liveUrl, gith
 /**
  * Send quota-exhausted warning email.
  */
-async function sendQuotaExhausted({ to, userName, projectTitle, plan }) {
+async function sendQuotaExhausted({ to, userName, projectTitle, plan, userId }) {
+  if (!await _prefEnabled(userId, 'quotaExhausted')) return;
   const subject = plan === 'starter'
     ? `נגמר הקרדיט ב-API שלך — ${projectTitle}`
     : `מגבלת שימוש הגיעה — ${projectTitle}`;
@@ -57,7 +70,8 @@ async function sendQuotaExhausted({ to, userName, projectTitle, plan }) {
 /**
  * Send "planning complete, codegen starting" email.
  */
-async function sendPlanningComplete({ to, userName, projectTitle }) {
+async function sendPlanningComplete({ to, userName, projectTitle, userId }) {
+  if (!await _prefEnabled(userId, 'planningComplete')) return;
   await _send({
     to,
     subject: `📋 האפיון של "${projectTitle}" הושלם — Claude מתחיל לכתוב קוד`,

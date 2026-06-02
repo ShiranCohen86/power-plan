@@ -12,7 +12,7 @@ const ProjectSchema = new mongoose.Schema(
     ownerId:           { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     status: {
       type: String,
-      enum: ['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'quota_paused', 'awaiting_credentials'],
+      enum: ['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'quota_paused', 'awaiting_credentials', 'archived'],
       default: 'onboarding',
       index: true,
     },

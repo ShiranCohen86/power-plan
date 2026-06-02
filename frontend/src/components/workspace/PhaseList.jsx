@@ -58,7 +58,13 @@ function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
         <button
           className="phase-item__rollback"
           title={lang === 'he' ? `חזור לשלב ${config.index + 1}` : `Roll back to phase ${config.index + 1}`}
-          onClick={(e) => { e.stopPropagation(); onRollback(config.index); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const msg = lang === 'he'
+              ? `חזרה לשלב ${config.index + 1} תמחק את כל התוצאות של השלבים הבאים. להמשיך?`
+              : `Rolling back to phase ${config.index + 1} will erase all later phase results. Continue?`;
+            if (window.confirm(msg)) onRollback(config.index);
+          }}
         >
           ↩
         </button>
