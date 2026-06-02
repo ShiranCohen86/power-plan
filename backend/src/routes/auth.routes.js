@@ -9,8 +9,8 @@ const { RATE_AUTH_WINDOW_MS, RATE_AUTH_MAX } = require('../config/constants');
 
 const authLimiter = rateLimit({
   windowMs: RATE_AUTH_WINDOW_MS,
-  max: RATE_AUTH_MAX,
-  standardHeaders: true,
+  limit: RATE_AUTH_MAX,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { error: 'Too many attempts — please try again later' },
 });

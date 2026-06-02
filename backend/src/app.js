@@ -93,8 +93,8 @@ app.use(requestLogger);
 
 const globalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: env.RATE_LIMIT_MAX,
-  standardHeaders: true,
+  limit: env.RATE_LIMIT_MAX,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   store: _buildRateLimitStore('rl:global:'),
 });
@@ -103,8 +103,8 @@ app.use('/api/v1', globalLimiter);
 
 const authLimiter = rateLimit({
   windowMs: RATE_AUTH_WINDOW_MS,
-  max: RATE_AUTH_MAX,
-  standardHeaders: true,
+  limit: RATE_AUTH_MAX,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { error: 'Too many attempts. Please try again in 15 minutes.' },
   store: _buildRateLimitStore('rl:auth:'),

@@ -193,7 +193,8 @@ exports.listUsers = asyncHandler(async (req, res) => {
 
   const filter = {};
   if (search) {
-    const re = new RegExp(search.replace(/[.*+?^${}()|[\]\]/g, '\$&'), 'i');
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(escaped, 'i');
     filter.$or = [{ name: re }, { email: re }];
   }
 
