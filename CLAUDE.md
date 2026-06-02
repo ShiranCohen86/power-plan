@@ -331,12 +331,12 @@ margin-left: 12px;
 | 9 | `dev-planner.agent.js` | ✅ |
 | 10 | `qa.agent.js` | ✅ |
 | 11 | `devops.agent.js` | ✅ |
+| 12 | `db-schema.agent.js` | — |
 | 13 | `backend-scaffold.agent.js` | — |
 | 14 | `frontend-scaffold.agent.js` | — |
-| 15 | `db-schema.agent.js` | — |
+| 15 | `tests.agent.js` | — |
 | 16 | `config.agent.js` | — |
-| 17 | `tests.agent.js` | — |
-| 18 | `review.agent.js` | — |
+| 17 | `review.agent.js` | — |
 
 Meeting members: Sarah (CTO, purple), David (PM, blue), Alex (UX, yellow), Maya (Backend, green), Tom (Frontend, red), Dana (QA, orange), Eli (DevOps, gray), Noa (Security, pink).
 
