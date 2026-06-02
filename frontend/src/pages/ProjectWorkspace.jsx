@@ -5,6 +5,9 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import { ALL_PHASES } from '../utils/phaseConfig';
 import { useWorkspaceState } from '../hooks/useWorkspaceState';
 import { downloadFiles } from '../api/files.api';
+import { generateReadme } from '../api/projects.api';
+import DocSearch from '../components/workspace/DocSearch';
+import WorkspaceTour from '../components/ui/WorkspaceTour';
 
 import PhaseList              from '../components/workspace/PhaseList';
 import FeatureErrorBoundary   from '../components/ui/FeatureErrorBoundary';
@@ -66,6 +69,35 @@ export default function ProjectWorkspace() {
   }
 
   const hasGeneratedFiles = ['live', 'coding', 'deploying'].includes(ws.project?.status);
+  const [generatingReadme, setGeneratingReadme] = useState(false);
+  const [showDocSearch, setShowDocSearch]       = useState(false);
+
+  // Ctrl+F to open doc search
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f' && ws.activeDoc) {
+        e.preventDefault();
+        setShowDocSearch(true);
+      }
+      if (e.key === 'Escape') setShowDocSearch(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ws.activeDoc]);
+
+  async function handleGenerateReadme() {
+    if (generatingReadme) return;
+    setGeneratingReadme(true);
+    try {
+      const { readme } = await generateReadme(id);
+      const blob = new Blob([readme], { type: 'text/markdown' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'README.md';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch { /* non-critical */ } finally { setGeneratingReadme(false); }
+  }
 
   // Pre-compute derived values used inside JSX to avoid IIFEs in render
   const activePhase = ws.activePhaseIndex !== null
@@ -104,6 +136,7 @@ export default function ProjectWorkspace() {
 
   return (
     <div className="workspace">
+      <WorkspaceTour />
       {/* Phase entry animation */}
       {ws.introCount !== null && (
         <PhaseIntroOverlay count={ws.introCount} done={ws.introCount >= 1} />
@@ -207,6 +240,9 @@ export default function ProjectWorkspace() {
 
           {ws.canStart && (
             <div className="workspace-start-btn">
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', textAlign: 'center', lineHeight: 1.4 }}>
+                ~{ws.estMinutes} דק׳ · $1-5 Anthropic API
+              </p>
               <button className="btn btn--primary btn--full" onClick={ws.handleStart}>
                 🚀 התחל את פייפליין התכנון
               </button>
@@ -231,6 +267,14 @@ export default function ProjectWorkspace() {
                 disabled={downloading}
               >
                 {downloading ? '⏳ מכין ZIP...' : '⬇️ הורד קוד מקור'}
+              </button>
+              <button
+                className="btn btn--secondary btn--full"
+                style={{ marginTop: 4 }}
+                onClick={handleGenerateReadme}
+                disabled={generatingReadme}
+              >
+                {generatingReadme ? '⏳ יוצר README...' : '📄 צור README.md'}
               </button>
             </div>
           )}
@@ -276,6 +320,11 @@ export default function ProjectWorkspace() {
             </div>
           )}
 
+          <div style={{ position: 'relative' }}>
+            {showDocSearch && ws.activeDoc && (
+              <DocSearch content={ws.activeDoc.content} onClose={() => setShowDocSearch(false)} />
+            )}
+          </div>
           <main className="workspace-main" ref={ws.mainRef}>
             {ws.loading ? (
               <div>

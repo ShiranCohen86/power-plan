@@ -143,6 +143,23 @@ function LiveFeed({
             {t('workspace.feed.tabFiles')}
           </button>
         )}
+        {meetingMsgs.length > 0 && (
+          <button
+            className="live-feed__tab"
+            title={t('workspace.feed.downloadTranscript')}
+            onClick={() => {
+              const lines = meetingMsgs
+                .filter((m) => !m._isSeparator)
+                .map((m) => `[${m.displayName || '?'}] ${m.message}`)
+                .join('\n');
+              const blob = new Blob([lines], { type: 'text/plain' });
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+              a.download = 'meeting-transcript.txt'; document.body.appendChild(a); a.click(); a.remove();
+            }}
+          >
+            ⬇️
+          </button>
+        )}
       </div>
 
       {activeTab === 'meeting' && (

@@ -215,3 +215,34 @@ exports.archiveProject = asyncHandler(async (req, res) => {
   await project.save();
   res.json({ ok: true, status: 'archived' });
 });
+
+exports.generateReadme = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!project) throw ApiError.notFound('Project not found');
+  if (!['live', 'coding', 'deploying'].includes(project.status)) {
+    throw ApiError.badRequest('README can only be generated after code generation');
+  }
+
+  const Document = require('../models/Document');
+  const Phase    = require('../models/Phase');
+
+  const phases = await Phase.find({ projectId: req.params.id, status: 'completed' }).lean();
+  const docs   = await Document.find({ projectId: req.params.id }).select('type content summary').limit(6).lean();
+
+  const docSummaries = docs.map((d) => `## ${d.type}\n${d.summary || d.content?.slice(0, 300)}`).join('\n\n');
+
+  const { getPlatformClient } = require('../services/ai/claude.client');
+  const client = getPlatformClient();
+
+  const response = await client.messages.create({
+    model:      require('../config/env').ANTHROPIC_MODEL_STARTER,
+    max_tokens: 1500,
+    messages: [{
+      role:    'user',
+      content: `Generate a professional README.md for this project:\n\nTitle: ${project.title}\nIdea: ${project.idea}\n\n${docSummaries}\n\nOutput only the markdown README, no commentary.`,
+    }],
+  });
+
+  const readme = response.content[0]?.text || '# README\n\nGenerated README not available.';
+  res.json({ readme });
+});

@@ -189,7 +189,8 @@
       "meetingAfterPhase": "הישיבה הפנימית תתחיל לאחר השלמת כל שלב",
       "decisionLabel": "✅ החלטה",
       "tabFiles": "📁 קבצים",
-      "noFiles": "אין קבצים שנוצרו עדיין."
+      "noFiles": "אין קבצים שנוצרו עדיין.",
+      "downloadTranscript": "הורד תמלול ישיבה"
     },
     "creds": {
       "title": "🔧 שירותים נדרשים לפרויקט",
@@ -240,6 +241,17 @@
     "claudeTyping": "Claude מקליד...",
     "allDone": "מעולה! אני מוכן להתחיל לתכנן את האפליקציה שלך",
     "startPipeline": "התחל תכנון"
+  },
+  "profile": {
+    "title": "הפרופיל שלי",
+    "infoSection": "פרטים אישיים",
+    "accountSection": "פרטי חשבון",
+    "email": "אימייל",
+    "name": "שם מלא",
+    "saved": "נשמר!",
+    "role": "תפקיד",
+    "plan": "תוכנית",
+    "joined": "הצטרף"
   },
   "common": {
     "loading": "טוען...",
@@ -300,6 +312,12 @@
     "totpVerifyBtn": "אפשר 2FA",
     "totpDisableBtn": "השבת 2FA",
     "totpDisableConfirm": "הזן את הקוד הנוכחי שלך לאישור הסרה:",
+    "webhookSection": "Webhook",
+    "webhookDesc": "קבל התראות HTTP כאשר אירועים מרכזיים מתרחשים (פריסה, כישלון וכו').",
+    "webhookHttps": "נדרש HTTPS URL",
+    "appearanceSection": "מראה",
+    "switchLight": "עבור למצב בהיר",
+    "switchDark": "עבור למצב כהה",
     "notifSection": "התראות במייל",
     "notifDesc": "בחר אילו אירועים ישלחו אליך הודעות מייל.",
     "notif": {

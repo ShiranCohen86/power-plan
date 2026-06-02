@@ -189,7 +189,8 @@
       "meetingAfterPhase": "The internal meeting will begin after each phase is completed",
       "decisionLabel": "✅ Decision",
       "tabFiles": "📁 Files",
-      "noFiles": "No generated files yet."
+      "noFiles": "No generated files yet.",
+      "downloadTranscript": "Download meeting transcript"
     },
     "creds": {
       "title": "🔧 Services Required for Project",
@@ -240,6 +241,17 @@
     "claudeTyping": "Claude is typing...",
     "allDone": "Great! I'm ready to start planning your app",
     "startPipeline": "Start Planning"
+  },
+  "profile": {
+    "title": "My Profile",
+    "infoSection": "Personal Info",
+    "accountSection": "Account Details",
+    "email": "Email",
+    "name": "Full name",
+    "saved": "Saved!",
+    "role": "Role",
+    "plan": "Plan",
+    "joined": "Joined"
   },
   "common": {
     "loading": "Loading...",
@@ -300,6 +312,12 @@
     "totpVerifyBtn": "Enable 2FA",
     "totpDisableBtn": "Disable 2FA",
     "totpDisableConfirm": "Enter your current code to confirm removal:",
+    "webhookSection": "Webhook",
+    "webhookDesc": "Receive HTTP notifications when key events occur (deployment, failure, etc.).",
+    "webhookHttps": "HTTPS URL required",
+    "appearanceSection": "Appearance",
+    "switchLight": "Switch to light mode",
+    "switchDark": "Switch to dark mode",
     "notifSection": "Email Notifications",
     "notifDesc": "Choose which events send you email notifications.",
     "notif": {

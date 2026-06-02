@@ -241,3 +241,46 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
   res.json({ ok: true, user: { _id: user._id, name: user.name, email: user.email, role: user.role, plan: user.plan, isActive: user.isActive } });
 });
+
+// ── Agent log CSV export ─────────────────────────────────────────────────────
+
+exports.exportAgentLogs = asyncHandler(async (req, res) => {
+  const projectId = req.query.projectId;
+  const filter    = projectId ? { projectId } : {};
+  const logs      = await AgentLog.find(filter).sort({ timestamp: -1 }).limit(5000).lean();
+
+  const rows = ['timestamp,agentName,event,message,projectId'];
+  for (const l of logs) {
+    const ts  = new Date(l.timestamp || l.createdAt).toISOString();
+    const msg = (l.message || '').replace(/"/g, '""');
+    rows.push(`"${ts}","${l.agentName || ''}","${l.event || ''}","${msg}","${l.projectId}"`);
+  }
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="agent-logs.csv"');
+  res.send(rows.join('\n'));
+});
+
+// ── Admin impersonation ──────────────────────────────────────────────────────
+// Issues a short-lived access token for the target user.
+// The impersonating admin's ID is recorded in the token for audit.
+
+exports.impersonateUser = asyncHandler(async (req, res) => {
+  const target = await User.findById(req.params.id).lean();
+  if (!target) throw require('../utils/ApiError').notFound('User not found');
+  if (!target.isActive) throw require('../utils/ApiError').badRequest('Cannot impersonate inactive user');
+
+  const env = require('../config/env');
+  const jwt = require('jsonwebtoken');
+  const accessToken = jwt.sign(
+    { sub: String(target._id), role: target.role, _impersonatedBy: req.user.id },
+    env.JWT_SECRET,
+    { expiresIn: '1h' },
+  );
+
+  require('../utils/logger').warn('admin: impersonation started', {
+    adminId: req.user.id, targetId: target._id, targetEmail: target.email,
+  });
+
+  res.json({ accessToken, user: { _id: target._id, name: target.name, email: target.email, role: target.role } });
+});

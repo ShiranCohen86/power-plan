@@ -15,7 +15,8 @@ router.get   ('/',                                          ctrl.list);
 router.get   ('/:id', validate(projectValidator.objectId), ctrl.getOne);
 router.delete('/:id',        validate(projectValidator.objectId), ctrl.deleteProject);
 router.post  ('/:id/clone',   validate(projectValidator.objectId), ctrl.cloneProject);
-router.patch ('/:id/archive', validate(projectValidator.objectId), ctrl.archiveProject);
+router.patch ('/:id/archive',        validate(projectValidator.objectId), ctrl.archiveProject);
+router.post  ('/:id/generate-readme', validate(projectValidator.objectId), ctrl.generateReadme);
 router.patch ('/:id/restore', validate(projectValidator.objectId), ctrl.restoreProject);
 
 // ── Discovery ─────────────────────────────────────────────────────────────────

@@ -36,7 +36,7 @@ exports.updatePlan = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('+settings.anthropicApiKey');
 
   if (plan === 'starter' && !user.settings?.anthropicApiKey) {
-    throw ApiError.badRequest('כדי להשתמש בתוכנית Starter עליך קודם להזין מפתח API אישי.');
+    throw ApiError.badRequest('An API key is required before switching to the Starter plan.');
   }
 
   user.plan = plan;
@@ -50,7 +50,7 @@ exports.updateApiKey = asyncHandler(async (req, res) => {
   if (!apiKey || typeof apiKey !== 'string') throw ApiError.badRequest('apiKey required');
 
   if (!apiKey.startsWith('sk-ant-') || apiKey.length < 40) {
-    throw ApiError.badRequest('מפתח API לא תקין — צריך להתחיל עם "sk-ant-" ולהיות באורך מלא');
+    throw ApiError.badRequest('Invalid API key — must start with "sk-ant-" and be full length');
   }
 
   const user = await User.findById(req.user.id);
@@ -138,7 +138,7 @@ exports.getRateLimit = asyncHandler(async (req, res) => {
 exports.validateApiKey = asyncHandler(async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey?.startsWith('sk-ant-')) {
-    return res.json({ valid: false, error: 'מפתח לא תקין — חייב להתחיל עם sk-ant-' });
+    return res.json({ valid: false, error: 'Invalid key — must start with sk-ant-' });
   }
   try {
     const client = new Anthropic({ apiKey });
@@ -152,11 +152,11 @@ exports.validateApiKey = asyncHandler(async (req, res) => {
   } catch (err) {
     const msg = err?.message || '';
     if (msg.includes('authentication') || msg.includes('invalid') || msg.includes('401')) {
-      res.json({ valid: false, error: 'מפתח לא תקין — בדוק שהעתקת נכון' });
+      res.json({ valid: false, error: 'Invalid key — check that you copied it correctly' });
     } else if (msg.includes('credit') || msg.includes('billing') || msg.includes('balance')) {
-      res.json({ valid: false, error: 'מפתח תקין אך אין קרדיט — טען קרדיט ב-console.anthropic.com' });
+      res.json({ valid: false, error: 'Key valid but no credits — add credits at console.anthropic.com' });
     } else {
-      res.json({ valid: false, error: 'לא ניתן לאמת את המפתח כעת — נסה שוב' });
+      res.json({ valid: false, error: 'Could not verify key at this time — try again' });
     }
   }
 });
@@ -185,5 +185,24 @@ exports.updateNotifPrefs = asyncHandler(async (req, res) => {
     if (typeof req.body[k] === 'boolean') update[`notifPrefs.${k}`] = req.body[k];
   }
   await User.updateOne({ _id: req.user.id }, { $set: update });
+  res.json({ ok: true });
+});
+
+exports.updateWebhookUrl = asyncHandler(async (req, res) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string') throw ApiError.badRequest('url required');
+  try { new URL(url); } catch { throw ApiError.badRequest('Invalid URL format'); }
+  if (!url.startsWith('https://')) throw ApiError.badRequest('Webhook URL must use HTTPS');
+  const user = await User.findById(req.user.id);
+  if (!user.settings) user.settings = {};
+  user.settings.webhookUrl = url;
+  await user.save();
+  res.json({ ok: true, webhookUrl: url.slice(0, 40) + '...' });
+});
+
+exports.deleteWebhookUrl = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user.settings) user.settings.webhookUrl = undefined;
+  await user.save();
   res.json({ ok: true });
 });

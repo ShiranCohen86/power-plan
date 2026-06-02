@@ -28,10 +28,11 @@ module.exports = function errorMiddleware(err, req, res, next) {
     message = 'Validation failed';
   }
 
+  const reqId = req.headers['x-request-id'] || req.id || '-';
   if (status >= 500) {
-    logger.error('Server error', { err: err.message, stack: err.stack, path: req.originalUrl });
+    logger.error('Server error', { reqId, err: err.message, stack: err.stack, path: req.originalUrl, userId: req.user?.id });
   } else {
-    logger.warn('Client error', { status, message, path: req.originalUrl });
+    logger.warn('Client error', { reqId, status, message, path: req.originalUrl, userId: req.user?.id });
   }
 
   res.status(status).json({

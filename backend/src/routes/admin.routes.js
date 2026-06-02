@@ -19,4 +19,10 @@ router.delete('/lessons/:id',    ctrl.deleteLesson);
 router.get   ('/users',          ctrl.listUsers);
 router.patch ('/users/:id',      ctrl.updateUser);
 
+// Agent log export
+router.get   ('/logs/export',        ctrl.exportAgentLogs);
+
+// Impersonation
+router.post  ('/users/:id/impersonate', ctrl.impersonateUser);
+
 module.exports = router;

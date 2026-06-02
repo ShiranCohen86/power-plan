@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import Skeleton from '@mui/material/Skeleton';
+import { useAppTheme } from '../context/ThemeContext.jsx';
 import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
 import { BIOMETRIC_STORAGE_KEY } from '../config/constants.js';
 import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
   updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
-  getNotifPrefs, updateNotifPrefs,
+  getNotifPrefs, updateNotifPrefs, updateWebhookUrl, deleteWebhookUrl,
 } from '../api/settings.api';
 import { webAuthnRegisterStart, webAuthnRegisterFinish, getSessions, revokeSession, totpSetup, totpEnable, totpDisable } from '../api/auth.api.js';
 
@@ -409,6 +411,61 @@ function BiometricSection() {
   );
 }
 
+function WebhookSection() {
+  const { t } = useTranslation();
+  const [url,  setUrl]  = useState('');
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy]   = useState(false);
+  const [err,  setErr]    = useState('');
+
+  async function handleSave() {
+    if (!url.startsWith('https://')) { setErr(t('settings.webhookHttps')); return; }
+    setBusy(true); setErr('');
+    try {
+      await updateWebhookUrl(url);
+      setSaved(true); setUrl(''); setTimeout(() => setSaved(false), 2000);
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.webhookSection')}</h2>
+      <p className="settings-section__desc">{t('settings.webhookDesc')}</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          type="url" value={url} onChange={(e) => { setUrl(e.target.value); setSaved(false); setErr(''); }}
+          placeholder="https://your-server.com/webhook"
+          className="settings-apikey__input" style={{ flex: 1, minWidth: 220 }} dir="ltr"
+        />
+        <button className="btn btn--primary" onClick={handleSave} disabled={busy || !url}>
+          {busy ? '...' : t('common.save')}
+        </button>
+        <button className="btn btn--secondary" onClick={async () => { await deleteWebhookUrl(); setUrl(''); }}>
+          {t('common.delete')}
+        </button>
+      </div>
+      {err  && <p style={{ color: 'var(--danger)',   fontSize: 13, marginTop: 6 }}>{err}</p>}
+      {saved && <p style={{ color: 'var(--success, #22c55e)', fontSize: 13, marginTop: 6 }}>✅ Webhook URL saved</p>}
+    </section>
+  );
+}
+
+function AppearanceSection() {
+  const { t }               = useTranslation();
+  const { mode, toggleTheme } = useAppTheme();
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.appearanceSection')}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 14 }}>{mode === 'dark' ? '🌙 מצב כהה' : '☀️ מצב בהיר'}</span>
+        <button className="btn btn--secondary" onClick={toggleTheme} style={{ fontSize: 13 }}>
+          {mode === 'dark' ? t('settings.switchLight') : t('settings.switchDark')}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export default function Settings() {
   const { t } = useTranslation();
   const [settings,  setSettings]  = useState(null);
@@ -434,7 +491,14 @@ export default function Settings() {
       {loadError && <div className="settings-page__load-error">{loadError}</div>}
 
       {!settings && !loadError && (
-        <div className="settings-page__loading"><div className="pwa-spinner" /></div>
+        <div className="settings-page__body" style={{ paddingTop: 16 }}>
+          {[1,2,3].map((i) => (
+            <div key={i} style={{ marginBottom: 24 }}>
+              <Skeleton variant="text" width="40%" height={22} sx={{ mb: 1 }} />
+              <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
+            </div>
+          ))}
+        </div>
       )}
 
       {settings && !settings.hasApiKey && (
@@ -456,9 +520,11 @@ export default function Settings() {
 
       {settings && (
         <div className="settings-page__body">
+          <AppearanceSection />
           <BiometricSection />
           <TotpSection totpEnabled={!!settings?.totpEnabled} />
           <NotifPrefsSection />
+          <WebhookSection />
           <SessionsSection />
           <section className="settings-section">
             <h2 className="settings-section__title">{t('settings.apiSection')}</h2>

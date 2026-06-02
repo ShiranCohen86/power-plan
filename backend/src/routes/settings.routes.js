@@ -16,5 +16,7 @@ router.put ('/render-token',  ctrl.updateRenderToken);
 router.delete('/render-token',ctrl.deleteRenderToken);
 router.get   ('/notification-prefs',  ctrl.getNotifPrefs);
 router.patch ('/notification-prefs',  ctrl.updateNotifPrefs);
+router.put   ('/webhook',             ctrl.updateWebhookUrl);
+router.delete('/webhook',             ctrl.deleteWebhookUrl);
 
 module.exports = router;

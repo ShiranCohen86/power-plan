@@ -19,6 +19,7 @@ const ProjectWorkspace = lazy(() => import('./pages/ProjectWorkspace.jsx'));
 const TaskManagement   = lazy(() => import('./pages/TaskManagement.jsx'));
 const Settings         = lazy(() => import('./pages/Settings.jsx'));
 const Admin            = lazy(() => import('./pages/Admin.jsx'));
+const Profile          = lazy(() => import('./pages/Profile.jsx'));
 const Status           = lazy(() => import('./pages/Status.jsx'));
 const NotFound         = lazy(() => import('./pages/NotFound.jsx'));
 
@@ -162,6 +163,7 @@ export default function App() {
           <Route path="/projects/:id/workspace" element={<ProtectedRoute><AppShell><PageBoundary><ProjectWorkspace /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/projects/:id/tasks"     element={<ProtectedRoute><AppShell><PageBoundary><TaskManagement /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/settings"               element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
+          <Route path="/profile"                element={<ProtectedRoute><AppShell><PageBoundary><Profile /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/admin"                  element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

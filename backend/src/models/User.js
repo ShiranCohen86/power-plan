@@ -50,6 +50,7 @@ const UserSchema = new mongoose.Schema(
       anthropicApiKey: { type: String, select: false },
       githubToken:     { type: String, select: false },
       renderApiKey:    { type: String, select: false },
+      webhookUrl:      { type: String, select: false },
     },
 
     // WebAuthn / Passkeys
