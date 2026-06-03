@@ -141,6 +141,21 @@ exports.searchPhases = asyncHandler(async (req, res) => {
   res.json(results);
 });
 
+// Sprint 105: pipeline cost estimate (based on historical avg tokens × pricing)
+exports.getCostEstimate = asyncHandler(async (req, res) => {
+  const Phase          = require('../models/Phase');
+  const { tokensToUSD } = require('../services/usage.service');
+  const agg   = await Phase.aggregate([
+    { $match: { status: 'completed' } },
+    { $group: { _id: null, avgTokensPerPhase: { $avg: '$tokensUsed' }, count: { $sum: 1 } } },
+  ]);
+  const avgPerPhase     = agg[0]?.avgTokensPerPhase || 4000;
+  const totalPhases     = 19;
+  const estimatedTokens = Math.round(avgPerPhase * totalPhases);
+  const estimatedUSD    = tokensToUSD(estimatedTokens);
+  res.json({ estimatedTokens, estimatedUSD, avgTokensPerPhase: Math.round(avgPerPhase), totalPhases });
+});
+
 // Sprint 106: pipeline time estimate based on historical avg
 exports.getTimeEstimate = asyncHandler(async (req, res) => {
   const Phase = require('../models/Phase');
