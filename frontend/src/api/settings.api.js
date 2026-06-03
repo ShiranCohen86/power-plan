@@ -32,5 +32,31 @@ export const getRateLimit = () =>
 
 export const getNotifPrefs    = ()      => safeRequest({ method: 'get',    url: '/settings/notification-prefs' });
 export const updateNotifPrefs = (prefs) => safeRequest({ method: 'patch',  url: '/settings/notification-prefs', data: prefs });
-export const updateWebhookUrl = (url)   => safeRequest({ method: 'put',    url: '/settings/webhook', data: { url } });
-export const deleteWebhookUrl = ()      => safeRequest({ method: 'delete', url: '/settings/webhook' });
+export const updateWebhookUrl       = (url) => safeRequest({ method: 'put',    url: '/settings/webhook', data: { url } });
+export const deleteWebhookUrl       = ()    => safeRequest({ method: 'delete', url: '/settings/webhook' });
+
+// Sprint 131-133: Webhook delivery
+export const getWebhookDeliveries   = ()    => safeRequest({ method: 'get',    url: '/settings/webhook/deliveries' });
+export const testWebhook            = ()    => safeRequest({ method: 'post',   url: '/settings/webhook/test' });
+
+// Sprint 134: Slack
+export const updateSlackWebhook     = (url) => safeRequest({ method: 'put',    url: '/settings/slack', data: { url } });
+export const deleteSlackWebhook     = ()    => safeRequest({ method: 'delete', url: '/settings/slack' });
+
+// Sprint 111: usage
+export const getUsage               = ()    => safeRequest({ method: 'get',    url: '/settings/usage' });
+export const checkFreeTierLimit     = ()    => safeRequest({ method: 'get',    url: '/settings/usage/free-tier' });
+
+// Sprint 95: dashboard stats
+export const getDashboardStats      = ()    => safeRequest({ method: 'get',    url: '/settings/stats' });
+
+// Sprint 137-138: public API keys
+export const listApiKeys            = ()    => safeRequest({ method: 'get',    url: '/settings/api-keys' });
+export const createApiKey           = (name) => safeRequest({ method: 'post',  url: '/settings/api-keys', data: { name } });
+export const revokeApiKey           = (id)  => safeRequest({ method: 'delete', url: `/settings/api-keys/${id}` });
+
+// Sprint 141: GDPR export
+export const exportMyData           = ()    => `/api/settings/export/my-data`;
+
+// Sprint 145: privacy
+export const getPrivacySummary      = ()    => safeRequest({ method: 'get',    url: '/settings/privacy' });

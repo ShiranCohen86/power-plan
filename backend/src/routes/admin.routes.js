@@ -1,8 +1,10 @@
-const express           = require('express');
-const router            = express.Router();
+const express          = require('express');
+const router           = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { authorize }    = require('../middleware/rbac');
 const ctrl             = require('../controllers/admin.controller');
+const usageCtrl        = require('../controllers/usage.controller');
+const compCtrl         = require('../controllers/compliance.controller');
 
 router.use(authenticate, authorize('admin'));
 
@@ -30,5 +32,14 @@ router.delete('/lessons/bulk',          ctrl.bulkDeleteLessons);
 
 // Audit log
 router.get   ('/audit',                 ctrl.getAuditLog);
+
+// Sprint 116: all users' usage (admin)
+router.get   ('/usage',                 usageCtrl.getAllUsersUsage);
+
+// Sprint 142: audit log CSV export
+router.get   ('/audit/export',          compCtrl.exportAuditLogCsv);
+
+// Sprint 148: system health
+router.get   ('/system/health',         compCtrl.systemHealth);
 
 module.exports = router;

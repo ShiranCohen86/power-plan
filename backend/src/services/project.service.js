@@ -17,14 +17,15 @@ async function create({ title, idea, ownerId }) {
 }
 
 const SORT_MAP = {
-  date:       { createdAt: -1 },
-  status:     { status: 1, createdAt: -1 },
-  completion: { completionPercent: -1, createdAt: -1 },
+  date:       { isPinned: -1, createdAt: -1 },
+  status:     { isPinned: -1, status: 1, createdAt: -1 },
+  completion: { isPinned: -1, completionPercent: -1, createdAt: -1 },
+  tokens:     { isPinned: -1, totalTokensUsed: -1, createdAt: -1 },
 };
 
 const VALID_STATUSES = new Set(['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'archived']);
 
-async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date', status = '' } = {}) {
+async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date', status = '', tags = '' } = {}) {
   const query = { ownerId, deletedAt: null };
   if (search) {
     const escaped = escapeRegex(search);
@@ -32,6 +33,10 @@ async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 
     query.$or = [{ title: re }, { idea: re }];
   }
   if (status && VALID_STATUSES.has(status)) query.status = status;
+  if (tags) {
+    const tagList = tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+    if (tagList.length) query.tags = { $in: tagList };
+  }
   const sortQuery = SORT_MAP[sort] || SORT_MAP.date;
   const skip = (page - 1) * limit;
   const [items, total] = await Promise.all([

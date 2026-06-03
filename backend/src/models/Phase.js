@@ -19,6 +19,8 @@ const PhaseSchema = new Schema({
   errorMessage:    String,
   retryCount:      { type: Number, default: 0 },
   refineCount:     { type: Number, default: 0 },
+  // Sprint 101: phase output rating (1=thumbs down, 2=thumbs up)
+  rating:          { type: Number, enum: [1, 2], default: null },
 }, { timestamps: true });
 
 PhaseSchema.index({ projectId: 1, index: 1 }, { unique: true });

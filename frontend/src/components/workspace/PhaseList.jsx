@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PLANNING_PHASES, CODEGEN_PHASES } from '../../utils/phaseConfig';
 import { useLanguage } from '../../context/LanguageContext.jsx';
+import PhaseRating from './PhaseRating.jsx';
 
 const STATUS_ICON = {
   pending:           '⏳',
@@ -37,7 +38,7 @@ function PhaseErrorModal({ message, onClose }) {
   );
 }
 
-function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
+function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang, projectId }) {
   const status    = phaseData?.status || 'pending';
   const icon      = STATUS_ICON[status] || '⏳';
   const tokens    = phaseData?.tokensUsed;
@@ -84,6 +85,10 @@ function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
           <PhaseErrorModal message={phaseData.errorMessage} onClose={() => setShowError(false)} />
         )}
       </button>
+      {/* Sprint 101: rating */}
+      {status === 'completed' && projectId && (
+        <PhaseRating projectId={projectId} phaseIndex={config.index} initialRating={phaseData?.rating ?? null} />
+      )}
       {onRollback && status === 'completed' && (
         <button
           className="phase-item__rollback"
@@ -103,7 +108,7 @@ function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
   );
 }
 
-function PhaseList({ phases, activeIndex, onSelect, onRollback }) {
+function PhaseList({ phases, activeIndex, onSelect, onRollback, projectId }) {
   const { lang } = useLanguage();
   const phaseMap = Object.fromEntries(phases.map((p) => [p.index, p]));
 
@@ -123,6 +128,7 @@ function PhaseList({ phases, activeIndex, onSelect, onRollback }) {
             onClick={() => onSelect(cfg.index)}
             onRollback={onRollback}
             lang={lang}
+            projectId={projectId}
           />
         ))}
       </div>
@@ -137,6 +143,7 @@ function PhaseList({ phases, activeIndex, onSelect, onRollback }) {
             isActive={activeIndex === cfg.index}
             onClick={() => onSelect(cfg.index)}
             onRollback={onRollback}
+            projectId={projectId}
             lang={lang}
           />
         ))}

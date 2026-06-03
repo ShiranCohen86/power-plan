@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
 import BottomSheet from './components/ui/BottomSheet.jsx';
 import OfflineBanner from './components/ui/OfflineBanner.jsx';
+import CookieConsent from './components/ui/CookieConsent.jsx'; // Sprint 144
 import {
   InstallSheetContent, UpdateSheetContent, VersionSheetContent,
   isStandalone, isIOS, INSTALL_DISMISSED_KEY,
@@ -22,6 +23,7 @@ const Admin            = lazy(() => import('./pages/Admin.jsx'));
 const Profile          = lazy(() => import('./pages/Profile.jsx'));
 const Status           = lazy(() => import('./pages/Status.jsx'));
 const NotFound         = lazy(() => import('./pages/NotFound.jsx'));
+const SharedProject    = lazy(() => import('./pages/SharedProject.jsx')); // Sprint 123
 
 const VERSION_KEY = 'pwa-version';
 
@@ -135,6 +137,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <OfflineBanner />
+      <CookieConsent />
       {sheet && (
         <BottomSheet onClose={closeSheet}>
           {sheet === 'install' && <InstallSheetContent deferredPrompt={deferredPrompt} onClose={closeSheet} />}
@@ -165,6 +168,8 @@ export default function App() {
           <Route path="/settings"               element={<ProtectedRoute><AppShell><PageBoundary><Settings /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/profile"                element={<ProtectedRoute><AppShell><PageBoundary><Profile /></PageBoundary></AppShell></ProtectedRoute>} />
           <Route path="/admin"                  element={<ProtectedRoute roles={['admin']}><AppShell><PageBoundary><Admin /></PageBoundary></AppShell></ProtectedRoute>} />
+          {/* Sprint 123: public share viewer */}
+          <Route path="/share/:shareToken" element={<PageBoundary><SharedProject /></PageBoundary>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

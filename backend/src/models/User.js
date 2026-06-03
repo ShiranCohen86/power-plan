@@ -47,10 +47,11 @@ const UserSchema = new mongoose.Schema(
     lastLogin:            Date,
     sessions:             { type: [SessionSchema], default: [] },
     settings: {
-      anthropicApiKey: { type: String, select: false },
-      githubToken:     { type: String, select: false },
-      renderApiKey:    { type: String, select: false },
-      webhookUrl:      { type: String, select: false },
+      anthropicApiKey:  { type: String, select: false },
+      githubToken:      { type: String, select: false },
+      renderApiKey:     { type: String, select: false },
+      webhookUrl:       { type: String, select: false },
+      slackWebhookUrl:  { type: String, select: false }, // Sprint 134: Slack integration
     },
 
     // WebAuthn / Passkeys

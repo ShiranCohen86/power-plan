@@ -1,0 +1,258 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ── Sprint 101: Phase rating ──────────────────────────────────────────────────
+
+.phase-rating {
+  display: flex; gap: 4px; align-items: center;
+
+  &__btn {
+    background: none; border: none; font-size: 16px; cursor: pointer;
+    padding: 2px 4px; border-radius: $radius-sm; opacity: .4;
+    transition: opacity .15s, transform .15s; min-height: auto;
+    &:hover { opacity: 1; transform: scale(1.2); }
+    &--active-up   { opacity: 1; }
+    &--active-down { opacity: 1; }
+    &:disabled { cursor: default; }
+  }
+}
+
+// ── Sprint 107: Meeting transcript link ───────────────────────────────────────
+
+.phase-transcript-btn {
+  font-size: 11px; color: var(--text-muted); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 6px; border-radius: $radius-sm; border: 1px solid var(--border);
+  background: var(--surface-2); cursor: pointer;
+  &:hover { color: var(--text); border-color: var(--border-strong); }
+}
+
+// ── Sprint 121-122: Share modal ───────────────────────────────────────────────
+
+.share-modal__body { padding: 8px 0; }
+.share-modal__desc { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+
+.share-modal__link-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 12px;
+}
+.share-modal__link-input {
+  flex: 1; font-size: 12px; padding: 7px 10px;
+  background: var(--surface-3); border: 1px solid var(--border); color: var(--text);
+  border-radius: $radius-sm; font-family: monospace; cursor: pointer;
+}
+.share-modal__disabled-hint { font-size: 13px; color: var(--text-muted); margin: 0 0 12px; }
+.share-modal__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+// ── Sprint 127: Phase comments ────────────────────────────────────────────────
+
+.phase-comments {
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+}
+.phase-comments__title { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+.phase-comments__empty { font-size: 13px; color: var(--text-muted); }
+.phase-comments__list  { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.phase-comment {
+  background: var(--surface-2); border-radius: $radius; padding: 10px 12px;
+  border: 1px solid var(--border);
+
+  &__header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  &__author  { font-size: 13px; font-weight: 600; }
+  &__time    { font-size: 11px; color: var(--text-muted); }
+  &__delete  {
+    margin-inline-start: auto; background: none; border: none; cursor: pointer;
+    font-size: 12px; color: var(--text-muted); padding: 0 2px; min-height: auto;
+    &:hover { color: var(--danger); }
+  }
+  &__text    { font-size: 13px; color: var(--text); margin: 0; line-height: 1.5; }
+}
+
+.phase-comments__form {
+  margin-top: 10px; display: flex; gap: 8px; align-items: flex-end;
+}
+.phase-comments__input {
+  flex: 1; font-size: 13px; padding: 7px 10px; background: var(--surface-2);
+  border: 1px solid var(--border); color: var(--text); border-radius: $radius-sm;
+  resize: vertical; font-family: inherit;
+  &:focus { outline: none; border-color: var(--brand-primary); }
+}
+
+// ── Sprint 111-120: Usage dashboard ──────────────────────────────────────────
+
+.usage-dashboard {
+  &__title { font-size: 16px; font-weight: 700; margin: 0 0 16px; }
+  &__cost  { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+  &__loading { color: var(--text-muted); font-size: 13px; }
+}
+
+.usage-stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px;
+}
+.usage-stat-card {
+  @include surface-card;
+  padding: 12px 16px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  &__value { font-size: var(--text-lg); font-weight: 800; }
+  &__label { font-size: var(--text-xs); color: var(--text-muted); }
+}
+
+.usage-daily-chart {
+  margin-bottom: 16px;
+  &__title { font-size: 13px; font-weight: 600; margin: 0 0 8px; }
+  &__bars  { display: flex; align-items: flex-end; gap: 8px; height: 90px; }
+}
+.usage-daily-bar {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1;
+  &__fill  { width: 100%; background: var(--brand-primary); border-radius: 3px 3px 0 0; min-height: 2px; }
+  &__label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+}
+
+.usage-bar {
+  flex: 1; height: 6px; background: var(--surface-4); border-radius: 99px; overflow: hidden;
+  &__fill { height: 100%; border-radius: 99px; transition: width .4s ease; }
+}
+
+.usage-by-project {
+  &__title { font-size: 13px; font-weight: 600; margin: 0 0 8px; }
+  &__list  { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+}
+.usage-project-row {
+  display: flex; align-items: center; gap: 10px; font-size: 13px;
+  &__title  { min-width: 120px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__tokens { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  &__usd    { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+}
+
+// ── Sprint 131-133: Webhook delivery log ──────────────────────────────────────
+
+.webhook-delivery-log {
+  &__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  &__empty  { color: var(--text-muted); font-size: 13px; }
+}
+
+.delivery-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  th { text-align: start; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--border-subtle, var(--border)); }
+}
+.delivery-row {
+  &--ok   td:first-child { color: #22c55e; }
+  &--fail td:first-child { color: var(--danger); }
+  &__event { font-family: monospace; font-size: 12px; }
+}
+
+// ── Sprint 137-138: Public API keys ──────────────────────────────────────────
+
+.api-keys-section {
+  &__title { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+  &__desc  { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+  &__form  { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  &__input { flex: 1; min-width: 180px; font-size: 13px; }
+}
+
+.api-keys-section__new-key-banner {
+  background: rgba(22,163,74,.1); border: 1px solid rgba(22,163,74,.3); border-radius: $radius;
+  padding: 12px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.api-keys-section__raw-key {
+  font-family: monospace; font-size: 12px; background: var(--surface-3);
+  padding: 4px 8px; border-radius: $radius-sm; word-break: break-all; display: block;
+}
+.api-keys-section__dismiss {
+  background: none; border: none; cursor: pointer; font-size: 12px;
+  color: var(--text-muted); align-self: flex-start; padding: 0; min-height: auto;
+  &:hover { color: var(--text); }
+}
+
+.api-keys-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  th { text-align: start; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--border-subtle, var(--border)); }
+}
+
+// ── Sprint 144: Cookie consent ────────────────────────────────────────────────
+
+.cookie-consent {
+  position: fixed; bottom: 0; inset-inline: 0; z-index: 9999;
+  background: var(--surface-2); border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  &__content {
+    max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  &__text { flex: 1; font-size: 13px; color: var(--text-muted); margin: 0; }
+  &__actions { display: flex; gap: 8px; }
+
+  @include mobile {
+    padding: 12px 16px;
+    &__content { flex-direction: column; align-items: flex-start; }
+  }
+}
+
+// ── Sprint 145: Privacy dashboard ─────────────────────────────────────────────
+
+.privacy-dashboard {
+  &__title { font-size: 16px; font-weight: 700; margin: 0 0 16px; }
+}
+.privacy-section {
+  margin-bottom: 16px;
+  h4 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+}
+.privacy-list {
+  list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;
+  li { font-size: 13px; color: var(--text-muted); }
+  strong { color: var(--text); }
+}
+.privacy-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+// ── Sprint 123: Shared project page ───────────────────────────────────────────
+
+.shared-project {
+  min-height: 100vh; background: var(--bg); color: var(--text);
+  font-family: var(--font-sans, sans-serif);
+
+  &--loading, &--error {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 16px; text-align: center; padding: 32px;
+  }
+  &__spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--brand-primary); border-radius: 50%; animation: spin .7s linear infinite; }
+  &__error-icon { font-size: 48px; opacity: .4; }
+
+  &__header {
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; background: rgba(9,11,13,.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+  }
+  &__brand  { font-size: 16px; font-weight: 800; }
+  &__badge  { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+
+  &__main { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+
+  &__title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  &__title     { font-size: var(--text-2xl); font-weight: 800; margin: 0; }
+  &__idea      { color: var(--text-muted); font-size: 14px; margin: 0 0 12px; line-height: 1.6; }
+  &__live-link { display: inline-flex; align-items: center; gap: 4px; color: var(--success); font-size: 14px; margin-bottom: 16px; }
+
+  &__progress-bar  { height: 4px; background: var(--surface-4); border-radius: 99px; overflow: hidden; margin-bottom: 4px; }
+  &__progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent)); border-radius: 99px; transition: width .5s; }
+  &__progress-label { font-size: 12px; color: var(--text-muted); margin: 0 0 24px; }
+
+  &__phases, &__docs { margin-bottom: 24px; h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; } }
+}
+
+.shared-phases-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.shared-phase {
+  display: flex; align-items: center; gap: 10px; font-size: 13px;
+  padding: 8px 12px; background: var(--surface-2); border-radius: $radius; border: 1px solid var(--border);
+  &--completed { border-color: rgba(22,163,74,.2); }
+  &--failed    { border-color: rgba(239,68,68,.2); }
+  &__index  { font-size: 11px; color: var(--text-muted); min-width: 50px; }
+  &__type   { flex: 1; font-weight: 500; }
+  &__status { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--surface-3); }
+  &__tokens { font-size: 11px; color: var(--text-muted); margin-inline-start: auto; }
+}
+
+.shared-doc {
+  margin-bottom: 16px; padding: 14px; background: var(--surface-2); border-radius: $radius; border: 1px solid var(--border);
+  &__type { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

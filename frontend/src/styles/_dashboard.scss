@@ -203,6 +203,79 @@
   &__sub   { font-size: 13px; color: var(--text-muted); margin: 0; max-width: 280px; line-height: 1.6; }
 }
 
+// â”€â”€ Sprint 95: dashboard stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.dashboard-stats {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.dashboard-stats__item {
+  @include surface-card;
+  padding: 12px 20px; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; min-width: 80px;
+}
+.dashboard-stats__value { font-size: var(--text-xl); font-weight: 800; }
+.dashboard-stats__label { font-size: var(--text-xs); color: var(--text-muted); }
+
+// â”€â”€ Sprint 92: tags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.dashboard-tag-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+
+.tag-filter-chip {
+  font: inherit; font-size: var(--text-xs); padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+  cursor: pointer; transition: all var(--ease-fast);
+  &:hover { background: var(--surface-3); color: var(--text); }
+  &--active { background: rgba(6,182,212,.15); color: var(--brand-primary-light); border-color: var(--brand-primary); }
+}
+
+.project-card__tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: var(--space-2); }
+
+.project-tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(6,182,212,.1); color: var(--brand-primary-light);
+  border: 1px solid rgba(6,182,212,.2);
+}
+
+// â”€â”€ Sprint 93: pinned card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.project-card--pinned {
+  border-color: rgba(167,139,250,.35);
+  &::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(167,139,250,.04); pointer-events: none; }
+}
+.project-card__pin { position: absolute; top: 10px; inset-inline-end: 10px; font-size: 12px; opacity: .7; }
+.project-card__pin-btn {
+  background: none; border: none; min-height: auto; padding: 2px 4px;
+  opacity: .4; font-size: 12px; cursor: pointer; border-radius: $radius-sm;
+  &:hover { opacity: 1; transform: none; box-shadow: none; }
+}
+
+// â”€â”€ Sprint 94: bulk select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.project-card__checkbox {
+  position: absolute; top: 10px; inset-inline-start: 10px;
+  width: 16px; height: 16px; cursor: pointer; opacity: .4;
+  &:checked { opacity: 1; }
+}
+.project-card--selected {
+  border-color: rgba(167,139,250,.6);
+  background: rgba(167,139,250,.06);
+}
+
+.bulk-actions-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius;
+  padding: 8px 14px; margin-bottom: 12px;
+
+  &__count  { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+  &__btn    {
+    font: inherit; font-size: var(--text-sm); padding: 5px 12px; border-radius: $radius-sm;
+    border: 1px solid var(--border); cursor: pointer; font-weight: 600;
+    &--archive { background: rgba(251,191,36,.12); color: var(--warning); border-color: rgba(251,191,36,.3); }
+    &--delete  { background: rgba(239,68,68,.12);  color: var(--danger);  border-color: rgba(239,68,68,.3); }
+    &--clear   { background: var(--surface-3); color: var(--text-muted); }
+    &:hover { opacity: .85; }
+  }
+}
+
 // â”€â”€ Skeleton loaders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .skeleton {

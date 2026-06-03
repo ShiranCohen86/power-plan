@@ -206,3 +206,36 @@ exports.deleteWebhookUrl = asyncHandler(async (req, res) => {
   await user.save();
   res.json({ ok: true });
 });
+
+// Sprint 131-133: Webhook delivery log + test
+exports.getWebhookDeliveries = asyncHandler(async (req, res) => {
+  const { getDeliveryLog } = require('../services/webhook.service');
+  const logs = await getDeliveryLog(req.user.id, 30);
+  res.json(logs);
+});
+
+exports.testWebhook = asyncHandler(async (req, res) => {
+  const { sendTestWebhook } = require('../services/webhook.service');
+  const result = await sendTestWebhook(req.user.id);
+  res.json(result);
+});
+
+// Sprint 134: Slack integration
+exports.updateSlackWebhook = asyncHandler(async (req, res) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string') throw ApiError.badRequest('url required');
+  try { new URL(url); } catch { throw ApiError.badRequest('Invalid URL format'); }
+  if (!url.startsWith('https://hooks.slack.com/')) throw ApiError.badRequest('Must be a Slack Incoming Webhook URL (https://hooks.slack.com/...)');
+  const user = await User.findById(req.user.id);
+  if (!user.settings) user.settings = {};
+  user.settings.slackWebhookUrl = url;
+  await user.save();
+  res.json({ ok: true });
+});
+
+exports.deleteSlackWebhook = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (user.settings) user.settings.slackWebhookUrl = undefined;
+  await user.save();
+  res.json({ ok: true });
+});

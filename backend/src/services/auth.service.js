@@ -229,14 +229,38 @@ async function logout(userId) {
 
 // ── Session management ─────────────────────────────────────────────────────
 
+function _parseDevice(ua) {
+  if (!ua) return 'Unknown device';
+  if (/iPhone/i.test(ua))           return 'iPhone';
+  if (/iPad/i.test(ua))             return 'iPad';
+  if (/Android.*Mobile/i.test(ua))  return 'Android Phone';
+  if (/Android/i.test(ua))          return 'Android Tablet';
+  if (/Macintosh/i.test(ua))        return 'Mac';
+  if (/Windows NT/i.test(ua))       return 'Windows PC';
+  if (/Linux/i.test(ua))            return 'Linux';
+  return 'Unknown device';
+}
+
+function _parseBrowser(ua) {
+  if (!ua) return '';
+  if (/Edg\//i.test(ua))    return 'Edge';
+  if (/OPR\//i.test(ua))    return 'Opera';
+  if (/Chrome\//i.test(ua)) return 'Chrome';
+  if (/Firefox\//i.test(ua)) return 'Firefox';
+  if (/Safari\//i.test(ua)) return 'Safari';
+  return '';
+}
+
 async function listSessions(userId) {
   const user = await User.findById(userId).select('+sessions').lean();
   if (!user) throw ApiError.notFound('User not found');
   return (user.sessions || []).map((s) => ({
-    jtiHash:   s.jtiHash,
-    userAgent: s.userAgent || '',
-    ip:        s.ip        || '',
-    lastSeen:  s.lastSeen,
+    jtiHash:     s.jtiHash,
+    userAgent:   s.userAgent || '',
+    ip:          s.ip        || '',
+    lastSeen:    s.lastSeen,
+    deviceName:  _parseDevice(s.userAgent),
+    browserName: _parseBrowser(s.userAgent),
   }));
 }
 

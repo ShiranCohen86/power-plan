@@ -13,4 +13,7 @@ router.use('/settings',                     require('./settings.routes'));
 router.use('/notifications',                require('./notifications.routes'));
 router.use('/admin',                        require('./admin.routes'));
 
+// Sprint 121-123, 137: public share + public REST API (no auth)
+router.use('/public',                       require('./public.routes'));
+
 module.exports = router;

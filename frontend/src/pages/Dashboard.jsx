@@ -11,14 +11,19 @@ import { DASHBOARD_AUTO_REFRESH_MS, DASHBOARD_PAGE_SIZE } from '../config/consta
 import {
   selectProjects, selectProjectsStatus, selectProjectsHasMore, selectProjectsTotal,
   selectProjectsSearch, selectProjectsSort, selectProjectsStatusFilter, selectLoadingMore,
-  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, setSort, setStatusFilter, updateProject, addProject,
+  selectSelectedIds, selectAllTags, selectTagFilter,
+  fetchProjects, refreshProjects, loadMoreProjects, deleteProjectThunk, togglePinThunk,
+  setSort, setStatusFilter, setTagFilter, updateProject, addProject,
+  toggleSelectProject, selectAllProjects, clearSelection,
 } from '../store/slices/projectsSlice.js';
 import { restoreProject, cloneProject, archiveProject } from '../api/projects.api.js';
+import DashboardStats from '../components/dashboard/DashboardStats.jsx';
+import BulkActionsBar from '../components/dashboard/BulkActionsBar.jsx';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 const UNDO_TOAST_DURATION_MS = 5000;
 
-function ProjectCard({ project, dispatch }) {
+function ProjectCard({ project, dispatch, isSelected, onToggleSelect }) {
   const { t }    = useTranslation();
   const navigate = useNavigate();
   const isActive = ACTIVE_STATUSES.has(project.status);
@@ -64,7 +69,21 @@ function ProjectCard({ project, dispatch }) {
   }
 
   return (
-    <div className="project-card" onClick={handleClick}>
+    <div
+      className={`project-card${isSelected ? ' project-card--selected' : ''}${project.isPinned ? ' project-card--pinned' : ''}`}
+      onClick={handleClick}
+    >
+      {/* Sprint 94: bulk select checkbox */}
+      <input
+        type="checkbox"
+        className="project-card__checkbox"
+        checked={isSelected}
+        onChange={(e) => { e.stopPropagation(); onToggleSelect(project._id); }}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Select ${project.title}`}
+      />
+      {/* Sprint 93: pin indicator */}
+      {project.isPinned && <span className="project-card__pin" title="Pinned">📌</span>}
       <div className="project-card__header">
         <span className="project-card__title">{project.title}</span>
         <span className={`project-status project-status--${project.status}`}>
@@ -73,6 +92,14 @@ function ProjectCard({ project, dispatch }) {
         </span>
       </div>
       <p className="project-card__idea">{project.idea}</p>
+      {/* Sprint 92: tag chips */}
+      {project.tags?.length > 0 && (
+        <div className="project-card__tags">
+          {project.tags.slice(0, 4).map((tag) => (
+            <span key={tag} className="project-tag">{tag}</span>
+          ))}
+        </div>
+      )}
       {project.status === 'live' && project.deployedUrl && (
         <a href={project.deployedUrl} target="_blank" rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
@@ -91,6 +118,17 @@ function ProjectCard({ project, dispatch }) {
           aria-label={`מחק פרויקט: ${project.title}`}
         >
           🗑️
+        </button>
+        {/* Sprint 93: pin toggle */}
+        <button
+          className="project-card__pin-btn"
+          title={project.isPinned ? 'Unpin' : 'Pin to top'}
+          onClick={async (e) => {
+            e.stopPropagation();
+            try { await dispatch(togglePinThunk(project._id)).unwrap(); } catch { /* non-critical */ }
+          }}
+        >
+          {project.isPinned ? '📌' : '📍'}
         </button>
         <button
           className="project-card__clone"
@@ -137,12 +175,17 @@ export default function Dashboard() {
   const storeSearch       = useSelector(selectProjectsSearch);
   const storeSort         = useSelector(selectProjectsSort);
   const storeStatusFilter = useSelector(selectProjectsStatusFilter);
+  const storeTagFilter    = useSelector(selectTagFilter);
   const loadingMore       = useSelector(selectLoadingMore);
+  const selectedIds       = useSelector(selectSelectedIds);
+  const allTags           = useSelector(selectAllTags);
 
   function handleSort(newSort) { dispatch(setSort(newSort)); }
   function handleStatusFilter(s) { dispatch(setStatusFilter(s)); }
+  function handleTagFilter(tag) { dispatch(setTagFilter(storeTagFilter === tag ? '' : tag)); }
+  function handleToggleSelect(id) { dispatch(toggleSelectProject(id)); }
 
-  // Fetch projects when search, sort, or statusFilter changes
+  // Fetch projects when search, sort, statusFilter, or tagFilter changes
   useEffect(() => {
     const ctrl = new AbortController();
     dispatch(fetchProjects({ page: 1, search: storeSearch, sort: storeSort, statusFilter: storeStatusFilter, signal: ctrl.signal }));
@@ -175,6 +218,12 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Sprint 95: stats widget */}
+        <DashboardStats />
+
+        {/* Sprint 94: bulk actions */}
+        <BulkActionsBar />
+
         {/* Sort + filter bar */}
         <div className="dashboard-toolbar">
           <div className="dashboard-toolbar__sort">
@@ -182,6 +231,7 @@ export default function Dashboard() {
               { key: 'date',       label: '📅 תאריך' },
               { key: 'status',     label: '🔵 סטטוס' },
               { key: 'completion', label: '📊 התקדמות' },
+              { key: 'tokens',     label: '🔢 טוקנים' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -196,6 +246,21 @@ export default function Dashboard() {
             <span className="dashboard-toolbar__count">{total} פרויקטים</span>
           )}
         </div>
+
+        {/* Sprint 92: tag filter chips */}
+        {allTags.length > 0 && (
+          <div className="dashboard-tag-filters">
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                className={`tag-filter-chip${storeTagFilter === tag ? ' tag-filter-chip--active' : ''}`}
+                onClick={() => handleTagFilter(tag)}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Status filter chips */}
         <div className="dashboard-status-filters">
@@ -263,7 +328,15 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="projects-grid">
-              {projects.map((p) => <ProjectCard key={p._id} project={p} dispatch={dispatch} />)}
+              {projects.map((p) => (
+                <ProjectCard
+                  key={p._id}
+                  project={p}
+                  dispatch={dispatch}
+                  isSelected={selectedIds.includes(p._id)}
+                  onToggleSelect={handleToggleSelect}
+                />
+              ))}
             </div>
 
             {hasMore && (

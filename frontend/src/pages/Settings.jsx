@@ -8,8 +8,13 @@ import {
   getSettings, updateApiKey, deleteApiKey, validateApiKey,
   updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
   getNotifPrefs, updateNotifPrefs, updateWebhookUrl, deleteWebhookUrl,
+  updateSlackWebhook, deleteSlackWebhook,
 } from '../api/settings.api';
 import { webAuthnRegisterStart, webAuthnRegisterFinish, getSessions, revokeSession, totpSetup, totpEnable, totpDisable, changePassword } from '../api/auth.api.js';
+import UsageDashboard from '../components/settings/UsageDashboard.jsx';
+import WebhookDeliveryLog from '../components/settings/WebhookDeliveryLog.jsx';
+import ApiKeysSection from '../components/settings/ApiKeysSection.jsx';
+import PrivacyDashboard from '../components/settings/PrivacyDashboard.jsx';
 
 function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, inputProps, onValidate }) {
   const { t } = useTranslation();
@@ -325,7 +330,10 @@ function SessionsSection() {
         ) : sessions.map((s) => (
           <div key={s.jtiHash} className="settings-session">
             <div className="settings-session__info">
-              <span className="settings-session__agent">{s.userAgent || t('settings.sessionUnknown')}</span>
+              <span className="settings-session__agent">
+                {s.deviceName || s.userAgent || t('settings.sessionUnknown')}
+                {s.browserName ? ` · ${s.browserName}` : ''}
+              </span>
               <span className="settings-session__meta">{s.ip} · {s.lastSeen ? new Date(s.lastSeen).toLocaleDateString() : ''}</span>
             </div>
             <button
@@ -483,6 +491,50 @@ function WebhookSection() {
       </div>
       {err  && <p style={{ color: 'var(--danger)',   fontSize: 13, marginTop: 6 }}>{err}</p>}
       {saved && <p style={{ color: 'var(--success, #22c55e)', fontSize: 13, marginTop: 6 }}>✅ Webhook URL saved</p>}
+
+      {/* Sprint 131-133: Delivery log */}
+      <WebhookDeliveryLog />
+    </section>
+  );
+}
+
+// Sprint 134: Slack section
+function SlackSection() {
+  const [url,  setUrl]  = useState('');
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy]   = useState(false);
+  const [err,  setErr]    = useState('');
+
+  async function handleSave() {
+    if (!url.startsWith('https://hooks.slack.com/')) {
+      setErr('Must be a Slack Incoming Webhook URL (https://hooks.slack.com/...)'); return;
+    }
+    setBusy(true); setErr('');
+    try {
+      await updateSlackWebhook(url);
+      setSaved(true); setUrl(''); setTimeout(() => setSaved(false), 2000);
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">Slack Notifications</h2>
+      <p className="settings-section__desc">Receive pipeline events in your Slack channel.</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          type="url" value={url} onChange={(e) => { setUrl(e.target.value); setSaved(false); setErr(''); }}
+          placeholder="https://hooks.slack.com/services/..."
+          className="settings-apikey__input" style={{ flex: 1, minWidth: 260 }} dir="ltr"
+        />
+        <button className="btn btn--primary" onClick={handleSave} disabled={busy || !url}>
+          {busy ? '...' : 'Save'}
+        </button>
+        <button className="btn btn--secondary" onClick={async () => { await deleteSlackWebhook(); setUrl(''); }}>
+          Remove
+        </button>
+      </div>
+      {err   && <p style={{ color: 'var(--danger)', fontSize: 13, marginTop: 6 }}>{err}</p>}
+      {saved && <p style={{ color: '#22c55e', fontSize: 13, marginTop: 6 }}>✅ Slack webhook saved</p>}
     </section>
   );
 }
@@ -569,7 +621,23 @@ export default function Settings() {
           <ChangePasswordSection />
           <NotifPrefsSection />
           <WebhookSection />
+          <SlackSection />
           <SessionsSection />
+
+          {/* Sprint 111-120: Usage analytics */}
+          <section className="settings-section">
+            <UsageDashboard />
+          </section>
+
+          {/* Sprint 137-138: Public API keys */}
+          <section className="settings-section">
+            <ApiKeysSection />
+          </section>
+
+          {/* Sprint 145: Privacy dashboard */}
+          <section className="settings-section">
+            <PrivacyDashboard />
+          </section>
           <section className="settings-section">
             <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
             <p className="settings-section__desc">{t('settings.apiDesc')}</p>

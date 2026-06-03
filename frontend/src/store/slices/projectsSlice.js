@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { listProjects, createProject, deleteProject } from '../../api/projects.api';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
+import { listProjects, createProject, deleteProject, toggleProjectPin, updateProjectTags, bulkDeleteProjects, bulkArchiveProjects } from '../../api/projects.api';
 import { DASHBOARD_PAGE_SIZE } from '../../config/constants';
 
 const PAGE_LIMIT = DASHBOARD_PAGE_SIZE;
@@ -53,6 +53,42 @@ export const deleteProjectThunk = createAsyncThunk(
   },
 );
 
+export const togglePinThunk = createAsyncThunk(
+  'projects/togglePin',
+  async (id, { rejectWithValue }) => {
+    try {
+      const { isPinned } = await toggleProjectPin(id);
+      return { id, isPinned };
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to toggle pin');
+    }
+  },
+);
+
+export const bulkDeleteThunk = createAsyncThunk(
+  'projects/bulkDelete',
+  async (ids, { rejectWithValue }) => {
+    try {
+      await bulkDeleteProjects(ids);
+      return ids;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to bulk delete');
+    }
+  },
+);
+
+export const bulkArchiveThunk = createAsyncThunk(
+  'projects/bulkArchive',
+  async (ids, { rejectWithValue }) => {
+    try {
+      await bulkArchiveProjects(ids);
+      return ids;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Failed to bulk archive');
+    }
+  },
+);
+
 export const createNewProject = createAsyncThunk(
   'projects/create',
   async ({ title, idea }, { rejectWithValue }) => {
@@ -65,16 +101,18 @@ export const createNewProject = createAsyncThunk(
 );
 
 const initialState = {
-  items:      [],
-  status:     'idle',
-  loadedAt:   null,
-  error:      null,
-  page:       1,
-  totalPages: 1,
-  total:      0,
+  items:       [],
+  status:      'idle',
+  loadedAt:    null,
+  error:       null,
+  page:        1,
+  totalPages:  1,
+  total:       0,
   search:       '',
   sort:         'date',
   statusFilter: '',
+  tagFilter:    '',     // Sprint 92
+  selectedIds:  [],     // Sprint 94: bulk select
   hasMore:      false,
   loadingMore:  false,
 };
@@ -111,6 +149,23 @@ const projectsSlice = createSlice({
     },
     setProjectsLoading(state) {
       state.status = 'loading';
+    },
+    // Sprint 92: tag filter
+    setTagFilter(state, action) {
+      state.tagFilter = action.payload;
+    },
+    // Sprint 94: bulk select
+    toggleSelectProject(state, action) {
+      const id = action.payload;
+      const idx = state.selectedIds.indexOf(id);
+      if (idx === -1) state.selectedIds.push(id);
+      else state.selectedIds.splice(idx, 1);
+    },
+    selectAllProjects(state) {
+      state.selectedIds = state.items.map((p) => p._id);
+    },
+    clearSelection(state) {
+      state.selectedIds = [];
     },
   },
   extraReducers: (builder) => {
@@ -166,12 +221,35 @@ const projectsSlice = createSlice({
         state.total  = Math.max(0, state.total - 1);
         state.hasMore = state.items.length < state.total;
       })
+      // Sprint 93: pin
+      .addCase(togglePinThunk.fulfilled, (state, action) => {
+        const { id, isPinned } = action.payload;
+        const proj = state.items.find((p) => p._id === id);
+        if (proj) proj.isPinned = isPinned;
+      })
+      // Sprint 94: bulk delete/archive
+      .addCase(bulkDeleteThunk.fulfilled, (state, action) => {
+        const deleted = new Set(action.payload);
+        state.items     = state.items.filter((p) => !deleted.has(p._id));
+        state.total     = Math.max(0, state.total - deleted.size);
+        state.selectedIds = [];
+        state.hasMore   = state.items.length < state.total;
+      })
+      .addCase(bulkArchiveThunk.fulfilled, (state, action) => {
+        const archived = new Set(action.payload);
+        state.items.forEach((p) => { if (archived.has(p._id)) p.status = 'archived'; });
+        state.selectedIds = [];
+      })
       .addMatcher((action) => action.type === 'auth/logout/fulfilled', () => initialState);
   },
 });
 
-export const { setProjects, addProject, updateProject, setSearch, setSort, setStatusFilter, setProjectsError, setProjectsLoading } =
-  projectsSlice.actions;
+export const {
+  setProjects, addProject, updateProject,
+  setSearch, setSort, setStatusFilter, setTagFilter,
+  setProjectsError, setProjectsLoading,
+  toggleSelectProject, selectAllProjects, clearSelection,
+} = projectsSlice.actions;
 
 export const selectProjects        = (state) => state.projects.items;
 export const selectProjectsStatus  = (state) => state.projects.status;
@@ -182,6 +260,30 @@ export const selectProjectsSearch  = (state) => state.projects.search;
 export const selectProjectsSort         = (state) => state.projects.sort;
 export const selectProjectsStatusFilter = (state) => state.projects.statusFilter;
 export const selectLoadingMore     = (state) => state.projects.loadingMore;
-export const selectProjectById     = (id) => (state) => state.projects.items.find((p) => p._id === id);
+export const selectProjectById = (id) => (state) => state.projects.items.find((p) => p._id === id);
+
+export const selectTagFilter       = (state) => state.projects.tagFilter;
+export const selectSelectedIds     = (state) => state.projects.selectedIds;
+
+// Memoized selectors for derived data
+export const selectActiveProjects = createSelector(
+  selectProjects,
+  (items) => items.filter((p) => ['planning', 'coding', 'deploying'].includes(p.status)),
+);
+
+export const selectLiveProjects = createSelector(
+  selectProjects,
+  (items) => items.filter((p) => p.status === 'live'),
+);
+
+export const selectPinnedProjects = createSelector(
+  selectProjects,
+  (items) => items.filter((p) => p.isPinned),
+);
+
+export const selectAllTags = createSelector(
+  selectProjects,
+  (items) => [...new Set(items.flatMap((p) => p.tags || []))].sort(),
+);
 
 export default projectsSlice.reducer;

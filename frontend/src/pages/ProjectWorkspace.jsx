@@ -1,14 +1,17 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { ALL_PHASES } from '../utils/phaseConfig';
 import { useWorkspaceState } from '../hooks/useWorkspaceState';
 import { downloadFiles } from '../api/files.api';
-import { generateReadme } from '../api/projects.api';
+import { generateReadme, approveAllPhases } from '../api/projects.api';
 import DocSearch from '../components/workspace/DocSearch';
 import WorkspaceTour from '../components/ui/WorkspaceTour';
 import KeyboardHelp from '../components/workspace/KeyboardHelp';
+import ShareModal from '../components/workspace/ShareModal.jsx';
+import PhaseComments from '../components/workspace/PhaseComments.jsx';
 
 import PhaseList              from '../components/workspace/PhaseList';
 import FeatureErrorBoundary   from '../components/ui/FeatureErrorBoundary';
@@ -41,7 +44,16 @@ export default function ProjectWorkspace() {
   const { lang } = useLanguage();
 
   const ws = useWorkspaceState(id);
-  const [downloading, setDownloading] = useState(false);
+  const [downloading,   setDownloading]   = useState(false);
+  const [showShare,     setShowShare]     = useState(false);   // Sprint 121
+  const [showComments,  setShowComments]  = useState(false);   // Sprint 127
+
+  async function handleBulkApprove() {
+    try {
+      const { approved } = await approveAllPhases(id);
+      if (approved) toast.success(`${approved} phase(s) approved`);
+    } catch { /* non-critical */ }
+  }
 
   // Update page title with project name + progress
   useEffect(() => {
@@ -192,6 +204,8 @@ export default function ProjectWorkspace() {
         onPause={ws.handlePause}
         onOpenSettings={() => ws.setShowProjectSettings(true)}
         onJoinMeeting={() => ws.setShowMeetingRoom(true)}
+        onShare={() => setShowShare(true)}
+        onBulkApprove={ws.awaitingPhase !== null ? handleBulkApprove : null}
       />
 
 
@@ -239,6 +253,7 @@ export default function ProjectWorkspace() {
                 activeIndex={ws.activePhaseIndex}
                 onSelect={(idx) => { ws.setActive(idx); ws.loadDocument(idx); }}
                 onRollback={!ws.isRunning ? ws.handleRollback : null}
+                projectId={id}
               />
             </FeatureErrorBoundary>
           )}
@@ -388,6 +403,22 @@ export default function ProjectWorkspace() {
               onRefineSubmit={ws.handleRefine}
             />
           )}
+
+          {/* Sprint 127: phase comments */}
+          {ws.activePhaseIndex !== null && ws.activeDoc && (
+            <div className="workspace-comments-toggle">
+              <button
+                className="btn btn--ghost btn--sm"
+                onClick={() => setShowComments((s) => !s)}
+                style={{ fontSize: 12, padding: '4px 10px' }}
+              >
+                💬 {showComments ? 'Hide comments' : 'Comments'}
+              </button>
+              {showComments && (
+                <PhaseComments projectId={id} phaseIndex={ws.activePhaseIndex} />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="workspace-resize-handle" onMouseDown={(e) => ws.startResize(e, 'feed')} />
@@ -415,6 +446,11 @@ export default function ProjectWorkspace() {
           </FeatureErrorBoundary>
         </div>
       </div>
+
+      {/* Sprint 121: share modal */}
+      {showShare && ws.project && (
+        <ShareModal project={ws.project} onClose={() => setShowShare(false)} />
+      )}
     </div>
   );
 }

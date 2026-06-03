@@ -20,6 +20,8 @@ export default function WorkspaceTopbar({
   onPause,
   onOpenSettings,
   onJoinMeeting,
+  onShare,          // Sprint 121
+  onBulkApprove,    // Sprint 104
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -49,6 +51,20 @@ export default function WorkspaceTopbar({
       >
         ⚙️ <span className="workspace-topbar__btn-label">{t('topbar.settings')}</span>
       </button>
+
+      {/* Sprint 121: share button */}
+      {onShare && (
+        <button className="workspace-topbar__action-btn btn-ghost" onClick={onShare} title="Share project">
+          🔗 <span className="workspace-topbar__btn-label">Share</span>
+        </button>
+      )}
+
+      {/* Sprint 104: bulk approve */}
+      {onBulkApprove && (
+        <button className="workspace-topbar__action-btn btn-ghost" onClick={onBulkApprove} title="Approve all pending phases">
+          ✅✅ <span className="workspace-topbar__btn-label">Approve All</span>
+        </button>
+      )}
 
       {isRunning && (
         <button

@@ -49,6 +49,24 @@ const ProjectSchema = new mongoose.Schema(
       credentials:         { type: Map, of: String, select: false }, // encrypted AES-256
     }],
 
+    // Sprint 92: tags
+    tags: { type: [String], default: [] },
+    // Sprint 93: pinning
+    isPinned: { type: Boolean, default: false, index: true },
+    // Sprint 97: notes
+    notes: { type: String, default: '' },
+    // Sprint 109: custom pause points (phase indices that require manual approval)
+    pauseBeforePhases: { type: [Number], default: [] },
+    // Sprint 117: token budget per project (0 = unlimited)
+    tokenBudget: { type: Number, default: 0 },
+    // Sprint 117: total tokens used across all phases
+    totalTokensUsed: { type: Number, default: 0 },
+    // Sprint 121: read-only share
+    shareToken:   { type: String, sparse: true, index: true },
+    shareEnabled: { type: Boolean, default: false },
+    // Sprint 136: custom env vars for generated app
+    customEnvVars: { type: Map, of: String, default: {} },
+
     // Quota / pause tracking
     quotaPausedAt:   Date,
     quotaResumedAt:  Date,

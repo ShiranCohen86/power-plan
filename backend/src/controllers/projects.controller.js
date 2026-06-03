@@ -48,7 +48,7 @@ exports.restoreProject = asyncHandler(async (req, res) => {
   res.json(project);
 });
 
-const VALID_SORTS = new Set(['date', 'status', 'completion']);
+const VALID_SORTS = new Set(['date', 'status', 'completion', 'tokens']);
 
 exports.list = asyncHandler(async (req, res) => {
   const page   = Math.max(1, parseInt(req.query.page,  10) || 1);
@@ -56,7 +56,8 @@ exports.list = asyncHandler(async (req, res) => {
   const search = (req.query.search || '').slice(0, 100);
   const sort   = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
   const status = (req.query.status || '').slice(0, 20);
-  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort, status });
+  const tags   = (req.query.tags   || '').slice(0, 200);
+  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort, status, tags });
   res.json(result);
 });
 

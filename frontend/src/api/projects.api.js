@@ -69,6 +69,40 @@ export const skipServiceCredentials = (id, serviceId) =>
 export const consultService = (id, serviceId) =>
   safeRequest({ method: 'post', url: `/projects/${id}/required-services/${serviceId}/consult` });
 
+// ── Sprint 92-100: Project extras ─────────────────────────────────────────────
+export const updateProjectTags        = (id, tags)         => safeRequest({ method: 'patch', url: `/projects/${id}/tags`,          data: { tags } });
+export const toggleProjectPin         = (id)               => safeRequest({ method: 'patch', url: `/projects/${id}/pin` });
+export const bulkDeleteProjects       = (ids)              => safeRequest({ method: 'post',  url: '/projects/bulk/delete',          data: { ids } });
+export const bulkArchiveProjects      = (ids)              => safeRequest({ method: 'post',  url: '/projects/bulk/archive',         data: { ids } });
+export const updateProjectNotes       = (id, notes)        => safeRequest({ method: 'patch', url: `/projects/${id}/notes`,          data: { notes } });
+export const updateTokenBudget        = (id, tokenBudget)  => safeRequest({ method: 'patch', url: `/projects/${id}/token-budget`,   data: { tokenBudget } });
+export const updateCustomEnvVars      = (id, vars)         => safeRequest({ method: 'patch', url: `/projects/${id}/custom-env`,     data: { vars } });
+
+// ── Sprint 101-110: Pipeline extras ──────────────────────────────────────────
+export const ratePhase                = (id, phaseIndex, rating) => safeRequest({ method: 'post', url: `/projects/${id}/pipeline/rate`, data: { phaseIndex, rating } });
+export const getPhaseHistory          = (id, phaseIndex)         => safeRequest({ method: 'get',  url: `/projects/${id}/pipeline/phases/${phaseIndex}/history` });
+export const approveAllPhases         = (id)                     => safeRequest({ method: 'post', url: `/projects/${id}/pipeline/approve-all` });
+export const getPipelineCostEstimate  = (id)                     => safeRequest({ method: 'get',  url: `/projects/${id}/pipeline/estimate/cost` });
+export const getPipelineTimeEstimate  = (id)                     => safeRequest({ method: 'get',  url: `/projects/${id}/pipeline/estimate/time` });
+export const getMeetingTranscript     = (id, phaseIndex)         => `/api/projects/${id}/pipeline/phases/${phaseIndex}/transcript`;
+export const updatePausePoints        = (id, pauseBeforePhases)  => safeRequest({ method: 'patch', url: `/projects/${id}/pipeline/pause-points`, data: { pauseBeforePhases } });
+export const searchPhases             = (id, q)                  => safeRequest({ method: 'get',  url: `/projects/${id}/pipeline/search`, params: { q } });
+
+// ── Sprint 121-126: Share + collaborators ────────────────────────────────────
+export const enableShare              = (id)               => safeRequest({ method: 'post',   url: `/projects/${id}/share/enable` });
+export const disableShare             = (id)               => safeRequest({ method: 'post',   url: `/projects/${id}/share/disable` });
+export const regenerateShareToken     = (id)               => safeRequest({ method: 'post',   url: `/projects/${id}/share/regenerate` });
+export const listCollaborators        = (id)               => safeRequest({ method: 'get',    url: `/projects/${id}/collaborators` });
+export const inviteCollaborator       = (id, email, role)  => safeRequest({ method: 'post',   url: `/projects/${id}/collaborators`, data: { email, role } });
+export const updateCollaboratorRole   = (id, cid, role)    => safeRequest({ method: 'patch',  url: `/projects/${id}/collaborators/${cid}`, data: { role } });
+export const revokeCollaborator       = (id, cid)          => safeRequest({ method: 'delete', url: `/projects/${id}/collaborators/${cid}` });
+export const transferProject          = (id, toEmail)      => safeRequest({ method: 'post',   url: `/projects/${id}/transfer`, data: { toEmail } });
+
+// ── Sprint 127: Phase comments ────────────────────────────────────────────────
+export const getPhaseComments         = (id, phaseIndex)   => safeRequest({ method: 'get',    url: `/projects/${id}/phases/${phaseIndex}/comments` });
+export const addPhaseComment          = (id, phaseIndex, text) => safeRequest({ method: 'post', url: `/projects/${id}/phases/${phaseIndex}/comments`, data: { text } });
+export const deletePhaseComment       = (id, phaseIndex, cid) => safeRequest({ method: 'delete', url: `/projects/${id}/phases/${phaseIndex}/comments/${cid}` });
+
 /**
  * Opens an SSE connection to stream the next discovery question.
  * Returns an AbortController so the caller can cancel the stream.
