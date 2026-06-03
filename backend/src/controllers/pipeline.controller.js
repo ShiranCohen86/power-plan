@@ -59,3 +59,23 @@ exports.refine = asyncHandler(async (req, res) => {
     emitToProject(req.params.projectId, 'pipeline:error', { error: err.message });
   });
 });
+
+exports.health = asyncHandler(async (req, res) => {
+  const Phase   = require('../models/Phase');
+  const Project = require('../models/Project');
+  const [running, stuck, queued] = await Promise.all([
+    Phase.countDocuments({ status: 'running' }),
+    Phase.countDocuments({ status: 'running', updatedAt: { $lt: new Date(Date.now() - 30 * 60 * 1000) } }),
+    Project.countDocuments({ status: 'planning' }),
+  ]);
+  res.json({ ok: stuck === 0, running, stuck, queued });
+});
+
+exports.tokenUsage = asyncHandler(async (req, res) => {
+  await projectService.getById(req.params.projectId, req.user.id);
+  const Phase = require('../models/Phase');
+  const phases = await Phase.find({ projectId: req.params.projectId, status: 'completed' })
+    .select('type tokensUsed startedAt completedAt').lean();
+  const total = phases.reduce((s, p) => s + (p.tokensUsed || 0), 0);
+  res.json({ total, phases: phases.map((p) => ({ type: p.type, tokens: p.tokensUsed || 0 })) });
+});

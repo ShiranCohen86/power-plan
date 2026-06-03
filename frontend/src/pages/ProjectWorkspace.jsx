@@ -8,6 +8,7 @@ import { downloadFiles } from '../api/files.api';
 import { generateReadme } from '../api/projects.api';
 import DocSearch from '../components/workspace/DocSearch';
 import WorkspaceTour from '../components/ui/WorkspaceTour';
+import KeyboardHelp from '../components/workspace/KeyboardHelp';
 
 import PhaseList              from '../components/workspace/PhaseList';
 import FeatureErrorBoundary   from '../components/ui/FeatureErrorBoundary';
@@ -79,15 +80,18 @@ export default function ProjectWorkspace() {
   const hasGeneratedFiles = ['live', 'coding', 'deploying'].includes(ws.project?.status);
   const [generatingReadme, setGeneratingReadme] = useState(false);
   const [showDocSearch, setShowDocSearch]       = useState(false);
+  const [showKeyHelp,   setShowKeyHelp]         = useState(false);
 
-  // Ctrl+F to open doc search
+  // Keyboard shortcuts
   useEffect(() => {
     function onKey(e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'f' && ws.activeDoc) {
-        e.preventDefault();
-        setShowDocSearch(true);
+        e.preventDefault(); setShowDocSearch(true);
       }
-      if (e.key === 'Escape') setShowDocSearch(false);
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        setShowKeyHelp((v) => !v);
+      }
+      if (e.key === 'Escape') { setShowDocSearch(false); setShowKeyHelp(false); }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -145,6 +149,7 @@ export default function ProjectWorkspace() {
   return (
     <div className="workspace">
       <WorkspaceTour />
+      {showKeyHelp && <KeyboardHelp onClose={() => setShowKeyHelp(false)} />}
       {/* Phase entry animation */}
       {ws.introCount !== null && (
         <PhaseIntroOverlay count={ws.introCount} done={ws.introCount >= 1} />
@@ -181,6 +186,8 @@ export default function ProjectWorkspace() {
         showEstTime={ws.showEstTime}
         rateLimit={ws.rateLimit}
         liveUrl={ws.liveUrl}
+        liveGithubUrl={ws.liveGithubUrl}
+        totalTokensUsed={ws.totalTokensUsed}
         onCelebrate={() => ws.setShowCelebration(true)}
         onPause={ws.handlePause}
         onOpenSettings={() => ws.setShowProjectSettings(true)}

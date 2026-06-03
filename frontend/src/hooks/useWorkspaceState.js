@@ -240,6 +240,7 @@ export function useWorkspaceState(id) {
   const canResume       = (isPaused || isFailed || hasStalledPhase || isAwaitingCreds) && !isRunning && hasPhases && !isQuotaPaused;
 
   const completedCount  = phases.filter((p) => p.status === 'completed' || p.status === 'awaiting_approval').length;
+  const totalTokensUsed = phases.reduce((s, p) => s + (p.tokensUsed || 0), 0);
   const remainingPhases = Math.max(0, TOTAL_PLANNING_PHASES - completedCount);
   const estMinutes      = Math.round(remainingPhases * MINUTES_PER_PHASE);
   const showEstTime     = isRunning && remainingPhases > 0;
@@ -276,7 +277,7 @@ export function useWorkspaceState(id) {
     isDeploying, isQuotaPaused, hasPhases, isRunning, notStarted,
     awaitPhase, projectStatus, isOnboarding, isPaused, isFailed,
     inProgress, canStart, canResume,
-    TOTAL_PLANNING: TOTAL_PLANNING_PHASES, completedCount, estMinutes, showEstTime,
+    TOTAL_PLANNING: TOTAL_PLANNING_PHASES, completedCount, estMinutes, showEstTime, totalTokensUsed,
     // handlers
     loadDocument,
     ...actions,

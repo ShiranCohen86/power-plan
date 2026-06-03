@@ -40,5 +40,7 @@ router.post('/approve',  validate(phaseIndexBody),  ctrl.approve);
 router.post('/refine',   validate(refineBody),      ctrl.refine);
 router.post('/retry',                               ctrl.retry);
 router.post('/rollback', validate(rollbackBody),    ctrl.rollback);
+router.get ('/health',                              ctrl.health);
+router.get ('/tokens',                              ctrl.tokenUsage);
 
 module.exports = router;

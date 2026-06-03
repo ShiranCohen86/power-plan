@@ -2,12 +2,13 @@ const notifSvc      = require('../services/notification.service');
 const asyncHandler  = require('../utils/asyncHandler');
 
 exports.list = asyncHandler(async (req, res) => {
-  const { unread } = req.query;
-  const notifications = await notifSvc.getForUser(req.user.id, {
+  const { unread, page } = req.query;
+  const result = await notifSvc.getForUser(req.user.id, {
     unreadOnly: unread === 'true',
+    page:       Math.max(1, parseInt(page, 10) || 1),
   });
   const count = await notifSvc.unreadCount(req.user.id);
-  res.json({ notifications, unreadCount: count });
+  res.json({ notifications: result.notifications, unreadCount: count, total: result.total, hasMore: result.hasMore });
 });
 
 exports.markRead = asyncHandler(async (req, res) => {

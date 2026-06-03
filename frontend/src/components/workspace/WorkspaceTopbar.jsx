@@ -14,6 +14,8 @@ export default function WorkspaceTopbar({
   showEstTime,
   rateLimit,
   liveUrl,
+  liveGithubUrl,
+  totalTokensUsed,
   onCelebrate,
   onPause,
   onOpenSettings,
@@ -75,6 +77,13 @@ export default function WorkspaceTopbar({
         </span>
       )}
 
+      {totalTokensUsed > 0 && (
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
+          title="Total tokens used across all phases">
+          {totalTokensUsed >= 1000 ? `${(totalTokensUsed / 1000).toFixed(1)}k` : totalTokensUsed} tokens
+        </span>
+      )}
+
       {rateLimit && rateLimit.used > 0 && (
         <span
           title={rateLimit.resetsAt ? `מתאפס ב-${new Date(rateLimit.resetsAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : ''}
@@ -92,6 +101,12 @@ export default function WorkspaceTopbar({
           <button className="badge badge--live" onClick={onCelebrate} style={{ cursor: 'pointer', border: 0 }}>
             {t('topbar.live')}
           </button>
+        )}
+        {liveGithubUrl && (
+          <a href={liveGithubUrl} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }} title="GitHub Repo">
+            ⭐ GitHub
+          </a>
         )}
         {isRunning && <span className="badge badge--pulse">{t('topbar.aiWorking')}</span>}
         {awaitingPhase != null && !isRunning && (

@@ -24,13 +24,15 @@ async function markAllRead(userId) {
   return Notification.updateMany({ userId, read: false }, { read: true });
 }
 
-async function getForUser(userId, { limit = NOTIFICATION_DEFAULT_LIMIT, unreadOnly = false } = {}) {
+async function getForUser(userId, { limit = NOTIFICATION_DEFAULT_LIMIT, unreadOnly = false, page = 1 } = {}) {
   const filter = { userId };
   if (unreadOnly) filter.read = false;
-  return Notification.find(filter)
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .lean();
+  const skip = (page - 1) * limit;
+  const [notifications, total] = await Promise.all([
+    Notification.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Notification.countDocuments(filter),
+  ]);
+  return { notifications, total, page, hasMore: skip + notifications.length < total };
 }
 
 async function unreadCount(userId) {

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { safeRequest } from '../api/request';
 
 const CHECK = [
-  { key: 'api',    label: 'API Server',    url: '/health' },
-  { key: 'db',     label: 'Database',      url: '/health/db' },
-  { key: 'claude', label: 'Claude AI',     url: '/health/claude' },
+  { key: 'api',      label: 'API Server',    url: '/health' },
+  { key: 'db',       label: 'Database',      url: '/health/db' },
+  { key: 'claude',   label: 'Claude AI',     url: '/health/claude' },
 ];
 
 function StatusDot({ ok }) {
