@@ -9,7 +9,7 @@ import {
   updateGithubToken, deleteGithubToken, updateRenderToken, deleteRenderToken,
   getNotifPrefs, updateNotifPrefs, updateWebhookUrl, deleteWebhookUrl,
 } from '../api/settings.api';
-import { webAuthnRegisterStart, webAuthnRegisterFinish, getSessions, revokeSession, totpSetup, totpEnable, totpDisable } from '../api/auth.api.js';
+import { webAuthnRegisterStart, webAuthnRegisterFinish, getSessions, revokeSession, totpSetup, totpEnable, totpDisable, changePassword } from '../api/auth.api.js';
 
 function TokenSection({ title, subtitle, hint, hasToken, onSave, onDelete, inputProps, onValidate }) {
   const { t } = useTranslation();
@@ -411,6 +411,43 @@ function BiometricSection() {
   );
 }
 
+function ChangePasswordSection() {
+  const { t } = useTranslation();
+  const [cur,  setCur]  = useState('');
+  const [next, setNext] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err,  setErr]  = useState('');
+  const [ok,   setOk]   = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (next.length < 8) { setErr(t('settings.pwdMinLen')); return; }
+    setBusy(true); setErr(''); setOk(false);
+    try {
+      await changePassword(cur, next);
+      setOk(true); setCur(''); setNext('');
+      setTimeout(() => setOk(false), 3000);
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="settings-section">
+      <h2 className="settings-section__title">{t('settings.changePasswordSection')}</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 360 }}>
+        <input type="password" className="settings-apikey__input" placeholder={t('settings.currentPassword')}
+          value={cur} onChange={(e) => setCur(e.target.value)} autoComplete="current-password" dir="ltr" />
+        <input type="password" className="settings-apikey__input" placeholder={t('settings.newPassword')}
+          value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" dir="ltr" />
+        {err && <p style={{ color: 'var(--danger)', fontSize: 13 }}>{err}</p>}
+        {ok  && <p style={{ color: '#22c55e', fontSize: 13 }}>✅ {t('settings.passwordChanged')}</p>}
+        <button type="submit" className="btn btn--primary" disabled={busy || !cur || !next}>
+          {busy ? t('settings.saving') : t('settings.changePasswordBtn')}
+        </button>
+      </form>
+    </section>
+  );
+}
+
 function WebhookSection() {
   const { t } = useTranslation();
   const [url,  setUrl]  = useState('');
@@ -523,6 +560,7 @@ export default function Settings() {
           <AppearanceSection />
           <BiometricSection />
           <TotpSection totpEnabled={!!settings?.totpEnabled} />
+          <ChangePasswordSection />
           <NotifPrefsSection />
           <WebhookSection />
           <SessionsSection />

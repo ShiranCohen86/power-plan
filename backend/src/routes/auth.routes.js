@@ -26,6 +26,8 @@ router.post('/password/reset',  authLimiter, validate(authValidator.resetPasswor
 router.post('/logout',             authenticate, authController.logout);
 router.get('/me',                  authenticate, authController.me);
 router.patch('/me',                authenticate, validate(authValidator.updateProfile), authController.updateMe);
+router.post('/change-password',    authenticate, authController.changePassword);
+router.delete('/account',          authenticate, authController.deleteAccount);
 router.get('/sessions',            authenticate, authController.listSessions);
 router.delete('/sessions/:jtiHash', authenticate, authController.revokeSession);
 

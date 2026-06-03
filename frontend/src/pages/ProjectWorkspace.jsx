@@ -42,6 +42,14 @@ export default function ProjectWorkspace() {
   const ws = useWorkspaceState(id);
   const [downloading, setDownloading] = useState(false);
 
+  // Update page title with project name + progress
+  useEffect(() => {
+    const pct   = ws.project?.completionPercent || 0;
+    const title = ws.project?.title;
+    document.title = title ? `${pct}% · ${title} — Power Plan` : 'Power Plan';
+    return () => { document.title = 'Power Plan'; };
+  }, [ws.project?.title, ws.project?.completionPercent]);
+
   // Keyboard shortcuts: Ctrl+Enter to approve, Escape to close modals
   useEffect(() => {
     function onKey(e) {
@@ -302,6 +310,15 @@ export default function ProjectWorkspace() {
                   ✅ אשר והמשך
                 </button>
               )}
+              {ws.activeDoc?.content && (() => {
+                const words   = ws.activeDoc.content.trim().split(/\s+/).length;
+                const readMin = Math.max(1, Math.ceil(words / 200));
+                return (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', alignSelf: 'center', whiteSpace: 'nowrap' }}>
+                    {words.toLocaleString()} מילים · {readMin} דק׳ קריאה
+                  </span>
+                );
+              })()}
               <button
                 className="btn btn--secondary workspace-doc-bar__export"
                 title="ייצא כ-Markdown"

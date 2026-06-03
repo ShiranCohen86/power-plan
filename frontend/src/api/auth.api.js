@@ -56,6 +56,9 @@ export function webAuthnLoginFinish(email, response) {
   return safeRequest(httpClient.post('/auth/webauthn/login/finish', { email, response }));
 }
 
+export const changePassword  = (currentPassword, newPassword) =>
+  safeRequest({ method: 'post', url: '/auth/change-password', data: { currentPassword, newPassword } });
+
 // Sessions
 export const getSessions    = ()          => safeRequest({ method: 'get',    url: '/auth/sessions' });
 export const revokeSession  = (jtiHash)   => safeRequest({ method: 'delete', url: `/auth/sessions/${jtiHash}` });

@@ -81,7 +81,7 @@ function PhaseList({ phases, activeIndex, onSelect, onRollback }) {
   const buildingLabel = lang === 'he' ? '⚙️ בנייה' : '⚙️ Building';
 
   return (
-    <div className="phase-list">
+    <div className="phase-list" role="navigation" aria-label="Pipeline phases">
       <div className="phase-list__group">
         <div className="phase-list__group-label">{planningLabel}</div>
         {PLANNING_PHASES.map((cfg) => (

@@ -84,7 +84,7 @@ function LiveFeed({
   }
 
   return (
-    <aside className="live-feed">
+    <aside className="live-feed" aria-label="Live feed" role="complementary">
       {isMeetingLive && (
         <div className="team-status-strip">
           {Object.entries(TEAM_MEMBERS).map(([key, member]) => (

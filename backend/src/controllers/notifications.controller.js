@@ -20,3 +20,10 @@ exports.markAllRead = asyncHandler(async (req, res) => {
   await notifSvc.markAllRead(req.user.id);
   res.json({ ok: true });
 });
+
+exports.dismiss = asyncHandler(async (req, res) => {
+  const Notification = require('../models/Notification');
+  const result = await Notification.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+  if (!result) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true });
+});

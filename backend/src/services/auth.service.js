@@ -205,6 +205,19 @@ async function updateProfile(userId, patch) {
   return user.toJSON();
 }
 
+async function changePassword(userId, currentPassword, newPassword) {
+  const user = await User.findById(userId).select('+passwordHash');
+  if (!user) throw ApiError.notFound('User not found');
+  if (!user.passwordHash) throw ApiError.badRequest('Account uses social login — no password to change');
+  const ok = await user.verifyPassword(currentPassword);
+  if (!ok) throw ApiError.unauthorized('Current password is incorrect');
+  await user.setPassword(newPassword);
+  user.sessions = []; // invalidate all sessions except current
+  await user.save();
+  invalidateUserCache(userId);
+  return { ok: true };
+}
+
 // ── Logout ─────────────────────────────────────────────────────────────────
 
 async function logout(userId) {
@@ -498,7 +511,7 @@ async function verifyTotp(email, token) {
 module.exports = {
   signup, login, refresh,
   requestPasswordReset, resetPassword,
-  getProfile, updateProfile, logout, listSessions, revokeSession, listUsers,
+  getProfile, updateProfile, changePassword, logout, listSessions, revokeSession, listUsers,
   loginWithGoogle,
   generateWebAuthnRegistration, verifyWebAuthnRegistration,
   generateWebAuthnAuthentication, verifyWebAuthnAuthentication,

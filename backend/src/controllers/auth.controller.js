@@ -71,6 +71,37 @@ exports.updateMe = asyncHandler(async (req, res) => {
   res.json(profile);
 });
 
+exports.deleteAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const user = await require('../models/User').findById(req.user.id).select('+passwordHash');
+  if (!user) throw require('../utils/ApiError').notFound('User not found');
+  // Verify password before deletion if account has one
+  if (user.passwordHash) {
+    if (!password) throw require('../utils/ApiError').badRequest('password required to delete account');
+    const ok = await user.verifyPassword(password);
+    if (!ok) throw require('../utils/ApiError').unauthorized('Incorrect password');
+  }
+  // Soft-anonymize: clear PII, keep audit trail
+  user.name         = `Deleted User ${user._id.toString().slice(-6)}`;
+  user.email        = `deleted-${user._id}@powerplan.deleted`;
+  user.passwordHash = undefined;
+  user.googleId     = undefined;
+  user.sessions     = [];
+  user.isActive     = false;
+  await user.save();
+  clearRefreshCookie(res);
+  require('../utils/logger').info('auth: account deleted', { userId: req.user.id });
+  res.json({ ok: true });
+});
+
+exports.changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) throw require('../utils/ApiError').badRequest('currentPassword and newPassword required');
+  if (newPassword.length < 8) throw require('../utils/ApiError').badRequest('New password must be at least 8 characters');
+  const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+  res.json(result);
+});
+
 exports.listSessions = asyncHandler(async (req, res) => {
   const sessions = await authService.listSessions(req.user.id);
   res.json({ sessions });
