@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUsage } from '../../api/settings.api';
+import QuotaRing from './QuotaRing.jsx';
 
 const BAR_MAX_WIDTH = 200;
 
@@ -24,11 +25,15 @@ export default function UsageDashboard() {
   if (loading) return <div className="usage-dashboard__loading">Loading usage…</div>;
   if (!usage)  return null;
 
-  const maxTokens = usage.month || 1;
+  const MONTHLY_SOFT_LIMIT = 500_000;
 
   return (
     <section className="usage-dashboard">
-      <h3 className="usage-dashboard__title">Token Usage</h3>
+      <div className="usage-dashboard__header">
+        <h3 className="usage-dashboard__title">Token Usage</h3>
+        {/* S113: quota ring */}
+        <QuotaRing used={usage.month || 0} total={MONTHLY_SOFT_LIMIT} label="this month" size={80} />
+      </div>
 
       <div className="usage-stats-grid">
         {[

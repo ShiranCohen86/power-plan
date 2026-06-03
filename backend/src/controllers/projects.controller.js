@@ -51,13 +51,19 @@ exports.restoreProject = asyncHandler(async (req, res) => {
 const VALID_SORTS = new Set(['date', 'status', 'completion', 'tokens']);
 
 exports.list = asyncHandler(async (req, res) => {
-  const page   = Math.max(1, parseInt(req.query.page,  10) || 1);
-  const limit  = Math.min(MAX_PAGE_SIZE, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE);
-  const search = (req.query.search || '').slice(0, 100);
-  const sort   = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
-  const status = (req.query.status || '').slice(0, 20);
-  const tags   = (req.query.tags   || '').slice(0, 200);
-  const result = await projectService.listByOwner(req.user.id, { page, limit, search, sort, status, tags });
+  const page          = Math.max(1, parseInt(req.query.page,  10) || 1);
+  const limit         = Math.min(MAX_PAGE_SIZE, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE);
+  const search        = (req.query.search        || '').slice(0, 100);
+  const sort          = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'date';
+  const status        = (req.query.status        || '').slice(0, 20);
+  const tags          = (req.query.tags          || '').slice(0, 200);
+  const fromDate      = (req.query.fromDate      || '').slice(0, 24);
+  const toDate        = (req.query.toDate        || '').slice(0, 24);
+  const completionMin = (req.query.completionMin || '');
+  const completionMax = (req.query.completionMax || '');
+  const result = await projectService.listByOwner(req.user.id, {
+    page, limit, search, sort, status, tags, fromDate, toDate, completionMin, completionMax,
+  });
   res.json(result);
 });
 
@@ -215,6 +221,53 @@ exports.archiveProject = asyncHandler(async (req, res) => {
   project.status = 'archived';
   await project.save();
   res.json({ ok: true, status: 'archived' });
+});
+
+// S140: Import idea from URL — Claude reads the URL and extracts a product concept
+exports.importFromUrl = asyncHandler(async (req, res) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string') throw ApiError.badRequest('url required');
+  try { new URL(url); } catch { throw ApiError.badRequest('Invalid URL'); }
+
+  // Fetch page content (simple text extraction)
+  let pageText = '';
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'PowerPlan/1.0' } });
+    const html = await resp.text();
+    // Strip HTML tags for a rough text extract
+    pageText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 8000);
+  } catch (err) {
+    throw ApiError.badRequest('Could not fetch URL: ' + err.message);
+  }
+
+  const resolvedKey = await _resolveApiKey(null, req.user.id);
+  if (!resolvedKey) throw ApiError.badRequest('No Anthropic API key configured');
+
+  const { getPlatformClient } = require('../services/ai/claude.client');
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey: resolvedKey });
+
+  const response = await client.messages.create({
+    model:      require('../config/env').ANTHROPIC_MODEL_STARTER,
+    max_tokens: 400,
+    messages: [{
+      role:    'user',
+      content: `Extract a concise product idea from this webpage content. Output ONLY a JSON object with two fields: "title" (5-8 words) and "idea" (2-3 sentences describing the product). No markdown, no extra text.\n\nURL: ${url}\n\nContent:\n${pageText}`,
+    }],
+  });
+
+  let parsed;
+  try {
+    const text = response.content[0]?.text || '{}';
+    const jsonStart = text.indexOf('{');
+    const jsonEnd   = text.lastIndexOf('}');
+    parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+  } catch {
+    throw ApiError.badRequest('Could not extract idea from URL');
+  }
+
+  if (!parsed.title || !parsed.idea) throw ApiError.badRequest('Could not extract idea from URL');
+  res.json({ title: parsed.title.slice(0, 100), idea: parsed.idea.slice(0, 500) });
 });
 
 exports.generateReadme = asyncHandler(async (req, res) => {

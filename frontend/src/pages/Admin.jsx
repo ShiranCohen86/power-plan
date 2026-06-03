@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { selectCurrentUser } from '../store/slices/authSlice';
 import * as adminApi from '../api/admin.api';
 import { ADMIN_ACTIVITY_PAGE_SIZE } from '../config/constants';
-import PlatformSetup   from '../components/admin/PlatformSetup';
-import AdminAnalytics  from '../components/admin/AdminAnalytics';
-import AdminLessons    from '../components/admin/AdminLessons';
-import AdminActivity   from '../components/admin/AdminActivity';
-import AdminUsers      from '../components/admin/AdminUsers';
+import PlatformSetup         from '../components/admin/PlatformSetup';
+import AdminAnalytics        from '../components/admin/AdminAnalytics';
+import AdminLessons          from '../components/admin/AdminLessons';
+import AdminActivity         from '../components/admin/AdminActivity';
+import AdminUsers            from '../components/admin/AdminUsers';
+import ProductionReadiness   from '../components/admin/ProductionReadiness.jsx';
 
 const ACTIVITY_LIMIT = ADMIN_ACTIVITY_PAGE_SIZE;
 
@@ -119,6 +120,9 @@ export default function Admin() {
       )}
 
       <main className="admin-main">
+        {/* S150: production readiness */}
+        <ProductionReadiness />
+
         <PlatformSetup />
 
         <section className="admin-section">

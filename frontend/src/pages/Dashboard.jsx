@@ -19,6 +19,7 @@ import {
 import { restoreProject, cloneProject, archiveProject } from '../api/projects.api.js';
 import DashboardStats from '../components/dashboard/DashboardStats.jsx';
 import BulkActionsBar from '../components/dashboard/BulkActionsBar.jsx';
+import AdvancedFilters from '../components/dashboard/AdvancedFilters.jsx';
 
 const ACTIVE_STATUSES = new Set(['planning', 'coding', 'deploying']);
 const UNDO_TOAST_DURATION_MS = 5000;
@@ -179,18 +180,24 @@ export default function Dashboard() {
   const loadingMore       = useSelector(selectLoadingMore);
   const selectedIds       = useSelector(selectSelectedIds);
   const allTags           = useSelector(selectAllTags);
+  const [advFilters, setAdvFilters] = useState({ fromDate: '', toDate: '', completionMin: '', completionMax: '' });
 
   function handleSort(newSort) { dispatch(setSort(newSort)); }
   function handleStatusFilter(s) { dispatch(setStatusFilter(s)); }
   function handleTagFilter(tag) { dispatch(setTagFilter(storeTagFilter === tag ? '' : tag)); }
   function handleToggleSelect(id) { dispatch(toggleSelectProject(id)); }
+  function handleAdvFilters(f) { setAdvFilters(f); }
+  function handleAdvReset() { setAdvFilters({ fromDate: '', toDate: '', completionMin: '', completionMax: '' }); }
 
-  // Fetch projects when search, sort, statusFilter, or tagFilter changes
+  // Fetch projects when any filter changes
   useEffect(() => {
     const ctrl = new AbortController();
-    dispatch(fetchProjects({ page: 1, search: storeSearch, sort: storeSort, statusFilter: storeStatusFilter, signal: ctrl.signal }));
+    dispatch(fetchProjects({
+      page: 1, search: storeSearch, sort: storeSort, statusFilter: storeStatusFilter,
+      ...advFilters, signal: ctrl.signal,
+    }));
     return () => ctrl.abort();
-  }, [storeSearch, storeSort, storeStatusFilter, dispatch]);
+  }, [storeSearch, storeSort, storeStatusFilter, advFilters, dispatch]);
 
   // Auto-refresh every 30s while any project is actively running — paused during active search
   const hasActive = projects.some((p) => ACTIVE_STATUSES.has(p.status));
@@ -245,6 +252,8 @@ export default function Dashboard() {
           {status === 'succeeded' && (
             <span className="dashboard-toolbar__count">{total} פרויקטים</span>
           )}
+          {/* S96: advanced filters */}
+          <AdvancedFilters onApply={handleAdvFilters} onReset={handleAdvReset} />
         </div>
 
         {/* Sprint 92: tag filter chips */}
@@ -299,8 +308,24 @@ export default function Dashboard() {
               <>
                 <div className="empty-state__icon">🔍</div>
                 <div className="empty-state__title">{`אין תוצאות עבור "${storeSearch}"`}</div>
+                <div className="empty-state__sub">נסה מונח אחר או נקה את החיפוש</div>
+              </>
+            ) : storeStatusFilter ? (
+              // S98: filtered empty state
+              <>
+                <div className="empty-state__icon">📂</div>
+                <div className="empty-state__title">אין פרויקטים בסטטוס זה</div>
+                <div className="empty-state__sub">נסה לבחור סטטוס אחר או הצג את כולם</div>
+                <button className="btn btn--secondary dashboard-empty__cta" onClick={() => handleStatusFilter('')}>הצג הכל</button>
+              </>
+            ) : storeTagFilter ? (
+              <>
+                <div className="empty-state__icon">🏷️</div>
+                <div className="empty-state__title">אין פרויקטים עם תג זה</div>
+                <button className="btn btn--secondary dashboard-empty__cta" onClick={() => handleTagFilter(storeTagFilter)}>הסר פילטר</button>
               </>
             ) : (
+              // S98: first-time onboarding empty state
               <>
                 <div className="empty-state__icon">⚡</div>
                 <div className="empty-state__title">{t('onboarding.welcome')}</div>

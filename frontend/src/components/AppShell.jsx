@@ -145,6 +145,12 @@ export default function AppShell({ children }) {
               {mode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
             </button>
             {user?.name && <span className="app-topbar__username">{user.name}</span>}
+            {/* S120: plan badge */}
+            {user?.plan && (
+              <span className={`plan-badge plan-badge--${user.plan}`}>
+                {user.plan === 'pro' ? 'Pro' : 'Free'}
+              </span>
+            )}
             <button
               className={`btn-ghost app-topbar__settings${location.pathname === '/settings' ? ' app-topbar__settings--active' : ''}`}
               onClick={() => navigate('/settings')}

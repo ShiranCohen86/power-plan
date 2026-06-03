@@ -42,4 +42,7 @@ router.get   ('/audit/export',          compCtrl.exportAuditLogCsv);
 // Sprint 148: system health
 router.get   ('/system/health',         compCtrl.systemHealth);
 
+// Sprint 150: production readiness checklist
+router.get   ('/system/readiness',      ctrl.productionReadiness);
+
 module.exports = router;

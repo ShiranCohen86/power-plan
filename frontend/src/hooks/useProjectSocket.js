@@ -53,6 +53,7 @@ export function useProjectSocket(projectId, handlers = {}) {
       'consultants:completed':         wrap('onConsultantsCompleted'),
       'pipeline:awaiting_credentials': wrap('onAwaitingCredentials'),
       'tasks:extracted':               wrap('onTasksExtracted'),
+      'presence:update':               wrap('onPresenceUpdate'), // S129
     };
 
     Object.entries(listeners).forEach(([event, fn]) => socket.current.on(event, fn));

@@ -44,8 +44,10 @@ router.get   ('/api-keys',            publicCtrl.listApiKeys);
 router.post  ('/api-keys',            publicCtrl.createApiKey);
 router.delete('/api-keys/:keyId',     publicCtrl.revokeApiKey);
 
-// Sprint 141: GDPR data export
+// Sprint 141: GDPR data export (JSON)
 router.get   ('/export/my-data',      compCtrl.exportMyData);
+// Sprint 143: Full account export (ZIP)
+router.get   ('/export/my-data.zip',  compCtrl.exportMyDataZip);
 
 // Sprint 145: privacy summary
 router.get   ('/privacy',             compCtrl.getPrivacySummary);

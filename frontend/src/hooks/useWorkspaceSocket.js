@@ -29,6 +29,7 @@ export function useWorkspaceSocket(projectId, {
   setConsultantMsgs,
   setConsultantsRunning,
   activeFeedTab,
+  setViewers,         // S129
 }) {
   const wasWatchingRef    = useRef(false);
   const pageLoadTimeRef   = useRef(Date.now());
@@ -108,5 +109,6 @@ export function useWorkspaceSocket(projectId, {
     onConsultantsStarted:    () => { setConsultantsRunning(true); setConsultantMsgs([]); },
     onConsultantsMessage:    (msg) => setConsultantMsgs((prev) => [...prev, msg]),
     onConsultantsCompleted:  () => setConsultantsRunning(false),
+    onPresenceUpdate:        ({ viewers }) => setViewers?.(viewers || []),  // S129
   });
 }

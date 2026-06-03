@@ -12,6 +12,7 @@ import WorkspaceTour from '../components/ui/WorkspaceTour';
 import KeyboardHelp from '../components/workspace/KeyboardHelp';
 import ShareModal from '../components/workspace/ShareModal.jsx';
 import PhaseComments from '../components/workspace/PhaseComments.jsx';
+import PhaseDiff from '../components/workspace/PhaseDiff.jsx';
 
 import PhaseList              from '../components/workspace/PhaseList';
 import FeatureErrorBoundary   from '../components/ui/FeatureErrorBoundary';
@@ -20,6 +21,7 @@ import WorkspaceApprovalFooter from '../components/workspace/WorkspaceApprovalFo
 import WorkspaceTopbar        from '../components/workspace/WorkspaceTopbar';
 import WorkspaceModals        from '../components/workspace/WorkspaceModals';
 import QuotaBanner            from '../components/workspace/QuotaBanner';
+import LowQuotaBanner         from '../components/workspace/LowQuotaBanner.jsx';
 import DeploymentStatus       from '../components/workspace/DeploymentStatus';
 import SettingsGate           from '../components/SettingsGate';
 import SafeMarkdown           from '../components/ui/SafeMarkdown';
@@ -47,6 +49,8 @@ export default function ProjectWorkspace() {
   const [downloading,   setDownloading]   = useState(false);
   const [showShare,     setShowShare]     = useState(false);   // Sprint 121
   const [showComments,  setShowComments]  = useState(false);   // Sprint 127
+  const [showDiff,      setShowDiff]      = useState(false);   // Sprint 103
+  const [viewers,       setViewers]       = useState([]);      // Sprint 129
 
   async function handleBulkApprove() {
     try {
@@ -206,6 +210,7 @@ export default function ProjectWorkspace() {
         onJoinMeeting={() => ws.setShowMeetingRoom(true)}
         onShare={() => setShowShare(true)}
         onBulkApprove={ws.awaitingPhase !== null ? handleBulkApprove : null}
+        viewers={ws.viewers}
       />
 
 
@@ -216,6 +221,8 @@ export default function ProjectWorkspace() {
         </div>
       )}
 
+      {/* S115: low-quota warning */}
+      <LowQuotaBanner />
       {/* Quota exhausted */}
       {ws.isQuotaPaused && <QuotaBanner message={ws.quotaError?.message} projectId={id} />}
 
@@ -375,7 +382,32 @@ export default function ProjectWorkspace() {
               </div>
             ) : ws.activeDoc ? (
               <div className="workspace-doc">
-                <SafeMarkdown content={ws.activeDoc.content} className="workspace-doc__content" />
+                {/* S108: copy to clipboard */}
+                <div className="workspace-doc-actions">
+                  <button
+                    className="btn btn--ghost btn--sm workspace-doc-action"
+                    title="Copy document content"
+                    onClick={() => {
+                      navigator.clipboard.writeText(ws.activeDoc.content).then(() => toast.success('Copied!')).catch(() => toast.error('Copy failed'));
+                    }}
+                  >
+                    📋 Copy
+                  </button>
+                  {/* S103: diff toggle (only if previousContent exists) */}
+                  {ws.activeDoc.previousContent && (
+                    <button
+                      className={`btn btn--ghost btn--sm workspace-doc-action${showDiff ? ' workspace-doc-action--active' : ''}`}
+                      onClick={() => setShowDiff((s) => !s)}
+                    >
+                      ⚡ {showDiff ? 'Hide diff' : 'Show changes'}
+                    </button>
+                  )}
+                </div>
+                {showDiff && ws.activeDoc.previousContent ? (
+                  <PhaseDiff previous={ws.activeDoc.previousContent} current={ws.activeDoc.content} />
+                ) : (
+                  <SafeMarkdown content={ws.activeDoc.content} className="workspace-doc__content" />
+                )}
               </div>
             ) : (
               <div className="workspace-empty">

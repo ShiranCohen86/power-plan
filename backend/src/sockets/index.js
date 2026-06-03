@@ -6,6 +6,9 @@ const Project    = require('../models/Project');
 
 let io;
 
+// S129: in-memory presence map  { projectId → Set<{ userId, name }> }
+const presenceMap = new Map();
+
 async function initSocket(server) {
   io = new Server(server, {
     cors: {
@@ -51,19 +54,49 @@ async function initSocket(server) {
     socket.on('join:project', async (projectId) => {
       if (!projectId || !socket.userId) return;
       try {
-        const project = await Project.findOne({ _id: projectId, ownerId: socket.userId }).lean();
-        if (!project) return; // silently reject — don't leak project existence
+        // Allow owner OR accepted collaborator
+        const ProjectCollaborator = require('../models/ProjectCollaborator');
+        const [project, collab] = await Promise.all([
+          Project.findOne({ _id: projectId, ownerId: socket.userId }).lean(),
+          ProjectCollaborator.findOne({ projectId, userId: socket.userId, status: 'accepted' }).lean(),
+        ]);
+        if (!project && !collab) return;
         socket.join(`project:${projectId}`);
+        socket.currentProjectId = projectId;
+
+        // S129: presence
+        if (!presenceMap.has(projectId)) presenceMap.set(projectId, new Map());
+        const User = require('../models/User');
+        const user = await User.findById(socket.userId).select('name').lean();
+        presenceMap.get(projectId).set(socket.id, { userId: socket.userId, name: user?.name || 'Unknown' });
+        const viewers = [...presenceMap.get(projectId).values()];
+        io.to(`project:${projectId}`).emit('presence:update', { viewers });
+
         logger.debug('socket joined project room', { socketId: socket.id, projectId });
       } catch { /* ignore malformed projectId */ }
     });
 
     socket.on('leave:project', (projectId) => {
       socket.leave(`project:${projectId}`);
+      // S129: remove from presence
+      if (presenceMap.has(projectId)) {
+        presenceMap.get(projectId).delete(socket.id);
+        const viewers = [...presenceMap.get(projectId).values()];
+        io.to(`project:${projectId}`).emit('presence:update', { viewers });
+        if (presenceMap.get(projectId).size === 0) presenceMap.delete(projectId);
+      }
     });
 
     socket.on('disconnect', () => {
       logger.debug('socket disconnected', { id: socket.id });
+      // S129: clean up presence on disconnect
+      const projectId = socket.currentProjectId;
+      if (projectId && presenceMap.has(projectId)) {
+        presenceMap.get(projectId).delete(socket.id);
+        const viewers = [...presenceMap.get(projectId).values()];
+        io.to(`project:${projectId}`).emit('presence:update', { viewers });
+        if (presenceMap.get(projectId).size === 0) presenceMap.delete(projectId);
+      }
     });
   });
 

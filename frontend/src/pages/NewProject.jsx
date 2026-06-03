@@ -6,7 +6,7 @@ import IdeaInput from '../components/discovery/IdeaInput';
 import DiscoveryChat from '../components/discovery/DiscoveryChat';
 import SettingsGate from '../components/SettingsGate';
 import { createNewProject } from '../store/slices/projectsSlice';
-import { discoveryComplete, getProject, getProjectSettings } from '../api/projects.api';
+import { discoveryComplete, getProject, getProjectSettings, importProjectFromUrl } from '../api/projects.api';
 
 const STEP_IDEA      = 'idea';
 const STEP_GATE      = 'gate';
@@ -22,6 +22,8 @@ export default function NewProject() {
   const [project, setProject]   = useState(null);
   const [creating, setCreating] = useState(false);
   const [error, setError]       = useState('');
+  const [importUrl,   setImportUrl]   = useState('');
+  const [importing,   setImporting]   = useState(false);
 
   // Resume an existing onboarding project from the dashboard
   const resumeId = searchParams.get('resumeId');
@@ -89,7 +91,38 @@ export default function NewProject() {
         )}
 
         {!creating && step === STEP_IDEA && (
-          <IdeaInput onSubmit={handleIdeaSubmit} loading={creating} />
+          <>
+            <IdeaInput onSubmit={handleIdeaSubmit} loading={creating} />
+            {/* S140: import from URL */}
+            <div className="new-project-import-url">
+              <p className="new-project-import-url__label">Or import from a URL:</p>
+              <div className="new-project-import-url__row">
+                <input
+                  type="url"
+                  className="new-project-import-url__input"
+                  placeholder="https://example.com/product-page"
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  dir="ltr"
+                />
+                <button
+                  className="btn btn--secondary"
+                  disabled={importing || !importUrl.trim()}
+                  onClick={async () => {
+                    setImporting(true); setError('');
+                    try {
+                      const { title, idea } = await importProjectFromUrl(importUrl.trim());
+                      await handleIdeaSubmit({ title, idea });
+                    } catch (err) {
+                      setError(err?.message || 'Could not import from URL');
+                    } finally { setImporting(false); }
+                  }}
+                >
+                  {importing ? '...' : '🔗 Import'}
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
         {step === STEP_GATE && project && (

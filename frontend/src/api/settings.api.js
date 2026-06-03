@@ -55,8 +55,10 @@ export const listApiKeys            = ()    => safeRequest({ method: 'get',    u
 export const createApiKey           = (name) => safeRequest({ method: 'post',  url: '/settings/api-keys', data: { name } });
 export const revokeApiKey           = (id)  => safeRequest({ method: 'delete', url: `/settings/api-keys/${id}` });
 
-// Sprint 141: GDPR export
-export const exportMyData           = ()    => `/api/settings/export/my-data`;
+// Sprint 141: GDPR export (JSON)
+export const exportMyData    = () => `/api/settings/export/my-data`;
+// Sprint 143: Full account export (ZIP)
+export const exportMyDataZip = () => `/api/settings/export/my-data.zip`;
 
 // Sprint 145: privacy
 export const getPrivacySummary      = ()    => safeRequest({ method: 'get',    url: '/settings/privacy' });

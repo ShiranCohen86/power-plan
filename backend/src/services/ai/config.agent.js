@@ -26,6 +26,11 @@ REQUIRED FILES — generate ALL of these:
    - How to run locally
    - Important files and their purpose
 8. README.md — user-facing README with: project description, features, setup instructions, tech stack
+9. .github/workflows/deploy.yml — GitHub Actions CI/CD workflow that:
+   - Triggers on push to main
+   - Runs: npm ci, npm run build
+   - Deploys to Render via API using secrets: RENDER_API_KEY and RENDER_SERVICE_ID
+   - Uses actions/checkout@v4, actions/setup-node@v4 (node 20)
 
 BACKEND DEPENDENCIES (use these exact packages):
 express, mongoose, jsonwebtoken, bcryptjs, cors, helmet, dotenv, joi, morgan,

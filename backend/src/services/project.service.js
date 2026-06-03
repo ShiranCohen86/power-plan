@@ -25,7 +25,12 @@ const SORT_MAP = {
 
 const VALID_STATUSES = new Set(['onboarding', 'planning', 'coding', 'deploying', 'live', 'failed', 'paused', 'archived']);
 
-async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 'date', status = '', tags = '' } = {}) {
+async function listByOwner(ownerId, {
+  page = 1, limit = 12, search = '', sort = 'date',
+  status = '', tags = '',
+  fromDate = '', toDate = '',
+  completionMin = '', completionMax = '',
+} = {}) {
   const query = { ownerId, deletedAt: null };
   if (search) {
     const escaped = escapeRegex(search);
@@ -36,6 +41,18 @@ async function listByOwner(ownerId, { page = 1, limit = 12, search = '', sort = 
   if (tags) {
     const tagList = tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
     if (tagList.length) query.tags = { $in: tagList };
+  }
+  // S96: date range filter
+  if (fromDate || toDate) {
+    query.createdAt = {};
+    if (fromDate) query.createdAt.$gte = new Date(fromDate);
+    if (toDate)   query.createdAt.$lte = new Date(toDate);
+  }
+  // S96: completion % range
+  if (completionMin !== '' || completionMax !== '') {
+    query.completionPercent = {};
+    if (completionMin !== '') query.completionPercent.$gte = Number(completionMin);
+    if (completionMax !== '') query.completionPercent.$lte = Number(completionMax);
   }
   const sortQuery = SORT_MAP[sort] || SORT_MAP.date;
   const skip = (page - 1) * limit;

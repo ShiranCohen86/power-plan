@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPrivacySummary, exportMyData } from '../../api/settings.api';
+import { getPrivacySummary, exportMyData, exportMyDataZip } from '../../api/settings.api';
 
 export default function PrivacyDashboard() {
   const [summary, setSummary] = useState(null);
@@ -42,13 +42,14 @@ export default function PrivacyDashboard() {
         <h4>Your Controls</h4>
         <div className="privacy-controls">
           {controls.canExportData && (
-            <a
-              href={exportMyData()}
-              download="my-data-export.json"
-              className="btn btn--sm"
-            >
-              Download my data
-            </a>
+            <>
+              <a href={exportMyData()} download="my-data-export.json" className="btn btn--sm">
+                📄 Download JSON
+              </a>
+              <a href={exportMyDataZip()} download="my-account-export.zip" className="btn btn--sm btn--secondary">
+                🗜️ Download ZIP
+              </a>
+            </>
           )}
         </div>
       </div>

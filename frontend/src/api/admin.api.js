@@ -13,4 +13,8 @@ export const bulkDeleteLessons = (data)  => safeRequest({ method: 'delete', url:
 export const listUsers     = (params)   => safeRequest({ method: 'get',    url: `${BASE}/users`, params });
 export const updateUser    = (id, data) => safeRequest({ method: 'patch',  url: `${BASE}/users/${id}`, data });
 export const impersonateUser = (id)     => safeRequest({ method: 'post',   url: `${BASE}/users/${id}/impersonate` });
-export const exportLogs    = (params)   => `${import.meta.env.VITE_API_URL || ''}/api/admin/logs/export${params?.projectId ? `?projectId=${params.projectId}` : ''}`;
+export const exportLogs        = (params)   => `${import.meta.env.VITE_API_URL || ''}/api/admin/logs/export${params?.projectId ? `?projectId=${params.projectId}` : ''}`;
+export const getSystemHealth   = ()         => safeRequest({ method: 'get', url: `${BASE}/system/health` });
+export const getReadiness      = ()         => safeRequest({ method: 'get', url: `${BASE}/system/readiness` });
+export const getAllUsersUsage   = ()         => safeRequest({ method: 'get', url: `${BASE}/usage` });
+export const exportAuditLogCsv = (params)   => `${import.meta.env.VITE_API_URL || ''}/api/admin/audit/export${params?.from ? `?from=${params.from}` : ''}`;

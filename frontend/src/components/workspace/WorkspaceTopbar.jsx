@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ArrowForwardOutlined from '@mui/icons-material/ArrowForwardOutlined';
+import PresenceIndicators from './PresenceIndicators.jsx';
 
 export default function WorkspaceTopbar({
   project,
@@ -22,6 +23,7 @@ export default function WorkspaceTopbar({
   onJoinMeeting,
   onShare,          // Sprint 121
   onBulkApprove,    // Sprint 104
+  viewers,          // Sprint 129
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -111,6 +113,9 @@ export default function WorkspaceTopbar({
           🚀 {rateLimit.remaining}/{rateLimit.maxPerHour} starts
         </span>
       )}
+
+      {/* S129: presence */}
+      {viewers?.length > 0 && <PresenceIndicators viewers={viewers} />}
 
       <div className="workspace-topbar__status">
         {liveUrl && (

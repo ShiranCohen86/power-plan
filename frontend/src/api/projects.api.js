@@ -5,11 +5,17 @@ const DISCOVERY_SSE_TIMEOUT_MS = 45_000;
 export const createProject = (data) =>
   safeRequest({ method: 'post', url: '/projects', data });
 
-export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date', statusFilter = '', signal } = {}) => {
+export const listProjects = ({ page = 1, limit = 12, search = '', sort = 'date', statusFilter = '', signal,
+  fromDate = '', toDate = '', completionMin = '', completionMax = '', tags = '' } = {}) => {
   const params = { page, limit };
-  if (search) params.search = search;
+  if (search)         params.search        = search;
   if (sort && sort !== 'date') params.sort = sort;
-  if (statusFilter) params.status = statusFilter;
+  if (statusFilter)   params.status        = statusFilter;
+  if (fromDate)       params.fromDate      = fromDate;
+  if (toDate)         params.toDate        = toDate;
+  if (completionMin !== '') params.completionMin = completionMin;
+  if (completionMax !== '') params.completionMax = completionMax;
+  if (tags)           params.tags          = tags;
   return safeRequest({ method: 'get', url: '/projects', params, signal });
 };
 
@@ -68,6 +74,10 @@ export const skipServiceCredentials = (id, serviceId) =>
 
 export const consultService = (id, serviceId) =>
   safeRequest({ method: 'post', url: `/projects/${id}/required-services/${serviceId}/consult` });
+
+// ── Sprint 140: Import from URL ───────────────────────────────────────────────
+export const importProjectFromUrl = (url) =>
+  safeRequest({ method: 'post', url: '/projects/import-from-url', data: { url } });
 
 // ── Sprint 92-100: Project extras ─────────────────────────────────────────────
 export const updateProjectTags        = (id, tags)         => safeRequest({ method: 'patch', url: `/projects/${id}/tags`,          data: { tags } });

@@ -302,6 +302,36 @@ exports.bulkDeleteLessons = asyncHandler(async (req, res) => {
   res.json({ ok: true, deleted: result.deletedCount });
 });
 
+// ── S150: Production readiness checklist ──────────────────────────────────────
+
+exports.productionReadiness = asyncHandler(async (req, res) => {
+  const env = require('../config/env');
+
+  const checks = [
+    { id: 'jwt_secret',      name: 'JWT_SECRET set & strong',          ok: !!(process.env.JWT_SECRET && process.env.JWT_SECRET !== 'dev_jwt_secret_change_me') },
+    { id: 'jwt_refresh',     name: 'JWT_REFRESH_SECRET set & unique',  ok: !!(process.env.JWT_REFRESH_SECRET && process.env.JWT_REFRESH_SECRET !== process.env.JWT_SECRET) },
+    { id: 'mongo_uri',       name: 'MONGO_URI set',                    ok: !!process.env.MONGO_URI },
+    { id: 'anthropic_key',   name: 'ANTHROPIC_API_KEY set',            ok: !!process.env.ANTHROPIC_API_KEY },
+    { id: 'encryption_key',  name: 'ENCRYPTION_KEY set (64 hex chars)',ok: !!(process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length === 64) },
+    { id: 'frontend_url',    name: 'FRONTEND_URL set',                 ok: !!process.env.FRONTEND_URL },
+    { id: 'sentry',          name: 'SENTRY_DSN set (error monitoring)', ok: !!process.env.SENTRY_DSN, optional: true },
+    { id: 'redis',           name: 'REDIS_URL set (multi-instance WS)', ok: !!process.env.REDIS_URL, optional: true },
+    { id: 'resend',          name: 'RESEND_API_KEY set (email)',        ok: !!process.env.RESEND_API_KEY, optional: true },
+    { id: 'github_token',    name: 'GITHUB_TOKEN set (deployment)',     ok: !!process.env.GITHUB_TOKEN, optional: true },
+    { id: 'render_key',      name: 'RENDER_API_KEY set (deployment)',   ok: !!process.env.RENDER_API_KEY, optional: true },
+    { id: 'return_dev_token', name: 'RETURN_DEV_TOKEN NOT set in prod', ok: !process.env.RETURN_DEV_TOKEN || process.env.RETURN_DEV_TOKEN !== 'true' },
+    { id: 'node_env',        name: 'NODE_ENV=production',              ok: env.NODE_ENV === 'production' },
+    { id: 'atlas_key',       name: 'Atlas API keys set (auto DB)',      ok: !!(process.env.ATLAS_PUBLIC_KEY && process.env.ATLAS_PRIVATE_KEY), optional: true },
+    { id: 'cloudinary',      name: 'Cloudinary set (media hosting)',    ok: !!process.env.CLOUDINARY_CLOUD_NAME, optional: true },
+  ];
+
+  const required = checks.filter((c) => !c.optional);
+  const allRequiredOk = required.every((c) => c.ok);
+  const score = Math.round((checks.filter((c) => c.ok).length / checks.length) * 100);
+
+  res.json({ ready: allRequiredOk, score, checks });
+});
+
 // ── Audit log ─────────────────────────────────────────────────────────────────
 
 exports.getAuditLog = asyncHandler(async (req, res) => {

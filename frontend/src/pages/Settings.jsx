@@ -555,10 +555,19 @@ function AppearanceSection() {
   );
 }
 
+const TABS = [
+  { key: 'general',      label: '⚙️ General' },
+  { key: 'api',          label: '🔑 API Keys' },
+  { key: 'integrations', label: '🔗 Integrations' },
+  { key: 'usage',        label: '📊 Usage' },
+  { key: 'privacy',      label: '🔒 Privacy' },
+];
+
 export default function Settings() {
   const { t } = useTranslation();
   const [settings,  setSettings]  = useState(null);
   const [loadError, setLoadError] = useState('');
+  const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
     (async () => {
@@ -575,6 +584,21 @@ export default function Settings() {
     <div className="settings-page">
       <div className="settings-page__heading">
         <h1 className="settings-page__title">{t('settings.title')}</h1>
+      </div>
+
+      {/* S139: tabs */}
+      <div className="settings-tabs" role="tablist">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            role="tab"
+            aria-selected={activeTab === tab.key}
+            className={`settings-tab${activeTab === tab.key ? ' settings-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loadError && <div className="settings-page__load-error">{loadError}</div>}
@@ -615,99 +639,95 @@ export default function Settings() {
 
       {settings && (
         <div className="settings-page__body">
-          <AppearanceSection />
-          <BiometricSection />
-          <TotpSection totpEnabled={!!settings?.totpEnabled} />
-          <ChangePasswordSection />
-          <NotifPrefsSection />
-          <WebhookSection />
-          <SlackSection />
-          <SessionsSection />
+          {activeTab === 'general' && (
+            <>
+              <AppearanceSection />
+              <BiometricSection />
+              <TotpSection totpEnabled={!!settings?.totpEnabled} />
+              <ChangePasswordSection />
+              <NotifPrefsSection />
+              <SessionsSection />
+            </>
+          )}
 
-          {/* Sprint 111-120: Usage analytics */}
-          <section className="settings-section">
-            <UsageDashboard />
-          </section>
+          {activeTab === 'api' && (
+            <>
+              <section className="settings-section">
+                <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
+                <p className="settings-section__desc">{t('settings.apiDesc')}</p>
+                <TokenSection
+                  title={t('settings.tokenTitle')}
+                  subtitle={t('settings.tokenSubtitle')}
+                  hint={settings.apiKeyHint}
+                  hasToken={settings.hasApiKey}
+                  onValidate={(key) => validateApiKey(key)}
+                  onSave={async (v) => {
+                    const res = await updateApiKey(v);
+                    setSettings((s) => ({ ...s, hasApiKey: res.hasApiKey, apiKeyHint: res.apiKeyHint }));
+                  }}
+                  onDelete={async () => {
+                    await deleteApiKey();
+                    setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null }));
+                  }}
+                  inputProps={{ placeholder: 'sk-ant-api03-...' }}
+                />
+              </section>
+              <section className="settings-section">
+                <h2 className="settings-section__title">{t('settings.deploySection')}</h2>
+                <p className="settings-section__desc">{t('settings.deployDesc')}</p>
+                <TokenSection
+                  title={t('settings.githubTokenTitle')}
+                  subtitle={t('settings.githubTokenSubtitle')}
+                  hint={settings.githubTokenHint}
+                  hasToken={settings.hasGithubToken}
+                  onSave={async (v) => {
+                    const res = await updateGithubToken(v);
+                    setSettings((s) => ({ ...s, hasGithubToken: res.hasGithubToken, githubTokenHint: res.githubTokenHint }));
+                  }}
+                  onDelete={async () => {
+                    await deleteGithubToken();
+                    setSettings((s) => ({ ...s, hasGithubToken: false, githubTokenHint: null }));
+                  }}
+                  inputProps={{ placeholder: 'ghp_...' }}
+                />
+                <TokenSection
+                  title={t('settings.renderTokenTitle')}
+                  subtitle={t('settings.renderTokenSubtitle')}
+                  hint={settings.renderTokenHint}
+                  hasToken={settings.hasRenderToken}
+                  onSave={async (v) => {
+                    const res = await updateRenderToken(v);
+                    setSettings((s) => ({ ...s, hasRenderToken: res.hasRenderToken, renderTokenHint: res.renderTokenHint }));
+                  }}
+                  onDelete={async () => {
+                    await deleteRenderToken();
+                    setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
+                  }}
+                  inputProps={{ placeholder: 'rnd_...' }}
+                />
+              </section>
+              <ApiKeysSection />
+            </>
+          )}
 
-          {/* Sprint 137-138: Public API keys */}
-          <section className="settings-section">
-            <ApiKeysSection />
-          </section>
+          {activeTab === 'integrations' && (
+            <>
+              <WebhookSection />
+              <SlackSection />
+            </>
+          )}
 
-          {/* Sprint 145: Privacy dashboard */}
-          <section className="settings-section">
-            <PrivacyDashboard />
-          </section>
-          <section className="settings-section">
-            <h2 className="settings-section__title">{t('settings.apiSection')}</h2>
-            <p className="settings-section__desc">{t('settings.apiDesc')}</p>
+          {activeTab === 'usage' && (
+            <section className="settings-section">
+              <UsageDashboard />
+            </section>
+          )}
 
-            <TokenSection
-              title={t('settings.tokenTitle')}
-              subtitle={t('settings.tokenSubtitle')}
-              hint={settings.apiKeyHint}
-              hasToken={settings.hasApiKey}
-              onValidate={(key) => validateApiKey(key)}
-              onSave={async (v) => {
-                const res = await updateApiKey(v);
-                setSettings((s) => ({ ...s, hasApiKey: res.hasApiKey, apiKeyHint: res.apiKeyHint }));
-              }}
-              onDelete={async () => {
-                await deleteApiKey();
-                setSettings((s) => ({ ...s, hasApiKey: false, apiKeyHint: null }));
-              }}
-              inputProps={{
-                placeholder: 'sk-ant-api03-...',
-                howto: {
-                  title: t('settings.howtoTitle'),
-                  steps: [
-                    t('settings.howtoStep1'),
-                    t('settings.howtoStep2'),
-                    t('settings.howtoStep3'),
-                    t('settings.howtoStep4'),
-                  ],
-                  note: t('settings.howtoNote'),
-                },
-              }}
-            />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section__title">{t('settings.deploySection')}</h2>
-            <p className="settings-section__desc">{t('settings.deployDesc')}</p>
-
-            <TokenSection
-              title={t('settings.githubTokenTitle')}
-              subtitle={t('settings.githubTokenSubtitle')}
-              hint={settings.githubTokenHint}
-              hasToken={settings.hasGithubToken}
-              onSave={async (v) => {
-                const res = await updateGithubToken(v);
-                setSettings((s) => ({ ...s, hasGithubToken: res.hasGithubToken, githubTokenHint: res.githubTokenHint }));
-              }}
-              onDelete={async () => {
-                await deleteGithubToken();
-                setSettings((s) => ({ ...s, hasGithubToken: false, githubTokenHint: null }));
-              }}
-              inputProps={{ placeholder: 'ghp_... or github_pat_...' }}
-            />
-
-            <TokenSection
-              title={t('settings.renderTokenTitle')}
-              subtitle={t('settings.renderTokenSubtitle')}
-              hint={settings.renderTokenHint}
-              hasToken={settings.hasRenderToken}
-              onSave={async (v) => {
-                const res = await updateRenderToken(v);
-                setSettings((s) => ({ ...s, hasRenderToken: res.hasRenderToken, renderTokenHint: res.renderTokenHint }));
-              }}
-              onDelete={async () => {
-                await deleteRenderToken();
-                setSettings((s) => ({ ...s, hasRenderToken: false, renderTokenHint: null }));
-              }}
-              inputProps={{ placeholder: 'rnd_...' }}
-            />
-          </section>
+          {activeTab === 'privacy' && (
+            <section className="settings-section">
+              <PrivacyDashboard />
+            </section>
+          )}
         </div>
       )}
     </div>

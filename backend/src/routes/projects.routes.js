@@ -63,8 +63,10 @@ router.patch('/:id/tags',        validate(projectValidator.objectId), extrasCtrl
 router.patch('/:id/pin',         validate(projectValidator.objectId), extrasCtrl.togglePin);
 
 // ── Sprint 94: Bulk ops ───────────────────────────────────────────────────────
-router.post('/bulk/delete',  extrasCtrl.bulkDelete);
-router.post('/bulk/archive', extrasCtrl.bulkArchive);
+router.post('/bulk/delete',    extrasCtrl.bulkDelete);
+router.post('/bulk/archive',   extrasCtrl.bulkArchive);
+// ── Sprint 140: Import from URL ───────────────────────────────────────────────
+router.post('/import-from-url', ctrl.importFromUrl);
 
 // ── Sprint 97: Notes ──────────────────────────────────────────────────────────
 router.patch('/:id/notes',       validate(projectValidator.objectId), extrasCtrl.updateNotes);

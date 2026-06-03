@@ -256,3 +256,160 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+// ── S96: Advanced filters ─────────────────────────────────────────────────────
+
+.advanced-filters { position: relative; }
+.advanced-filters__toggle {
+  font: inherit; font-size: var(--text-sm); padding: 5px 11px; border-radius: $radius-sm;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+  cursor: pointer; transition: all var(--ease-fast);
+  &:hover { background: var(--surface-3); color: var(--text); }
+  &--active { border-color: var(--brand-primary); color: var(--brand-primary-light); }
+}
+.advanced-filters__panel {
+  position: absolute; top: calc(100% + 6px); inset-inline-start: 0; z-index: 200;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: $radius;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 320px;
+  box-shadow: var(--shadow-lg);
+}
+.advanced-filters__row   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.advanced-filters__label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.advanced-filters__input { font-size: 13px; padding: 5px 8px; flex: 1;
+  &--short { max-width: 80px; } }
+.advanced-filters__sep   { font-size: 12px; color: var(--text-muted); }
+.advanced-filters__unit  { font-size: 12px; color: var(--text-muted); }
+.advanced-filters__actions { display: flex; gap: 8px; margin-top: 4px; }
+
+// ── S103: Phase diff ──────────────────────────────────────────────────────────
+
+.phase-diff {
+  &__legend { font-size: 11px; display: flex; gap: 12px; margin-bottom: 6px; }
+  &__added-label   { color: #22c55e; }
+  &__removed-label { color: var(--danger); }
+  &__pre   { font-family: monospace; font-size: 12px; line-height: 1.6; overflow-x: auto;
+             background: var(--surface-3); border-radius: $radius; padding: 12px; }
+  &__line  { display: flex; gap: 6px; }
+  &__marker { color: var(--text-subtle); min-width: 12px; }
+  &__line--added   { background: rgba(34,197,94,.08); color: #22c55e; }
+  &__line--removed { background: rgba(239,68,68,.08); color: #f87171; text-decoration: line-through; opacity: .75; }
+}
+
+.workspace-doc-actions { display: flex; gap: 6px; margin-bottom: 6px; }
+.workspace-doc-action {
+  font-size: 11px; padding: 3px 8px; border-radius: $radius-sm; opacity: .7;
+  &:hover { opacity: 1; }
+  &--active { opacity: 1; background: rgba(6,182,212,.15); color: var(--brand-primary-light); }
+}
+
+// ── S113: Quota ring ─────────────────────────────────────────────────────────
+
+.quota-ring {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  &__center { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  &__pct    { font-size: 14px; font-weight: 800; line-height: 1; }
+  &__label  { font-size: 9px; color: var(--text-muted); text-align: center; }
+}
+.usage-dashboard__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+// ── S115: Low-quota banner ────────────────────────────────────────────────────
+
+.low-quota-banner {
+  display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+  font-size: 13px; border-bottom: 1px solid transparent;
+  &--low       { background: rgba(251,191,36,.1); border-color: rgba(251,191,36,.3); color: var(--warning); }
+  &--exhausted { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3);  color: var(--danger); }
+  &__icon { font-size: 16px; }
+}
+
+// ── S120: Plan badge ──────────────────────────────────────────────────────────
+
+.plan-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; letter-spacing: .4px;
+  &--starter { background: rgba(107,114,128,.15); color: #9ca3af; border: 1px solid rgba(107,114,128,.3); }
+  &--pro     { background: rgba(167,139,250,.2);  color: #a78bfa; border: 1px solid rgba(167,139,250,.4); }
+}
+
+// ── S129: Presence indicators ─────────────────────────────────────────────────
+
+.presence-indicators {
+  display: flex; align-items: center; gap: -4px;
+}
+.presence-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--brand-primary); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface-1);
+  margin-inline-start: -4px; cursor: default;
+  &:first-child { margin-inline-start: 0; }
+  &--overflow { background: var(--surface-4); color: var(--text-muted); font-size: 10px; }
+}
+
+// ── S139: Settings tabs ───────────────────────────────────────────────────────
+
+.settings-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.settings-tab {
+  font: inherit; font-size: var(--text-sm); padding: 8px 14px; cursor: pointer;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text-muted); transition: color .15s, border-color .15s; min-height: auto;
+  &:hover { color: var(--text); }
+  &--active { color: var(--text); border-bottom-color: var(--brand-primary); font-weight: 600; }
+}
+
+// ── S140: Import from URL ─────────────────────────────────────────────────────
+
+.new-project-import-url {
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+  &__label { font-size: 12px; color: var(--text-muted); margin: 0 0 8px; }
+  &__row   { display: flex; gap: 8px; }
+  &__input { flex: 1; font-size: 13px; }
+}
+
+// ── S143: ZIP export (in privacy dashboard) ──────────────────────────────────
+
+.privacy-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+// ── S147: Redis rate-limit (no UI change — already in app.js)
+
+// ── S150: Production readiness ────────────────────────────────────────────────
+
+.prod-readiness {
+  @include surface-card;
+  padding: 20px; margin-bottom: 24px;
+
+  &__title { font-size: 16px; font-weight: 700; margin: 0 0 12px; }
+
+  &__health {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+    padding: 8px 12px; border-radius: $radius; margin-bottom: 16px;
+    &--healthy { background: rgba(34,197,94,.1); color: #22c55e; border: 1px solid rgba(34,197,94,.25); }
+    &--degraded { background: rgba(251,191,36,.1); color: var(--warning); border: 1px solid rgba(251,191,36,.25); }
+  }
+  &__health-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    flex-shrink: 0; animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  &__score { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  &__score-value { font-size: 32px; font-weight: 800;
+    &--ok   { color: #22c55e; }
+    &--warn { color: var(--warning); }
+  }
+  &__score-label { font-size: 14px; font-weight: 600; }
+
+  &__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  &__row {
+    border-bottom: 1px solid var(--border);
+    td { padding: 6px 8px; }
+    &--ok   {}
+    &--fail .prod-readiness__name { color: var(--danger); }
+    &--optional { opacity: .6; }
+  }
+  &__status { width: 24px; }
+  &__name   { flex: 1; }
+  &__optional { font-size: 11px; color: var(--text-muted); text-align: end; }
+}

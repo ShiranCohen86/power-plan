@@ -104,6 +104,64 @@ exports.systemHealth = asyncHandler(async (req, res) => {
   });
 });
 
+// Sprint 143: Full account export as ZIP
+exports.exportMyDataZip = asyncHandler(async (req, res) => {
+  let JSZip;
+  try { JSZip = require('jszip'); } catch {
+    return res.status(501).json({ error: 'jszip package not installed — run: npm install jszip' });
+  }
+
+  const User          = require('../models/User');
+  const Project       = require('../models/Project');
+  const Phase         = require('../models/Phase');
+  const Document      = require('../models/Document');
+  const Notification  = require('../models/Notification');
+  const AuditLog      = require('../models/AuditLog');
+  const GeneratedFile = require('../models/GeneratedFile');
+
+  const userId = req.user.id;
+
+  const [user, projects, notifications, auditLogs] = await Promise.all([
+    User.findById(userId).select('-passwordHash -totpSecret -webAuthnChallenge -sessions -pipelineStarts').lean(),
+    Project.find({ ownerId: userId, deletedAt: null }).lean(),
+    Notification.find({ userId }).sort({ createdAt: -1 }).limit(500).lean(),
+    AuditLog.find({ userId }).sort({ createdAt: -1 }).limit(500).lean(),
+  ]);
+
+  const projectIds = projects.map((p) => p._id);
+  const [phases, docs, files] = await Promise.all([
+    Phase.find({ projectId: { $in: projectIds } }).lean(),
+    Document.find({ projectId: { $in: projectIds } }).lean(),
+    GeneratedFile.find({ projectId: { $in: projectIds } }).lean(),
+  ]);
+
+  const zip = new JSZip();
+  zip.file('account.json', JSON.stringify({ ...user, settings: '[redacted]' }, null, 2));
+  zip.file('projects.json', JSON.stringify(projects.map((p) => ({ ...p, settings: '[redacted]', requiredServices: '[redacted]' })), null, 2));
+  zip.file('phases.json', JSON.stringify(phases, null, 2));
+  zip.file('notifications.json', JSON.stringify(notifications, null, 2));
+  zip.file('audit-log.json', JSON.stringify(auditLogs, null, 2));
+
+  // Add documents per project
+  const projFolder = zip.folder('documents');
+  for (const doc of docs) {
+    const safe = doc.type.replace(/[^a-zA-Z0-9_-]/g, '_');
+    projFolder.file(`${String(doc.projectId)}_${safe}_v${doc.version || 1}.md`, doc.content || '');
+  }
+
+  // Add generated file list (content omitted to keep ZIP small)
+  zip.file('generated-files-index.json', JSON.stringify(files.map((f) => ({
+    projectId: f.projectId, filePath: f.filePath, language: f.language, status: f.status, createdAt: f.createdAt,
+  })), null, 2));
+
+  const buf = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="my-account-export.zip"');
+  res.send(buf);
+
+  logger.info('compliance: zip export', { userId });
+});
+
 // Sprint 145: Privacy dashboard — what data we store about the user
 exports.getPrivacySummary = asyncHandler(async (req, res) => {
   const User          = require('../models/User');

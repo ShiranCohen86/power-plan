@@ -127,6 +127,8 @@ async function syncProjectTokens(projectId) {
     ]);
     const total = agg[0]?.total || 0;
     await Project.findByIdAndUpdate(projectId, { totalTokensUsed: total });
+    // S118: check budget alert after syncing
+    checkBudgetAlert(projectId).catch(() => {});
   } catch (err) {
     logger.warn('usage.service: syncProjectTokens failed', { projectId, error: err.message });
   }
@@ -139,4 +141,63 @@ async function isOverBudget(projectId) {
   return project.totalTokensUsed >= project.tokenBudget;
 }
 
-module.exports = { getUserUsage, getAllUsersUsage, syncProjectTokens, isOverBudget, tokensToUSD };
+/**
+ * S118: Check project token budget and fire notification at 80%.
+ * Called after each phase completes in syncProjectTokens.
+ */
+async function checkBudgetAlert(projectId) {
+  try {
+    const project = await Project.findById(projectId)
+      .select('tokenBudget totalTokensUsed ownerId title _budgetAlerted80')
+      .lean();
+    if (!project || !project.tokenBudget) return;
+
+    const pct = (project.totalTokensUsed / project.tokenBudget) * 100;
+    if (pct >= 80 && pct < 100 && !project._budgetAlerted80) {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        userId:    project.ownerId,
+        projectId: project._id,
+        type:      'warning',
+        title:     'Token budget at 80%',
+        message:   `"${project.title}" has used ${Math.round(pct)}% of its token budget (${project.totalTokensUsed.toLocaleString()} / ${project.tokenBudget.toLocaleString()} tokens).`,
+      });
+      // Mark alerted so we don't spam
+      await Project.findByIdAndUpdate(projectId, { _budgetAlerted80: true });
+    }
+  } catch (err) {
+    logger.warn('usage.service: checkBudgetAlert failed', { projectId, error: err.message });
+  }
+}
+
+/**
+ * S115: Check if user's monthly usage is at 80%+ of a soft limit.
+ * Returns { warned, pct, monthTokens, softLimit }
+ */
+async function checkMonthlyQuotaWarning(userId) {
+  const MONTHLY_SOFT_LIMIT = 500_000; // 500k tokens/month soft limit for starter
+  const monthStart = new Date();
+  monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+
+  const User    = require('../models/User');
+  const user    = await User.findById(userId).select('plan').lean();
+  if (user?.plan !== 'starter') return { warned: false };
+
+  const projects = await Project.find({ ownerId: userId, deletedAt: null }).select('_id').lean();
+  const projectIds = projects.map((p) => p._id);
+  if (!projectIds.length) return { warned: false };
+
+  const agg = await Phase.aggregate([
+    { $match: { projectId: { $in: projectIds }, completedAt: { $gte: monthStart } } },
+    { $group: { _id: null, total: { $sum: '$tokensUsed' } } },
+  ]);
+  const monthTokens = agg[0]?.total || 0;
+  const pct = (monthTokens / MONTHLY_SOFT_LIMIT) * 100;
+
+  return { warned: pct >= 80, pct: Math.round(pct), monthTokens, softLimit: MONTHLY_SOFT_LIMIT };
+}
+
+module.exports = {
+  getUserUsage, getAllUsersUsage, syncProjectTokens, isOverBudget, tokensToUSD,
+  checkBudgetAlert, checkMonthlyQuotaWarning,
+};

@@ -76,6 +76,9 @@ export function useWorkspaceState(id) {
     consultantsRunning, setConsultantsRunning,
   } = useMeetingFeed();
 
+  // S129: presence viewers
+  const [viewers, setViewers]                       = useState([]);
+
   // Phase intro animation
   const [introCount, setIntroCount]                 = useState(null);
   const introTargetRef                              = useRef(null);
@@ -97,7 +100,7 @@ export function useWorkspaceState(id) {
     setMeetingMsgs, setIsMeetingLive, setScheduledMeeting, setMissedMeeting,
     setQuotaError, setAwaitingServices,
     setTechLogs, setConsultantMsgs, setConsultantsRunning,
-    activeFeedTab,
+    activeFeedTab, setViewers,
   });
 
   // ── Document load ────────────────────────────────────────────────────────────
@@ -278,6 +281,7 @@ export function useWorkspaceState(id) {
     awaitPhase, projectStatus, isOnboarding, isPaused, isFailed,
     inProgress, canStart, canResume,
     TOTAL_PLANNING: TOTAL_PLANNING_PHASES, completedCount, estMinutes, showEstTime, totalTokensUsed,
+    viewers,                // S129
     // handlers
     loadDocument,
     ...actions,

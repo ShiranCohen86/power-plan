@@ -197,9 +197,12 @@ async function _runSinglePhase(projectId, phaseIndex, refineFeedback = null) {
   );
 
   await agentlog.log(projectId, phase._id, config.agentName, 'completed', null, { tokensUsed: result.totalTokens });
+  // S117/S118: sync token totals and check budget alert (fire-and-forget)
+  require('./usage.service').syncProjectTokens(projectId).catch(() => {});
 
   let doc = await Document.findOne({ projectId, phaseId: phase._id });
   if (doc) {
+    doc.previousContent = doc.content; // S103: save before overwriting
     doc.content  = result.content;
     doc.summary  = agent.summarize(result.content);
     doc.version += 1;
