@@ -112,6 +112,15 @@ exports.revokeSession = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+exports.loginHistory = asyncHandler(async (req, res) => {
+  const AuditLog = require('../models/AuditLog');
+  const logs = await AuditLog.find({
+    userId: req.user.id,
+    action: { $in: ['auth.login', 'auth.login.failed', 'auth.google', 'auth.webauthn', 'auth.totp_login'] },
+  }).sort({ createdAt: -1 }).limit(20).lean();
+  res.json({ history: logs.map((l) => ({ action: l.action, ip: l.meta?.ip || l.ip, createdAt: l.createdAt })) });
+});
+
 exports.totpSetup = asyncHandler(async (req, res) => {
   const result = await authService.setupTotp(req.user.id);
   res.json(result);

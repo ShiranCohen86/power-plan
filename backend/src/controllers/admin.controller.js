@@ -301,3 +301,23 @@ exports.bulkDeleteLessons = asyncHandler(async (req, res) => {
   const result = await Lesson.deleteMany(filter);
   res.json({ ok: true, deleted: result.deletedCount });
 });
+
+// ── Audit log ─────────────────────────────────────────────────────────────────
+
+exports.getAuditLog = asyncHandler(async (req, res) => {
+  const AuditLog = require('../models/AuditLog');
+  const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
+  const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+  const skip  = (page - 1) * limit;
+
+  const filter = {};
+  if (req.query.userId) filter.userId = req.query.userId;
+  if (req.query.action) filter.action = new RegExp(req.query.action.slice(0, 50), 'i');
+
+  const [items, total] = await Promise.all([
+    AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    AuditLog.countDocuments(filter),
+  ]);
+
+  res.json({ items, total, page, totalPages: Math.ceil(total / limit) || 1 });
+});

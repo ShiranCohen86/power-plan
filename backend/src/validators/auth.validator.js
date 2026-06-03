@@ -38,3 +38,17 @@ exports.resetPassword = {
 exports.updateProfile = {
   body: Joi.object({ name: Joi.string().min(2).max(80) }),
 };
+
+exports.changePassword = {
+  body: Joi.object({
+    currentPassword: Joi.string().required(),
+    newPassword:     password.required(),
+  }),
+};
+
+exports.totpVerify = {
+  body: Joi.object({
+    tempToken: Joi.string().required(),
+    token:     Joi.string().length(6).pattern(/^\d{6}$/).required(),
+  }),
+};

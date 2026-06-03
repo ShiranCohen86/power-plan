@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../store/slices/authSlice.js';
-import { updateCurrentUser } from '../api/auth.api.js';
+import { updateCurrentUser, getSessions } from '../api/auth.api.js';
+import { safeRequest } from '../api/request.js';
 
 export default function Profile() {
   const { t }   = useTranslation();
@@ -12,6 +13,13 @@ export default function Profile() {
   const [busy, setBusy]   = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr]     = useState('');
+  const [history, setHistory] = useState(null);
+
+  useEffect(() => {
+    safeRequest({ method: 'get', url: '/auth/login-history' })
+      .then((r) => setHistory(r.history || []))
+      .catch(() => setHistory([]));
+  }, []);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -67,6 +75,24 @@ export default function Profile() {
             <div><span style={{ color: 'var(--text-muted)' }}>{t('profile.joined')}:</span> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}</div>
           </div>
         </section>
+
+        {history && history.length > 0 && (
+          <section className="settings-section">
+            <h2 className="settings-section__title">🔐 {t('profile.loginHistory')}</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {history.slice(0, 10).map((h, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--text-muted)', padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ color: h.action.includes('failed') ? 'var(--danger)' : '#22c55e' }}>
+                    {h.action.includes('failed') ? '✗' : '✓'}
+                  </span>
+                  <span style={{ flex: 1 }}>{h.action}</span>
+                  <span>{h.ip || '—'}</span>
+                  <span>{h.createdAt ? new Date(h.createdAt).toLocaleDateString() : ''}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

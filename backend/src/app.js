@@ -55,16 +55,21 @@ const scriptSrc = env.NODE_ENV === 'production'
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
+      defaultSrc:      ["'self'"],
       scriptSrc,
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-      connectSrc: ["'self'", 'wss:', 'ws:'],
-      objectSrc: ["'none'"],
-      baseUri: ["'self'"],
+      styleSrc:        ["'self'", "'unsafe-inline'"],
+      imgSrc:          ["'self'", 'data:', 'blob:', 'https:'],
+      connectSrc:      ["'self'", 'wss:', 'ws:', 'https://accounts.google.com'],
+      fontSrc:         ["'self'", 'data:'],
+      mediaSrc:        ["'self'"],
+      objectSrc:       ["'none'"],
+      frameAncestors:  ["'none'"],
+      baseUri:         ["'self'"],
+      formAction:      ["'self'"],
     },
   },
   crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 const allowedOrigins = env.NODE_ENV === 'production'

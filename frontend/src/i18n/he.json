@@ -249,6 +249,7 @@
     "email": "אימייל",
     "name": "שם מלא",
     "saved": "נשמר!",
+    "loginHistory": "היסטוריית כניסות",
     "role": "תפקיד",
     "plan": "תוכנית",
     "joined": "הצטרף"
@@ -312,6 +313,7 @@
     "totpVerifyBtn": "אפשר 2FA",
     "totpDisableBtn": "השבת 2FA",
     "totpDisableConfirm": "הזן את הקוד הנוכחי שלך לאישור הסרה:",
+    "deployHint": "להפעלת פריסה אוטומטית הוסף GitHub Token בקטע Deployment למטה.",
     "changePasswordSection": "שינוי סיסמה",
     "currentPassword": "סיסמה נוכחית",
     "newPassword": "סיסמה חדשה",

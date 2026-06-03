@@ -28,4 +28,7 @@ router.post  ('/users/:id/impersonate', ctrl.impersonateUser);
 // Bulk lesson operations
 router.delete('/lessons/bulk',          ctrl.bulkDeleteLessons);
 
+// Audit log
+router.get   ('/audit',                 ctrl.getAuditLog);
+
 module.exports = router;

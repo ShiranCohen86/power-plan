@@ -544,6 +544,12 @@ export default function Settings() {
         </div>
       )}
 
+      {settings && !settings.hasGithubToken && settings.hasApiKey && (
+        <div className="settings-onboarding-hint" style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.25)' }}>
+          <span>⚠️ {t('settings.deployHint')}</span>
+        </div>
+      )}
+
       {settings?.hasApiKey && (
         <div className="settings-ready-cta">
           <span className="settings-ready-cta__icon">✅</span>

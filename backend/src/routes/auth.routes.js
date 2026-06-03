@@ -26,9 +26,10 @@ router.post('/password/reset',  authLimiter, validate(authValidator.resetPasswor
 router.post('/logout',             authenticate, authController.logout);
 router.get('/me',                  authenticate, authController.me);
 router.patch('/me',                authenticate, validate(authValidator.updateProfile), authController.updateMe);
-router.post('/change-password',    authenticate, authController.changePassword);
+router.post('/change-password',    authenticate, validate(authValidator.changePassword), authController.changePassword);
 router.delete('/account',          authenticate, authController.deleteAccount);
 router.get('/sessions',            authenticate, authController.listSessions);
+router.get('/login-history',       authenticate, authController.loginHistory);
 router.delete('/sessions/:jtiHash', authenticate, authController.revokeSession);
 
 // Admin only
@@ -49,6 +50,6 @@ router.post('/webauthn/login/finish', authLimiter, authController.webAuthnLoginF
 router.post('/totp/setup',    authenticate, authController.totpSetup);
 router.post('/totp/enable',   authenticate, authController.totpEnable);
 router.delete('/totp',        authenticate, authController.totpDisable);
-router.post('/totp/verify',   authLimiter,  authController.totpVerify);
+router.post('/totp/verify',   authLimiter,  validate(authValidator.totpVerify), authController.totpVerify);
 
 module.exports = router;

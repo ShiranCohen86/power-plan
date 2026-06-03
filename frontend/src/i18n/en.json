@@ -249,6 +249,7 @@
     "email": "Email",
     "name": "Full name",
     "saved": "Saved!",
+    "loginHistory": "Login History",
     "role": "Role",
     "plan": "Plan",
     "joined": "Joined"
@@ -312,6 +313,7 @@
     "totpVerifyBtn": "Enable 2FA",
     "totpDisableBtn": "Disable 2FA",
     "totpDisableConfirm": "Enter your current code to confirm removal:",
+    "deployHint": "To enable auto-deployment, add a GitHub Token in the Deployment section below.",
     "changePasswordSection": "Change Password",
     "currentPassword": "Current password",
     "newPassword": "New password",

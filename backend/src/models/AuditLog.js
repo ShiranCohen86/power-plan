@@ -15,5 +15,6 @@ const AuditLogSchema = new mongoose.Schema(
 
 AuditLogSchema.index({ createdAt: -1 });
 AuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+AuditLogSchema.index({ userId: 1, createdAt: -1 }); // login-history queries
 
 module.exports = mongoose.model('AuditLog', AuditLogSchema);
