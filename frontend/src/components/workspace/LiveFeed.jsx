@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { listFiles } from '../../api/files.api';
+import { listFiles, getFileContent } from '../../api/files.api';
 import { useTranslation } from 'react-i18next';
 import { TEAM_MEMBERS, PHASE_LEAD } from '../../utils/phaseConfig';
 import MeetingCountdownBanner from './MeetingCountdownBanner';
@@ -38,7 +38,9 @@ function LiveFeed({
   const { t } = useTranslation();
   const meetingRef   = useRef(null);
   const consultRef   = useRef(null);
-  const [files, setFiles] = useState(null);
+  const [files, setFiles]           = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileContent, setFileContent]   = useState(null);
   const techRef      = useRef(null);
 
   useEffect(() => {
@@ -309,10 +311,36 @@ function LiveFeed({
             <div className="live-feed__empty"><div className="pwa-spinner" /></div>
           ) : files.length === 0 ? (
             <div className="live-feed__empty"><p>{t('workspace.feed.noFiles')}</p></div>
+          ) : selectedFile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+                <button onClick={() => { setSelectedFile(null); setFileContent(null); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>←</button>
+                <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dir="ltr">
+                  {selectedFile}
+                </span>
+              </div>
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                {fileContent === null ? (
+                  <div style={{ padding: 16 }}><div className="pwa-spinner" /></div>
+                ) : (
+                  <pre style={{ margin: 0, padding: '10px 12px', fontSize: 11, fontFamily: 'monospace', color: 'var(--text)', whiteSpace: 'pre', overflowX: 'auto', background: 'transparent' }} dir="ltr">
+                    {fileContent}
+                  </pre>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="live-feed__files">
               {files.map((f) => (
-                <div key={f.filePath} className="file-entry">
+                <div key={f.filePath} className="file-entry" style={{ cursor: 'pointer' }}
+                  onClick={async () => {
+                    setSelectedFile(f.filePath); setFileContent(null);
+                    try {
+                      const res = await getFileContent(projectId, f.filePath);
+                      setFileContent(res.content);
+                    } catch { setFileContent('// Could not load file'); }
+                  }}>
                   <span className="file-entry__lang">{f.language}</span>
                   <span className="file-entry__path" dir="ltr">{f.filePath}</span>
                   <span className={`file-entry__status file-entry__status--${f.status}`}>{f.status}</span>

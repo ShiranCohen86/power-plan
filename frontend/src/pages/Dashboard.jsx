@@ -73,6 +73,13 @@ function ProjectCard({ project, dispatch }) {
         </span>
       </div>
       <p className="project-card__idea">{project.idea}</p>
+      {project.status === 'live' && project.deployedUrl && (
+        <a href={project.deployedUrl} target="_blank" rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{ fontSize: 11, color: '#22c55e', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+          🌐 {project.deployedUrl.replace(/^https?:\/\//, '').slice(0, 40)}
+        </a>
+      )}
       <div className="project-card__footer">
         <div className="project-card__progress">
           <div className="project-card__progress-bar" style={{ width: `${project.completionPercent || 0}%` }} />

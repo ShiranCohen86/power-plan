@@ -20,9 +20,9 @@ const refineBody = {
 // Per-user+project rate limit: max 10 starts per hour (prevents spam-clicking)
 const startLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  limit: 10,
   keyGenerator: (req) => `${req.user?.id}:${req.params.projectId}`,
-  standardHeaders: true,
+  standardHeaders: 'draft-7',
   legacyHeaders: false,
   skip: (req) => req.user?.role === 'admin',
   message: { error: 'Too many pipeline starts — try again in an hour' },

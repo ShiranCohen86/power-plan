@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PLANNING_PHASES, CODEGEN_PHASES } from '../../utils/phaseConfig';
 import { useLanguage } from '../../context/LanguageContext.jsx';
 
@@ -18,11 +18,32 @@ function fmtDuration(startedAt, completedAt) {
   return `${Math.floor(s / 60)}m${s % 60 > 0 ? ` ${s % 60}s` : ''}`;
 }
 
+function PhaseErrorModal({ message, onClose }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={onClose}>
+      <div style={{ background: 'var(--surface-2)', border: '1px solid var(--danger)', borderRadius: 12, padding: '20px 24px', maxWidth: 480, width: '100%' }}
+        onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 18 }}>❌</span>
+          <strong style={{ fontSize: 14 }}>Phase Error Details</strong>
+          <button onClick={onClose} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+        </div>
+        <pre style={{ fontSize: 12, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, maxHeight: 300, overflow: 'auto' }}>
+          {message}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
-  const status   = phaseData?.status || 'pending';
-  const icon     = STATUS_ICON[status] || '⏳';
-  const tokens   = phaseData?.tokensUsed;
-  const duration = status === 'completed' ? fmtDuration(phaseData?.startedAt, phaseData?.completedAt) : null;
+  const status    = phaseData?.status || 'pending';
+  const icon      = STATUS_ICON[status] || '⏳';
+  const tokens    = phaseData?.tokensUsed;
+  const duration  = status === 'completed' ? fmtDuration(phaseData?.startedAt, phaseData?.completedAt) : null;
+  const refines   = phaseData?.refineCount || 0;
+  const [showError, setShowError] = useState(false);
 
   return (
     <div className="phase-item-wrapper">
@@ -43,15 +64,24 @@ function PhaseItem({ config, phaseData, isActive, onClick, onRollback, lang }) {
             {duration}
           </span>
         )}
+        {refines > 0 && (
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', opacity: 0.7 }} title={`Refined ${refines}x`}>
+            ✏️{refines}
+          </span>
+        )}
         {status === 'failed' && phaseData?.errorMessage && (
-          <span
+          <button
             className="phase-item__error"
-            title={phaseData.errorMessage}
+            onClick={(e) => { e.stopPropagation(); setShowError(true); }}
             style={{ fontSize: 10, color: 'var(--danger)', marginRight: 'auto', maxWidth: 80,
-                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.8 }}
+                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.8,
+                     background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'start' }}
           >
             {phaseData.errorMessage}
-          </span>
+          </button>
+        )}
+        {showError && phaseData?.errorMessage && (
+          <PhaseErrorModal message={phaseData.errorMessage} onClose={() => setShowError(false)} />
         )}
       </button>
       {onRollback && status === 'completed' && (

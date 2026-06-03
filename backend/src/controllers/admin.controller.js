@@ -285,3 +285,19 @@ exports.impersonateUser = asyncHandler(async (req, res) => {
 
   res.json({ accessToken, user: { _id: target._id, name: target.name, email: target.email, role: target.role } });
 });
+
+// ── Lesson bulk operations ─────────────────────────────────────────────────
+
+exports.bulkDeleteLessons = asyncHandler(async (req, res) => {
+  const { ids, inactiveOnly } = req.body;
+  let filter = {};
+  if (ids && Array.isArray(ids)) {
+    filter = { _id: { $in: ids } };
+  } else if (inactiveOnly) {
+    filter = { isActive: false };
+  } else {
+    throw require('../utils/ApiError').badRequest('Provide ids[] or inactiveOnly: true');
+  }
+  const result = await Lesson.deleteMany(filter);
+  res.json({ ok: true, deleted: result.deletedCount });
+});

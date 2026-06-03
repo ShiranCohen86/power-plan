@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { exportLogs } from '../../api/admin.api';
 
 const PAGE_SIZE = 20;
 
@@ -10,9 +11,13 @@ export default function AdminActivity({ activity, activityPage, activityTotal, o
 
   return (
     <section className="admin-section">
-      <h2 className="admin-section__title">
+      <h2 className="admin-section__title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {t('admin.recentActivity')}
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 8 }}>({activityTotal} סה"כ)</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({activityTotal} total)</span>
+        <a href={exportLogs()} download="agent-logs.csv"
+          style={{ fontSize: 11, color: 'var(--brand-primary)', textDecoration: 'none', marginInlineStart: 'auto' }}>
+          ⬇️ Export CSV
+        </a>
       </h2>
 
       <div className="admin-activity">

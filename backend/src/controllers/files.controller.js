@@ -1,4 +1,4 @@
-const archiver     = require('archiver');
+const archiver      = require('archiver');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError     = require('../utils/ApiError');
 const Project      = require('../models/Project');
@@ -59,4 +59,17 @@ exports.downloadFiles = asyncHandler(async (req, res) => {
 
   await archive.finalize();
   logger.info('files: downloaded', { projectId: req.params.id, count: files.length });
+});
+
+exports.getFileContent = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({ _id: req.params.id, ownerId: req.user.id }).lean();
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const file = await GeneratedFile.findOne({
+    projectId: req.params.id,
+    filePath:  decodeURIComponent(req.params.filePath),
+  }).lean();
+  if (!file) throw ApiError.notFound('File not found');
+
+  res.json({ filePath: file.filePath, language: file.language, content: file.content, status: file.status });
 });

@@ -9,6 +9,7 @@ import PlatformSetup   from '../components/admin/PlatformSetup';
 import AdminAnalytics  from '../components/admin/AdminAnalytics';
 import AdminLessons    from '../components/admin/AdminLessons';
 import AdminActivity   from '../components/admin/AdminActivity';
+import AdminUsers      from '../components/admin/AdminUsers';
 
 const ACTIVITY_LIMIT = ADMIN_ACTIVITY_PAGE_SIZE;
 
@@ -139,6 +140,8 @@ export default function Admin() {
           onToggleActive={handleLessonToggle}
           onDelete={handleLessonDelete}
         />
+
+        <AdminUsers />
 
         <AdminActivity
           activity={activity}

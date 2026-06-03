@@ -1,7 +1,10 @@
 import { safeRequest, httpClient } from './request';
 
-export const listFiles = (projectId) =>
+export const listFiles    = (projectId) =>
   safeRequest({ method: 'get', url: `/projects/${projectId}/files` });
+
+export const getFileContent = (projectId, filePath) =>
+  safeRequest({ method: 'get', url: `/projects/${projectId}/files/${encodeURIComponent(filePath)}` });
 
 export async function downloadFiles(projectId, filename) {
   const response = await httpClient({

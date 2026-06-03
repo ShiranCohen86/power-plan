@@ -25,4 +25,7 @@ router.get   ('/logs/export',        ctrl.exportAgentLogs);
 // Impersonation
 router.post  ('/users/:id/impersonate', ctrl.impersonateUser);
 
+// Bulk lesson operations
+router.delete('/lessons/bulk',          ctrl.bulkDeleteLessons);
+
 module.exports = router;

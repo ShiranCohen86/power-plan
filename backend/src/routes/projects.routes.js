@@ -43,8 +43,9 @@ router.put   ('/:id/settings/render-token', validate(projectValidator.objectId),
 router.delete('/:id/settings/render-token', validate(projectValidator.objectId), settingsCtrl.deleteProjectRenderToken);
 
 // ── Generated files ───────────────────────────────────────────────────────────
-router.get('/:id/files',          validate(projectValidator.objectId), filesCtrl.listFiles);
-router.get('/:id/files/download', validate(projectValidator.objectId), filesCtrl.downloadFiles);
+router.get('/:id/files',               validate(projectValidator.objectId), filesCtrl.listFiles);
+router.get('/:id/files/download',      validate(projectValidator.objectId), filesCtrl.downloadFiles);
+router.get('/:id/files/:filePath(*)',   validate(projectValidator.objectId), filesCtrl.getFileContent);
 
 // ── External service credentials ──────────────────────────────────────────────
 router.get  ('/:id/required-services',                            servicesCtrl.getRequiredServices);
